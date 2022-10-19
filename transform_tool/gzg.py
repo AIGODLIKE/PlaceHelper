@@ -4,10 +4,10 @@ from mathutils import Vector, Color, Euler, Matrix
 
 from dataclasses import dataclass, field
 
-from ..utils import AlignObject, get_objs_bbox_center, get_objs_bbox_top
-
 from .op import C_OBJECT_TYPE_HAS_BBOX
 from ..get_addon_pref import get_addon_pref
+from .get_gz_matrix import get_matrix
+from .get_gz_position import get_position
 
 
 @dataclass
@@ -61,6 +61,7 @@ class TEST_GGT_test_group2(GZGBase, bpy.types.GizmoGroup):
 
     def setup(self, context):
         self._move_gz.clear()
+
         self.add_move_gz(context, 'X')
         self.add_move_gz(context, 'Y')
         self.add_move_gz(context, 'Z')
@@ -83,36 +84,44 @@ class TEST_GGT_test_group2(GZGBase, bpy.types.GizmoGroup):
         gzObject = GizmoInfo(scale_basis=1,
                              color=color,
                              color_highlight=color_highlight,
-                             use_draw_modal=False)
+                             use_draw_modal=False,
+                             use_event_handle_all=False)
 
         gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
-        prop = gz.target_set_operator("test.move_view_object", index=0)
+        prop = gz.target_set_operator("ph.translate", index=0)
         prop.axis = axis
+
+        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+
+        if axis == 'X':
+            gz.matrix_basis = mXW
+        elif axis == 'Y':
+            gz.matrix_basis = mYW
+        else:
+            gz.matrix_basis = mZW
+
+        loc = get_position()
+        gz.matrix_basis.translation = loc
 
         self._move_gz[gz] = axis
 
     def correct_gz_loc(self, context):
+        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+
+        loc = get_position()
+
         for gz, axis in self._move_gz.items():
             if axis == 'X':
-                rotate = Euler((math.radians(90), math.radians(
-                    180), math.radians(90)), 'XYZ')  # 奇怪的数值
-
+                gz.matrix_basis = mXW
             elif axis == 'Y':
-                rotate = Euler((math.radians(-90), 0, 0), 'XYZ')
-
+                gz.matrix_basis = mYW
             else:
-                rotate = Euler((0, 0, math.radians(90)), 'XYZ')
+                gz.matrix_basis = mZW
 
-            mx = context.object.matrix_world
-
-            # local
-            # rotate.rotate(mx.to_euler('XYZ'))
-            gz.matrix_basis = rotate.to_matrix().to_4x4()
-            gz.matrix_basis.translation = mx.translation
+            gz.matrix_basis.translation = loc
 
     def refresh(self, context):
-        if context.object:
-            self.correct_gz_loc(context)
+        self.correct_gz_loc(context)
 
 
 classes = (

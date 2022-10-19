@@ -6,9 +6,14 @@ from bpy.types import PropertyGroup
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
 from bpy.app.translations import pgettext_iface as tips_
 
+from .gzg import update_gzg_pref
+
+
 class DynamicPlaceProps(PropertyGroup):
-    mode: EnumProperty(name='Mode', items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Force', 'Force')],
-                       default='FORCE')
+    mode: EnumProperty(name='Mode',
+                       items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Force', 'Force'), ('DRAG', 'Drag', 'Drag')],
+                       default='FORCE', update=update_gzg_pref)
+    strength: IntProperty(name='Strength', default=100, min=0, max=500)
 
 
 class TestTool3(bpy.types.WorkSpaceTool):
@@ -23,6 +28,7 @@ class TestTool3(bpy.types.WorkSpaceTool):
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
+        layout.prop(prop, "strength")
         prop = tool.operator_properties('test.dynamic_place')
         layout.prop(prop, "invert")
 

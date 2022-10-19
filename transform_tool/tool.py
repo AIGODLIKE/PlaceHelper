@@ -5,6 +5,8 @@ from pathlib import Path
 from bpy.types import PropertyGroup
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
 
+from bpy.utils.toolsystem import ToolDef
+
 
 class MoveToolProps(PropertyGroup):
     orient: EnumProperty(name="Orientation",
@@ -21,7 +23,20 @@ class MoveToolProps(PropertyGroup):
 class TestTool2(bpy.types.WorkSpaceTool):
     bl_idname = "TEST.test_tool2"
     bl_space_type = 'VIEW_3D'
-    bl_context_mode = 'OBJECT'
+    bl_context_mode = "OBJECT"
+    bl_label = "Test"
+    bl_widget = "TEST_GGT_test_group2"
+    bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
+    bl_keymap = "3D View Tool: Select Box"
+
+    def draw_settings(context, layout, tool):
+        prop = bpy.context.scene.move_view_tool
+        layout.prop(prop, "duplicate")
+
+class TestTool2_Edit(bpy.types.WorkSpaceTool):
+    bl_idname = "TEST.test_tool2"
+    bl_space_type = 'VIEW_3D'
+    bl_context_mode = "EDIT_MESH"
     bl_label = "Test"
     bl_widget = "TEST_GGT_test_group2"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
@@ -36,9 +51,12 @@ def register():
     bpy.types.Scene.move_view_tool = bpy.props.PointerProperty(type=MoveToolProps)
 
     bpy.utils.register_tool(TestTool2, separator=False)
+    bpy.utils.register_tool(TestTool2_Edit, separator=False)
 
 
 def unregister():
     bpy.utils.unregister_tool(TestTool2)
+    bpy.utils.unregister_tool(TestTool2_Edit)
+
     del  bpy.types.Scene.place_tool
     bpy.utils.unregister_class(MoveToolProps)

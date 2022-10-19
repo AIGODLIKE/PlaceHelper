@@ -5,9 +5,19 @@ from mathutils import Vector, Matrix, Euler
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
 from bpy.app.translations import pgettext_iface as iface_
-from ..utils import get_objs_bbox_center
+from ..utils import get_objs_bbox_center, get_objs_axis_aligned_bbox
+from ..transform_tool.get_gz_matrix import get_matrix
 
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
+
+from bpy_extras.view3d_utils import location_3d_to_region_2d
+
+
+def get_2d_loc(loc, context):
+    r3d = context.space_data.region_3d
+
+    x, y = location_3d_to_region_2d(context.region, r3d, loc)
+    return x, y
 
 
 class TEST_OT_dynamic_place(bpy.types.Operator):
@@ -41,6 +51,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             self.mouseDX = event.mouse_x
             self.mouseDY = event.mouse_y
 
+            self.handle_drag_direction(context, event)
+
             context.scene.frame_set(self.frame)
             bpy.ops.ptcache.bake_all(bake=False)
 
@@ -52,11 +64,38 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             self.mouseDX = event.mouse_x
             self.mouseDY = event.mouse_y
 
+            if self.mode == 'DRAG':
+                # if self.startX > event.mouse_x:
+                #     self.force.matrix_world.translation = self.get_bbox_pos(max=True)
+                # else:
+                #     self.force.matrix_world.translation = self.get_bbox_pos(max=False)
+
+                self.force.field.strength = context.scene.dynamic_place_tool.strength
+
         elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.free(context)
             return {'FINISHED'}
 
         return {'RUNNING_MODAL'}
+
+    def handle_drag_direction(self, context, event):
+        from .gzg import GZ_CENTER
+
+        mode = context.scene.dynamic_place_tool.mode
+
+        x, y = get_2d_loc(GZ_CENTER, context)
+        value = abs(self.force.field.strength)
+
+        if mode == 'FORCE':
+            if self.axis in {'X', 'Y'}:
+                self.force.field.strength = - value if self.startX - x > event.mouse_x - x else value
+            else:
+                self.force.field.strength = - value if self.startY - y > event.mouse_y - y else value
+        elif mode == 'DRAG':
+            if self.axis in {'X', 'Y'}:
+                self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
+            else:
+                self.force.field.strength = value if self.startY - y > event.mouse_y - y else - value
 
     def invoke(self, context, event):
         self.mode = context.scene.dynamic_place_tool.mode
@@ -70,8 +109,6 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.init_force(context)
         self.init_frame(context)
         self.init_rbd_world(context)
-
-
 
         bpy.context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
@@ -152,27 +189,47 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
+    def get_bbox_pos(self, max=False):
+        min_x, min_y, min_z, max_x, max_y, max_z = get_objs_axis_aligned_bbox(self.objs)
+
+        pos = get_objs_bbox_center(self.objs)
+        if self.axis == 'X':
+            pos.x = min_x if not max else max_x
+        elif self.axis == 'Y':
+            pos.y = min_y if not max else max_y
+        elif self.axis == 'Z':
+            pos.z = min_z if not max else max_z
+
+        return pos
+
     def init_force(self, context):
         self.force = None
         active = context.object
         bpy.ops.object.effector_add(type='FORCE')
         self.force = context.active_object
         self.force.select_set(False)
+        # shape
+        self.force.field.shape = 'PLANE'
+        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
 
         if self.axis == 'X':
-            euler = Euler((0, math.radians(90), 0))
+            self.force.matrix_world = mXW
         elif self.axis == 'Y':
-            euler = Euler((math.radians(90), 0, 0))
-        else:
-            euler = Euler((0, 0, 0))
+            self.force.matrix_world = mYW
+        elif self.axis == 'Z':
+            self.force.matrix_world = mZW
 
-        self.force.rotation_euler = euler
-        self.force.field.strength = -200
-        # if TEST_OT_dynamic_place.invert:
-        #     self.force.field.strength = -1 * self.force.field.strength
-        self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
+        if self.mode == 'DRAG':
+            self.force.matrix_world.translation = self.get_bbox_pos(max=True)
+            self.force.field.strength = 0
+        else:
+            self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
+            self.force.field.strength = context.scene.dynamic_place_tool.strength * -1
+
+        self.force.field.falloff_power = 1
 
         context.view_layer.objects.active = active
+
 
 classes = (
     TEST_OT_dynamic_place,

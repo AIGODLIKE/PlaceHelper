@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty,PointerProperty
 from bpy.app.translations import pgettext_iface as tips_
 
 
@@ -21,10 +21,9 @@ class PlaceToolProps(PropertyGroup):
                                    ("COPY", "Object", "Create a Full Copy of the Active Object"), ],
                             default="INSTANCE")
 
+    exclude_collection:PointerProperty(type = bpy.types.Collection, name = "Exclude", description = "Exclude Collection")
 
-class DynamicPlaceProps(PropertyGroup):
-    mode: EnumProperty(name='Mode', items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Force', 'Force')],
-                       default='FORCE')
+
 
 
 class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
@@ -60,9 +59,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
 
 def register():
     bpy.utils.register_class(PlaceToolProps)
-    bpy.utils.register_class(DynamicPlaceProps)
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
-    bpy.types.Scene.dynamic_place_tool = bpy.props.PointerProperty(type=DynamicPlaceProps)
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
 
@@ -70,5 +67,4 @@ def register():
 def unregister():
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
 
-    bpy.utils.unregister_class(DynamicPlaceProps)
     bpy.utils.unregister_class(PlaceToolProps)

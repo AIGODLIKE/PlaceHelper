@@ -13,19 +13,19 @@ bl_info = {
 
 __ADDON_NAME__ = __name__
 
-from . import place_tool, move_view_tool,dynamic_place_tool, preferences
+from . import place_tool, transform_tool,dynamic_place_tool, preferences
 
 
 def register():
     preferences.register()
     place_tool.register()
-    move_view_tool.register()
+    transform_tool.register()
     dynamic_place_tool.register()
 
 
 def unregister():
     dynamic_place_tool.unregister()
-    move_view_tool.unregister()
+    transform_tool.unregister()
     place_tool.unregister()
     preferences.unregister()
 
