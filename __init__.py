@@ -1,5 +1,5 @@
 bl_info = {
-    "curve_name": "Place Helper",
+    "name": "Place Helper",
     "author": "幻之境科技 (开发:Atticus)",
     "blender": (3, 2, 0),
     "version": (0, 1),

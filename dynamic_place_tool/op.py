@@ -3,6 +3,7 @@ import bpy
 
 from mathutils import Vector, Matrix, Euler
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
+from bpy_extras import view3d_utils
 from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
 from bpy.app.translations import pgettext_iface as iface_
 from ..utils import get_objs_bbox_center, get_objs_axis_aligned_bbox
@@ -20,6 +21,16 @@ def get_2d_loc(loc, context):
     return x, y
 
 
+def mouse_ray(context, event):
+    """获取鼠标射线"""
+    region = context.region
+    rv3d = context.region_data
+    coord = event.mouse_region_x, event.mouse_region_y
+    ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    ray_direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    return ray_origin, ray_direction
+
+
 class TEST_OT_dynamic_place(bpy.types.Operator):
     """Dynamic Place"""
     bl_idname = 'test.dynamic_place'
@@ -33,6 +44,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     force = None
     objs = []
     coll_index = 0
+    coll_obj = {}
 
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
@@ -65,11 +77,6 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             self.mouseDY = event.mouse_y
 
             if self.mode == 'DRAG':
-                # if self.startX > event.mouse_x:
-                #     self.force.matrix_world.translation = self.get_bbox_pos(max=True)
-                # else:
-                #     self.force.matrix_world.translation = self.get_bbox_pos(max=False)
-
                 self.force.field.strength = context.scene.dynamic_place_tool.strength
 
         elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
@@ -82,6 +89,12 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         from .gzg import GZ_CENTER
 
         mode = context.scene.dynamic_place_tool.mode
+        ray_origin, ray_direction = mouse_ray(context, event)
+
+        # 判断ray_origin在gz的方向
+        invert_x = (Vector((1, 0, 0)) + ray_direction)[1] < 0
+        invert_y = (Vector((0, 1, 0)) + ray_direction)[0] > 0
+        invert_z = (Vector((0, 0, 1)) + ray_direction)[2] < 0
 
         x, y = get_2d_loc(GZ_CENTER, context)
         value = abs(self.force.field.strength)
@@ -89,13 +102,28 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         if mode == 'FORCE':
             if self.axis in {'X', 'Y'}:
                 self.force.field.strength = - value if self.startX - x > event.mouse_x - x else value
+
+                if invert_x and self.axis == 'X':
+                    self.force.field.strength *= -1
+                if invert_y and self.axis == 'Y':
+                    self.force.field.strength *= -1
             else:
                 self.force.field.strength = - value if self.startY - y > event.mouse_y - y else value
+
+                if invert_z:
+                    self.force.field.strength *= -1
+
         elif mode == 'DRAG':
             if self.axis in {'X', 'Y'}:
                 self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
+                if invert_x and self.axis == 'X':
+                    self.force.field.strength *= -1
+                if invert_y and self.axis == 'Y':
+                    self.force.field.strength *= -1
             else:
                 self.force.field.strength = value if self.startY - y > event.mouse_y - y else - value
+                if invert_z:
+                    self.force.field.strength *= -1
 
     def invoke(self, context, event):
         self.mode = context.scene.dynamic_place_tool.mode
@@ -106,7 +134,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.startY = event.mouse_y
 
         self.init_obj(context)
-        self.init_force(context)
+        self.init_collection_coll(context)
+        self.init_force(context,event)
         self.init_frame(context)
         self.init_rbd_world(context)
 
@@ -122,6 +151,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         # restore
         self.restore_frame(context)
         self.restore_rbd_world(context)
+        self.restore_collection_coll(context)
         # remove force field
         if self.force:
             bpy.data.objects.remove(self.force)
@@ -173,6 +203,37 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         context.scene.rigidbody_world.point_cache.frame_start = 1
         context.scene.rigidbody_world.point_cache.frame_end = 1000
 
+    def init_collection_coll(self, context):
+        self.coll_obj.clear()
+        active_obj = context.active_object
+        selected_objects = context.selected_objects.copy()
+
+        for obj in context.collection.objects:
+            obj.select_set(True)
+
+            if obj not in selected_objects and obj.type == 'MESH':
+                context.view_layer.objects.active = obj
+
+                if hasattr(obj, 'rigid_body') and obj.rigid_body is not None:
+                    self.coll_obj[obj] = obj.rigid_body.type
+                else:
+                    self.coll_obj[obj] = 'NONE'
+                    bpy.ops.rigidbody.object_add()
+
+                obj.rigid_body.type = 'PASSIVE'
+
+            obj.select_set(False)
+
+        context.view_layer.objects.active = active_obj
+
+    def restore_collection_coll(self, context):
+        for obj, rigid_body_type in self.coll_obj.items():
+            if rigid_body_type == 'NONE':
+                context.view_layer.objects.active = obj
+                bpy.ops.rigidbody.object_remove()
+            else:
+                obj.rigid_body.type = rigid_body_type
+
     def init_obj(self, context):
         self.objs.clear()
 
@@ -202,7 +263,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         return pos
 
-    def init_force(self, context):
+    def init_force(self, context,event):
         self.force = None
         active = context.object
         bpy.ops.object.effector_add(type='FORCE')

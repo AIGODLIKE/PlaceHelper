@@ -11,8 +11,8 @@ from .gzg import update_gzg_pref
 
 class DynamicPlaceProps(PropertyGroup):
     mode: EnumProperty(name='Mode',
-                       items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Force', 'Force'), ('DRAG', 'Drag', 'Drag')],
-                       default='FORCE', update=update_gzg_pref)
+                       items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Scale', 'Scale'), ('DRAG', 'Drag', 'Drag')],
+                       default='DRAG', update=update_gzg_pref)
     strength: IntProperty(name='Strength', default=100, min=0, max=500)
 
 

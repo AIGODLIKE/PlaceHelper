@@ -165,7 +165,7 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
         if self.gravity_gz:
             rotate = Euler((math.radians(180), 0, 0), 'XYZ')
-            self.gravity_gz.matrix_basis = rotate.to_matrix().to_matrix()()
+            self.gravity_gz.matrix_basis = rotate.to_matrix()
             self.gravity_gz.matrix_basis.translation = self.center
 
     def refresh(self, context):
