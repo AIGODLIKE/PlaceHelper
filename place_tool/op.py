@@ -6,8 +6,11 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
 
 from contextlib import contextmanager
 
-from ..utils import AlignObject, AlignObjects, ray_cast, get_objs_bbox_center, C_OBJECT_TYPE_HAS_BBOX
-from ..utils import timeit
+from ..utils import C_OBJECT_TYPE_HAS_BBOX
+from ..util.obj_bbox import AlignObject,AlignObjects
+from ..util.raycast import ray_cast
+
+
 from ..get_addon_pref import get_addon_pref
 from .draw_bbox import draw_bbox_callback
 

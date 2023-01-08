@@ -5,6 +5,7 @@ from mathutils import Matrix, Quaternion, Vector
 from math import radians, sqrt
 from .get_gz_position import get_bmesh_active
 
+# blender 坐标系
 arc_angle = (0.0, 0.0, 90.0)
 
 

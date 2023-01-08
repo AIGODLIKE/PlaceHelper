@@ -4,10 +4,9 @@ import bpy
 from mathutils import Vector, Matrix, Euler
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras import view3d_utils
-from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
-from bpy.app.translations import pgettext_iface as iface_
-from ..utils import get_objs_bbox_center, get_objs_axis_aligned_bbox
-from ..transform_tool.get_gz_matrix import get_matrix
+
+from ..util.get_position import get_objs_bbox_center, get_objs_axis_aligned_bbox
+from ..util.get_gz_matrix import get_matrix
 
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
@@ -135,7 +134,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         self.init_obj(context)
         self.init_collection_coll(context)
-        self.init_force(context,event)
+        self.init_force(context, event)
         self.init_frame(context)
         self.init_rbd_world(context)
 
@@ -247,6 +246,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         context.object.rigid_body.collision_collections[0] = False
         context.object.rigid_body.collision_collections[self.coll_index] = True
         context.object.rigid_body.mesh_source = 'FINAL'
+        context.object.rigid_body.collision_shape = 'MESH'
 
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
@@ -263,7 +263,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         return pos
 
-    def init_force(self, context,event):
+    def init_force(self, context, event):
         self.force = None
         active = context.object
         bpy.ops.object.effector_add(type='FORCE')

@@ -1,35 +1,10 @@
 import bpy
-import math
-from mathutils import Vector, Color, Euler, Matrix
-
-from dataclasses import dataclass, field
 
 from .op import C_OBJECT_TYPE_HAS_BBOX
-from ..get_addon_pref import get_addon_pref
-from .get_gz_matrix import get_matrix
-from .get_gz_position import get_position
 
-
-@dataclass
-class GizmoInfo:
-    # color
-    alpha: float = 0.9
-    color: Color = (0.48, 0.4, 1)
-    alpha_highlight: float = 1
-    color_highlight: Color = (1.0, 1.0, 1.0)
-
-    # settings
-    use_draw_modal: bool = True
-    use_event_handle_all: bool = True
-    scale_basis: float = 1
-    use_tooltip: bool = True
-
-    def set_up(self, gzg, type):
-        self.gz = gzg.gizmos.new(type)
-        for key in self.__annotations__.keys():
-            self.gz.__setattr__(key, self.__getattribute__(key))
-
-        return self.gz
+from ..util.gz import GizmoInfo, GZGBase
+from ..util.get_gz_matrix import get_matrix
+from ..util.get_gz_position import get_position
 
 
 class GZGBase():

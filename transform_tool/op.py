@@ -5,9 +5,7 @@ import bpy
 from mathutils import Vector, Matrix, Euler, Quaternion
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty, FloatVectorProperty, \
     BoolVectorProperty, PointerProperty
-from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
 from bpy.app.translations import pgettext_iface as iface_
-from bpy.types import PropertyGroup
 
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 

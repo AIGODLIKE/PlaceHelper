@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 from mathutils import Vector
-from ..utils import get_objs_bbox_center
+from .get_position import get_objs_bbox_center
 
 
 def get_bmesh_active(bm):
