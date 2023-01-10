@@ -75,16 +75,16 @@ def draw_bbox_callback(self, context):
                 # src
                 pts = [pt for pt in objs_A['bbox_pts']]
                 # element
-                bbox_pts = get_objs_bbox_draw_pts(objs_A['size'], pts, objs_A['center'])
-                circle_pts = get_circle_lines(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
-                                              objs_A['bottom'])
+                # bbox_pts = get_objs_bbox_draw_pts(objs_A['size'], pts, objs_A['center'])
+                # circle_pts = get_circle_lines(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
+                #                               objs_A['bottom'])
                 # line_pts = get_normal_pts(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
                 #                           objs_A['bottom'])
                 # 2d
-                draw_pts = bbox_pts + circle_pts
+                draw_pts = pts
                 draw_pts = [loc3d_2_r2d(region, r3d, pt) for pt in draw_pts]
 
-                batch = batch_for_shader(shader_2d, 'LINES', {"pos": draw_pts})
+                batch = batch_for_shader(shader_2d, 'POINTS', {"pos": draw_pts})
                 batch.draw(shader_2d)
 
 
@@ -94,11 +94,12 @@ def wrap_bgl_restore(width):
     bgl.glEnable(bgl.GL_LINE_SMOOTH)
     bgl.glEnable(bgl.GL_DEPTH_TEST)
     bgl.glLineWidth(width)
-    bgl.glPointSize(5)
+    bgl.glPointSize(8)
 
     yield  # do the work
     # restore opengl defaults
     bgl.glLineWidth(1)
+    bgl.glPointSize(5)
     bgl.glDisable(bgl.GL_BLEND)
     bgl.glDisable(bgl.GL_LINE_SMOOTH)
     bgl.glEnable(bgl.GL_DEPTH_TEST)
