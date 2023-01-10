@@ -5,7 +5,7 @@
 import bpy
 from bpy.app.handlers import persistent
 
-from ..utils import AlignObject, C_OBJECT_TYPE_HAS_BBOX
+from ..util.obj_bbox import AlignObject,C_OBJECT_TYPE_HAS_BBOX
 from ..get_addon_pref import get_addon_pref
 
 # 运行时缓存

@@ -11,7 +11,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
 from math import sin, cos, pi
 from contextlib import contextmanager
 
-from ..utils import AlignObject
+from ..util.obj_bbox import AlignObject
 from ..get_addon_pref import get_addon_pref
 
 from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
@@ -78,10 +78,10 @@ def draw_bbox_callback(self, context):
                 bbox_pts = get_objs_bbox_draw_pts(objs_A['size'], pts, objs_A['center'])
                 circle_pts = get_circle_lines(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
                                               objs_A['bottom'])
-                line_pts = get_normal_pts(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
-                                          objs_A['bottom'])
+                # line_pts = get_normal_pts(objs_A['size'], Matrix.Translation(Vector((0, 0, 0))),
+                #                           objs_A['bottom'])
                 # 2d
-                draw_pts = bbox_pts + circle_pts + line_pts
+                draw_pts = bbox_pts + circle_pts
                 draw_pts = [loc3d_2_r2d(region, r3d, pt) for pt in draw_pts]
 
                 batch = batch_for_shader(shader_2d, 'LINES', {"pos": draw_pts})
@@ -197,7 +197,7 @@ def get_obj_bbox_draw_pts(obj: AlignObject, factor=0.15):
     return draw_points
 
 
-def get_objs_bbox_draw_pts(size, pts, center: Vector, factor=0.15):
+def get_objs_bbox_draw_pts(size, pts, center: Vector, factor=0.1):
     """get bbox draw points,this bbox is a little bigger than the real bbox so that we can see the bbox"""
     draw_points = list()
 
