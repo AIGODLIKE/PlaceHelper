@@ -206,6 +206,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.coll_obj.clear()
         active_obj = context.active_object
         selected_objects = context.selected_objects.copy()
+        # collision_shape
+        passive = context.scene.dynamic_place_tool.passive
 
         for obj in context.collection.objects:
             obj.select_set(True)
@@ -220,6 +222,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                     bpy.ops.rigidbody.object_add()
 
                 obj.rigid_body.type = 'PASSIVE'
+                obj.rigid_body.mesh_source = 'FINAL'
+                obj.rigid_body.collision_shape = passive
 
             obj.select_set(False)
 
@@ -242,11 +246,14 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             else:
                 self.objs.append(obj)
 
+        # collision_shape
+        active = context.scene.dynamic_place_tool.active
+
         bpy.ops.rigidbody.object_add()
         context.object.rigid_body.collision_collections[0] = False
         context.object.rigid_body.collision_collections[self.coll_index] = True
         context.object.rigid_body.mesh_source = 'FINAL'
-        context.object.rigid_body.collision_shape = 'MESH'
+        context.object.rigid_body.collision_shape = active
 
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
@@ -271,21 +278,26 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.force.select_set(False)
         # shape
         self.force.field.shape = 'PLANE'
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+        # location
+        location_type = context.scene.dynamic_place_tool.location
+        if location_type == 'CENTER':
+            mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
 
-        if self.axis == 'X':
-            self.force.matrix_world = mXW
-        elif self.axis == 'Y':
-            self.force.matrix_world = mYW
-        elif self.axis == 'Z':
-            self.force.matrix_world = mZW
+            if self.axis == 'X':
+                self.force.matrix_world = mXW
+            elif self.axis == 'Y':
+                self.force.matrix_world = mYW
+            elif self.axis == 'Z':
+                self.force.matrix_world = mZW
 
-        if self.mode == 'DRAG':
-            self.force.matrix_world.translation = self.get_bbox_pos(max=True)
-            self.force.field.strength = 0
-        else:
-            self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
-            self.force.field.strength = context.scene.dynamic_place_tool.strength * -1
+            if self.mode == 'DRAG':
+                self.force.matrix_world.translation = self.get_bbox_pos(max=True)
+                self.force.field.strength = 0
+            else:
+                self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
+                self.force.field.strength = context.scene.dynamic_place_tool.strength * -1
+        else:  # 'CURSOR'
+            self.force.matrix_world.translation = context.scene.cursor.location
 
         self.force.field.falloff_power = 1
 
