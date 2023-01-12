@@ -24,7 +24,7 @@ class TestTool2(bpy.types.WorkSpaceTool):
     bl_idname = "TEST.test_tool2"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = "OBJECT"
-    bl_label = "Test"
+    bl_label = "Transform Pro"
     bl_widget = "TEST_GGT_test_group2"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"
@@ -37,7 +37,7 @@ class TestTool2_Edit(bpy.types.WorkSpaceTool):
     bl_idname = "TEST.test_tool2"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = "EDIT_MESH"
-    bl_label = "Test"
+    bl_label = "Transform Pro"
     bl_widget = "TEST_GGT_test_group2"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"

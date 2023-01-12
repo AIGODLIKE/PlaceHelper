@@ -33,7 +33,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.dynamic_place_tool"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = 'OBJECT'
-    bl_label = "Test"
+    bl_label = "Dynamic Place"
     bl_widget = "TEST_GGT_test_group3"
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"
@@ -51,7 +51,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
 class PH_PT_DynamicPlaceTool(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
-    bl_label = "Test"
+    bl_label = "Dynamic Place"
     bl_idname = "PH_PT_DynamicPlaceToolPanel"
 
     def draw(self, context):
