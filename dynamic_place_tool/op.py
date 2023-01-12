@@ -125,6 +125,15 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                     self.force.field.strength *= -1
 
     def invoke(self, context, event):
+        if context.active_object is None or context.active_object.hide_viewport or not context.active_object.select_get():
+            def draw(cls, _context):
+                cls.layout.label(text="Please select the active object")
+
+            context.window_manager.popup_menu(draw, title=f'Warning', icon='ERROR')
+
+            return {"INTERFACE"}
+
+        self.active_obj = context.active_object
         self.mode = context.scene.dynamic_place_tool.mode
 
         self.mouseDX = event.mouse_x
@@ -154,6 +163,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         # remove force field
         if self.force:
             bpy.data.objects.remove(self.force)
+
+        context.view_layer.objects.active = self.active_obj
 
     def restore_rbd_world(self, context):
         context.scene.gravity = self.ori_gravity
@@ -210,9 +221,10 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         passive = context.scene.dynamic_place_tool.passive
 
         for obj in context.collection.objects:
-            obj.select_set(True)
+            if obj.hide_viewport is False:
+                obj.select_set(True)
 
-            if obj not in selected_objects and obj.type == 'MESH':
+            if obj not in selected_objects and obj.type == 'MESH' and obj.hide_viewport is False:
                 context.view_layer.objects.active = obj
 
                 if hasattr(obj, 'rigid_body') and obj.rigid_body is not None:
@@ -231,7 +243,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
     def restore_collection_coll(self, context):
         for obj, rigid_body_type in self.coll_obj.items():
-            if rigid_body_type == 'NONE':
+            if rigid_body_type == 'NONE' and obj.hide_viewport is False:
                 context.view_layer.objects.active = obj
                 bpy.ops.rigidbody.object_remove()
             else:
@@ -242,6 +254,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         for obj in context.selected_objects:
             if obj.type != 'MESH':
+                obj.select_set(False)
+            elif obj.hide_viewport is True:
                 obj.select_set(False)
             else:
                 self.objs.append(obj)
