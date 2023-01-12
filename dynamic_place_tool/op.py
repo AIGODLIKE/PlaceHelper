@@ -1,16 +1,94 @@
 import math
 import bpy
+import bmesh
+
+import blf
+import gpu
+import bgl
+
+from gpu_extras.presets import draw_circle_2d
+from gpu_extras.batch import batch_for_shader
+from mathutils import Vector, Matrix
+
+from contextlib import contextmanager
 
 from mathutils import Vector, Matrix, Euler
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras import view3d_utils
+from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 from ..util.get_position import get_objs_bbox_center, get_objs_axis_aligned_bbox
 from ..util.get_gz_matrix import get_matrix
+from ..get_addon_pref import get_addon_pref
+
+shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+shader_tex = gpu.shader.from_builtin('2D_IMAGE')
 
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
-from bpy_extras.view3d_utils import location_3d_to_region_2d
+G_DRAW_MESH = {
+    'convex_hull': None,
+    'pt_mesh': None,
+    'tmp_mesh': None,
+}
+
+
+@contextmanager
+def wrap_bgl_restore(width):
+    bgl.glEnable(bgl.GL_BLEND)
+    bgl.glEnable(bgl.GL_LINE_SMOOTH)
+    bgl.glEnable(bgl.GL_DEPTH_TEST)
+    bgl.glLineWidth(width)
+    bgl.glPointSize(8)
+
+    yield  # do the work
+    # restore opengl defaults
+    bgl.glLineWidth(1)
+    bgl.glPointSize(5)
+    bgl.glDisable(bgl.GL_BLEND)
+    bgl.glDisable(bgl.GL_LINE_SMOOTH)
+    bgl.glEnable(bgl.GL_DEPTH_TEST)
+
+
+def get_draw_points(context, convex_hull: bool = False):
+    obj = context.object
+    eval_obj = obj.evaluated_get(context.evaluated_depsgraph_get())
+    mesh = eval_obj.to_mesh()
+    # get convex hull
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    me = bpy.data.meshes.new(f"{obj.name}_draw")
+
+    if convex_hull:
+        ch = bmesh.ops.convex_hull(bm, input=bm.verts)
+        bmesh.ops.delete(
+            bm,
+            geom=ch["geom_unused"] + ch["geom_interior"],
+            context='VERTS',
+        )
+    bm.to_mesh(me)
+
+    # get edges points
+    points = []
+    for edge in me.edges:
+        points.append(me.vertices[edge.vertices[0]].co)
+        points.append(me.vertices[edge.vertices[1]].co)
+
+    return points, me
+
+
+def fix_draw_pts(context, pts):
+    """修正点的位置"""
+    obj = context.object
+    matrix = obj.matrix_world
+    # 修正点的位置
+    fix_pts = []
+    for pt in pts:
+        fix_pt = matrix @ pt
+        fix_pts.append(fix_pt)
+    return fix_pts
 
 
 def get_2d_loc(loc, context):
@@ -44,6 +122,10 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     objs = []
     coll_index = 0
     coll_obj = {}
+
+    draw_handle = None
+    draw_pts = None
+    tmp_mesh = None
 
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
@@ -148,9 +230,36 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.init_rbd_world(context)
 
         bpy.context.window_manager.modal_handler_add(self)
+        TEST_OT_dynamic_place.draw_handle = bpy.types.SpaceView3D.draw_handler_add(self.draw_obj_coll_callback_px,
+                                                                                   (context,),
+                                                                                   'WINDOW',
+                                                                                   'POST_VIEW')
         return {'RUNNING_MODAL'}
 
+    def draw_obj_coll_callback_px(self, context):
+        if self.draw_pts is None:
+            convex_hull = context.scene.dynamic_place_tool.active == 'CONVEX_HULL'
+            self.draw_pts, self.tmp_mesh = get_draw_points(context, convex_hull=convex_hull)
+
+        draw_pts = fix_draw_pts(context, self.draw_pts)
+
+        pref_bbox = get_addon_pref().place_tool.bbox
+        width = pref_bbox.width
+        color =  pref_bbox.color
+
+        with wrap_bgl_restore(width):
+            shader_3d.bind()
+            shader_3d.uniform_float("color", color)
+            batch = batch_for_shader(shader_3d, 'LINES', {"pos": draw_pts})
+            batch.draw(shader_3d)
+
     def free(self, context):
+        # remove draw handler
+        if TEST_OT_dynamic_place.draw_handle:
+            bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
+        if self.tmp_mesh:
+            bpy.data.meshes.remove(self.tmp_mesh)
+
         for obj in self.objs:
             obj.select_set(True)
 
