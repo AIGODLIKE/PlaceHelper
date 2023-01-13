@@ -451,7 +451,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 offset_x = obj_A.mx.translation.x - offset_origin.x
                 offset_y = obj_A.mx.translation.y - offset_origin.y
 
-                offset_xy = Vector((offset_x, offset_y, 0)) * -1
+                # offset_xy = Vector((offset_x, offset_y, 0)) * -1
+                offset_xy = Vector((0,0,0))
 
             # ray cast calc
             self.tg_obj = None
