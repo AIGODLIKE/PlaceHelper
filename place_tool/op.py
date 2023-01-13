@@ -7,9 +7,8 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
 from contextlib import contextmanager
 
 from ..utils import C_OBJECT_TYPE_HAS_BBOX
-from ..util.obj_bbox import AlignObject,AlignObjects
+from ..util.obj_bbox import AlignObject, AlignObjects
 from ..util.raycast import ray_cast
-
 
 from ..get_addon_pref import get_addon_pref
 from .draw_bbox import draw_bbox_callback
@@ -169,6 +168,8 @@ class ModalBase(CheckBVHTree):
         self.clear_target()
         self.init_bbox_pref()
 
+        self.handle_copy_event(context, event)
+
         self.init_mouse(event)
 
         self.init_context_obj(context)
@@ -291,52 +292,36 @@ class ModalBase(CheckBVHTree):
 
     # COPY
     # ----------------------------------------------------------------------------------------------
-    def restore_old_obj(self):
-        self.old_obj.matrix_world = self.ori_matrix_world
-        self.old_obj.select_set(False)
-        SCENE_OBJS[self.old_obj].bvh_tree_update()
 
     def copy_obj(self, context):
-        if self.new_obj is None:
-            self.old_obj = context.object
-            self.new_obj = self.old_obj.copy()
+        if len(context.selected_objects) == 1:
+            old_obj = context.object
+            new_obj = context.object.copy()
 
-            if place_tool_props().duplicate == 'COPY' and self.new_obj.data:
-                new_data = self.old_obj.data.copy()
-                self.new_obj.data = new_data
+            if place_tool_props().duplicate == 'COPY' and new_obj.data:
+                new_data = old_obj.data.copy()
+                new_obj.data = new_data
 
-            context.collection.objects.link(self.new_obj)
-            context.view_layer.objects.active = self.new_obj
-            self.new_obj.select_set(True)
+            context.collection.objects.link(new_obj)
+            context.view_layer.objects.active = new_obj
 
-            ALIGN_OBJ['active'].bvh_tree_update()
-            obj_A = AlignObject(self.new_obj, self.active_mode)
-            SCENE_OBJS[self.new_obj] = obj_A
-            ALIGN_OBJ['active'] = obj_A
-
-    def cancel_copy_obj(self, context):
-        if context.object is not self.old_obj:
-            if self.has_bbox:
-                ALIGN_OBJ['active'].bvh_tree_update()
-
-            context.view_layer.objects.active = self.old_obj
-            self.old_obj.select_set(True)
-
-        if self.new_obj:
-            if self.has_bbox:
-                SCENE_OBJS.pop(self.new_obj, None)
-            bpy.data.objects.remove(self.new_obj)
-            self.new_obj = None
-
-        if self.has_bbox:
-            ALIGN_OBJ['active'] = SCENE_OBJS[self.old_obj]
+            old_obj.select_set(False)
+            new_obj.select_set(True)
+        elif len(context.selected_objects) > 1:
+            for obj in context.selected_objects:
+                new_obj = obj.copy()
+                if place_tool_props().duplicate == 'COPY' and new_obj.data:
+                    new_data = obj.data.copy()
+                    new_obj.data = new_data
+                context.collection.objects.link(new_obj)
+                if obj is context.object:
+                    context.view_layer.objects.active = new_obj
+                obj.select_set(False)
+                new_obj.select_set(True)
 
     def handle_copy_event(self, context, event):
-        if event.ctrl:
+        if event.shift:
             self.copy_obj(context)
-            self.restore_old_obj()
-        else:
-            self.cancel_copy_obj(context)
 
 
 class PH_OT_move_object(ModalBase, bpy.types.Operator):
@@ -355,8 +340,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.clear_target()
         self.init_bbox_pref()
 
-        self.init_mouse(event)
+        self.handle_copy_event(context, event)
 
+        self.init_mouse(event)
         self.init_context_obj(context)
 
         if context.object and len(context.selected_objects) > 1:
@@ -416,7 +402,6 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
             if len(self.selected_objs) == 1:
-                self.handle_copy_event(context, event)
                 self.handle_obj(context, event)
             else:
                 self.handle_multi_obj(context, event)
@@ -452,7 +437,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 offset_y = obj_A.mx.translation.y - offset_origin.y
 
                 # offset_xy = Vector((offset_x, offset_y, 0)) * -1
-                offset_xy = Vector((0,0,0))
+                offset_xy = Vector((0, 0, 0))
 
             # ray cast calc
             self.tg_obj = None
@@ -528,7 +513,6 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
     axis: EnumProperty(items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
 
     def handle_obj(self, context, event):
-        self.handle_copy_event(context, event)
         self.check_bbox_overlap(context)
 
         with mouse_offset(self, event) as (offset_x, offset_y):
@@ -591,7 +575,6 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
             if context.object and len(context.selected_objects) == 1:
-                self.handle_copy_event(context, event)
                 self.handle_obj(context, event)
             elif context.object and len(context.selected_objects) > 1:
                 self.handle_multi_obj(context, event)
@@ -612,7 +595,6 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
     cursor_modal = 'MOVE_Y'
 
     def handle_obj(self, context, event):
-        self.handle_copy_event(context, event)
         self.check_bbox_overlap(context)
 
         with mouse_offset(self, event, scale=0.01, scale_shift=0.005) as (offset_x, offset_y):
@@ -666,7 +648,6 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
             if context.object and len(context.selected_objects) == 1:
-                self.handle_copy_event(context, event)
                 self.handle_obj(context, event)
             elif context.object and len(context.selected_objects) > 1:
                 self.handle_multi_obj(context, event)
