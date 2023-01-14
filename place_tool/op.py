@@ -22,13 +22,20 @@ place_tool_props = lambda: bpy.context.scene.place_tool
 @contextmanager
 def exclude_ray_cast(obj_list: list[bpy.types.Object]):
     """光线投射时排除物体"""
+    ori_child_vis = {}
     for obj in obj_list:
+        for child in obj.children_recursive:
+            if child in obj_list: continue
+            ori_child_vis[child] = child.hide_get()
+            child.hide_set(True)
         obj.hide_set(True)
     yield  # 执行上下文管理器中的代码（光线投射）
     for obj in obj_list:
         obj.hide_set(False)
         obj.select_set(True)
 
+    for child,ori_vis in ori_child_vis.items():
+        child.hide_set(ori_vis)
 
 @contextmanager
 def store_objs_mx(obj_list: list[bpy.types.Object], restore: bool) -> dict:
@@ -84,11 +91,14 @@ class CheckBVHTree:
                 continue
             elif obj.type not in C_OBJECT_TYPE_HAS_BBOX:
                 continue
+            elif obj in context.object.children_recursive:
+                continue
 
             if obj is context.object:
                 obj_A = AlignObject(obj, self.active_mode)
                 SCENE_OBJS[obj] = obj_A
                 ALIGN_OBJ['active'] = obj_A
+
             else:
                 SCENE_OBJS[obj] = AlignObject(obj, self.scene_mode)
 
