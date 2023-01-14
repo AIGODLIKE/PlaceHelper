@@ -28,6 +28,9 @@ class DynamicPlaceProps(PropertyGroup):
         ('MESH', 'Mesh', ''),
     ], default='MESH')
 
+    collision_margin:FloatProperty(name = 'Margin',
+        min = 0,max = 1,default=0)
+
 
 class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.dynamic_place_tool"
@@ -64,6 +67,8 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         row.prop(prop, "active", expand = True)
         row = layout.row(align = True)
         row.prop(prop, "passive",expand = True)
+        row = layout.row(align = True)
+        row.prop(prop,"collision_margin")
 
 def register():
     bpy.utils.register_class(DynamicPlaceProps)

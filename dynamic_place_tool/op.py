@@ -328,6 +328,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         selected_objects = context.selected_objects.copy()
         # collision_shape
         passive = context.scene.dynamic_place_tool.passive
+        margin = context.scene.dynamic_place_tool.collision_margin
 
         for obj in context.collection.objects:
             if obj.hide_viewport is False:
@@ -345,6 +346,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                 obj.rigid_body.type = 'PASSIVE'
                 obj.rigid_body.mesh_source = 'FINAL'
                 obj.rigid_body.collision_shape = passive
+                obj.rigid_body.use_margin = True
+                obj.rigid_body.collision_margin = margin
 
             obj.select_set(False)
 
@@ -371,12 +374,16 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         # collision_shape
         active = context.scene.dynamic_place_tool.active
+        margin = context.scene.dynamic_place_tool.collision_margin
+
 
         bpy.ops.rigidbody.object_add()
         context.object.rigid_body.collision_collections[0] = False
         context.object.rigid_body.collision_collections[self.coll_index] = True
         context.object.rigid_body.mesh_source = 'FINAL'
         context.object.rigid_body.collision_shape = active
+        context.object.rigid_body.use_margin = True
+        context.object.rigid_body.collision_margin = margin
 
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
