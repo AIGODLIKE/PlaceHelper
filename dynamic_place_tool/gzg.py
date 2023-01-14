@@ -142,13 +142,23 @@ classes = (
     TEST_GGT_test_group3,
 )
 
-register, unregister = bpy.utils.register_classes_factory(classes)
+
+def register():
+    for cls in classes:
+        try:
+            bpy.utils.register_class(cls)
+        except:
+            pass
+
+
+def unregister():
+    for cls in classes:
+        try:
+            bpy.utils.unregister_class(cls)
+        except:
+            pass
 
 
 def update_gzg_pref(self, context):
-    try:
-        unregister()
-    except:
-        pass
-
+    unregister()
     register()
