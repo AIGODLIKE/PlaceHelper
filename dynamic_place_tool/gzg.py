@@ -2,13 +2,14 @@ import bpy
 import math
 from mathutils import Vector, Color, Euler, Matrix
 
-from .op import C_OBJECT_TYPE_HAS_BBOX
 
 from ..util.gz import GizmoInfo, GZGBase
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
 from ..util.get_gz_matrix import get_matrix
 
 GZ_CENTER = Vector((0, 0, 0))
+C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
+
 
 
 class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):

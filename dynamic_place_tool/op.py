@@ -26,13 +26,30 @@ shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 shader_tex = gpu.shader.from_builtin('2D_IMAGE')
 
-C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
+C_OBJECT_TYPE_RBD = {'MESH'}
 
 G_DRAW_MESH = {
     'convex_hull': None,
     'pt_mesh': None,
     'tmp_mesh': None,
 }
+
+
+def get_parent_collection_names(collection, parent_names):
+    for parent_collection in bpy.data.collections:
+        if collection.name in parent_collection.children.keys():
+            parent_names.append(parent_collection.name)
+            get_parent_collection_names(parent_collection, parent_names)
+            return
+
+
+def turn_collection_hierarchy_into_path(obj):
+    parent_collection = obj.users_collection[0]
+    parent_names = []
+    parent_names.append(parent_collection.name)
+    get_parent_collection_names(parent_collection, parent_names)
+    # parent_names.reverse()
+    return parent_names
 
 
 @contextmanager
@@ -245,7 +262,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
         pref_bbox = get_addon_pref().place_tool.bbox
         width = pref_bbox.width
-        color =  pref_bbox.color
+        color = pref_bbox.color
 
         with wrap_bgl_restore(width):
             shader_3d.bind()
@@ -326,30 +343,43 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.coll_obj.clear()
         active_obj = context.active_object
         selected_objects = context.selected_objects.copy()
+
+        trace_collection_level = bpy.context.scene.dynamic_place_tool.trace_coll_level
+        # get all selected object collection
+        coll_list = []
+        for obj in selected_objects:
+            if obj.type not in C_OBJECT_TYPE_RBD: continue
+            colls = turn_collection_hierarchy_into_path(obj)
+            coll_list.extend(colls[:min(trace_collection_level, len(colls))])
+
+        coll_list = set(coll_list)
+
         # collision_shape
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
 
-        for obj in context.collection.objects:
-            if obj.hide_viewport is False:
-                obj.select_set(True)
+        for coll in coll_list:
+            collection = bpy.data.collections[coll]
+            for obj in collection.objects:
+                if obj.hide_viewport is False:
+                    obj.select_set(True)
 
-            if obj not in selected_objects and obj.type == 'MESH' and obj.hide_viewport is False:
-                context.view_layer.objects.active = obj
+                if obj not in selected_objects and obj.type in C_OBJECT_TYPE_RBD and obj.hide_viewport is False:
+                    context.view_layer.objects.active = obj
 
-                if hasattr(obj, 'rigid_body') and obj.rigid_body is not None:
-                    self.coll_obj[obj] = obj.rigid_body.type
-                else:
-                    self.coll_obj[obj] = 'NONE'
-                    bpy.ops.rigidbody.object_add()
+                    if hasattr(obj, 'rigid_body') and obj.rigid_body is not None:
+                        self.coll_obj[obj] = obj.rigid_body.type
+                    else:
+                        self.coll_obj[obj] = 'NONE'
+                        bpy.ops.rigidbody.object_add()
 
-                obj.rigid_body.type = 'PASSIVE'
-                obj.rigid_body.mesh_source = 'FINAL'
-                obj.rigid_body.collision_shape = passive
-                obj.rigid_body.use_margin = True
-                obj.rigid_body.collision_margin = margin
+                    obj.rigid_body.type = 'PASSIVE'
+                    obj.rigid_body.mesh_source = 'FINAL'
+                    obj.rigid_body.collision_shape = passive
+                    obj.rigid_body.use_margin = True
+                    obj.rigid_body.collision_margin = margin
 
-            obj.select_set(False)
+                obj.select_set(False)
 
         context.view_layer.objects.active = active_obj
 
@@ -375,7 +405,6 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         # collision_shape
         active = context.scene.dynamic_place_tool.active
         margin = context.scene.dynamic_place_tool.collision_margin
-
 
         bpy.ops.rigidbody.object_add()
         context.object.rigid_body.collision_collections[0] = False

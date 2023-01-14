@@ -31,6 +31,7 @@ class DynamicPlaceProps(PropertyGroup):
     collision_margin:FloatProperty(name = 'Margin',
         min = 0,max = 1,default=0)
 
+    trace_coll_level:IntProperty(name='Trace Collection Level',min =1 ,default=2)
 
 class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.dynamic_place_tool"
@@ -71,6 +72,8 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         layout.separator()
         row = layout.row(align = True)
         row.prop(prop,"collision_margin")
+        row = layout.row(align = True)
+        row.prop(prop,"trace_coll_level")
 
 def register():
     bpy.utils.register_class(DynamicPlaceProps)
