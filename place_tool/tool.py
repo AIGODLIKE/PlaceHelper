@@ -40,7 +40,11 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
          ),
 
         ("ph.move_object",
-         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG'},
+         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": False},
+         {"properties": []}),
+
+        ("ph.move_object",
+         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG',"shift":True},
          {"properties": []}),
     )
 
