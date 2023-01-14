@@ -65,7 +65,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
 
         layout.popover(panel="PH_PT_PlaceTool", text = '',icon = 'PREFERENCES')
 
-class PH_PT_PlaceTool(bpy.types.Panel):
+class PH_PT_PlaceToolPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
     bl_label = "Place"
@@ -92,18 +92,18 @@ class PH_PT_PlaceTool(bpy.types.Panel):
         layout.prop(prop, "coll_hide")
 
 
+
 def register():
     bpy.utils.register_class(PlaceToolProps)
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
+    bpy.utils.register_class(PH_PT_PlaceToolPanel)
 
-    bpy.utils.register_class(PH_PT_PlaceTool)
 
 
 def unregister():
-    bpy.utils.unregister_tool(PH_PT_PlaceTool)
-
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
-
+    bpy.utils.unregister_class(PH_PT_PlaceToolPanel)
+    # del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(PlaceToolProps)
