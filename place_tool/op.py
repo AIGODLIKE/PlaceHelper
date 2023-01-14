@@ -77,8 +77,8 @@ class CheckBVHTree:
     def init_bbox_pref(self):
         pref = get_addon_pref()
         # 获取构建精度
-        self.active_mode = pref.place_tool.bbox.active_bbox_calc_mode
-        self.scene_mode = pref.place_tool.bbox.other_bbox_calc_mode
+        self.active_mode = bpy.context.scene.place_tool.active_bbox_calc_mode
+        self.scene_mode = bpy.context.scene.place_tool.other_bbox_calc_mode
 
     def build_bbox_bvh(self, context):
         """预计算bvh，用于检测是否碰撞"""

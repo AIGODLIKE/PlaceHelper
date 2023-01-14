@@ -48,7 +48,7 @@ def update_active_obj(type: str = 'active_prv'):
     obj = bpy.context.object
     if obj not in SCENE_OBJS:
         pref = get_addon_pref()
-        active_mode = pref.place_tool.bbox.active_bbox_calc_mode
+        active_mode = bpy.context.scene.place_tool.active_bbox_calc_mode
         obj_A = AlignObject(obj, active_mode)
         SCENE_OBJS[obj] = obj_A
     else:

@@ -13,16 +13,6 @@ def get_addon_pref():
 
 
 class PlaceToolBBoxProps(PropertyGroup):
-    active_bbox_calc_mode: EnumProperty(name='Active',
-                                        items=[('ACCURATE', 'Final', 'Use visual obj bounding box, slower'),
-                                               ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
-                                        default='ACCURATE')
-
-    other_bbox_calc_mode: EnumProperty(name='Others',
-                                       items=[('ACCURATE', 'Final', 'Use visual obj bounding box, slower'),
-                                              ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
-                                       default='ACCURATE')
-
     offset: FloatProperty(name='Geometry Offset', default=0.00001, min=0.0, max=0.001, step=1, precision=5)
     # display
     width: FloatProperty(name='Width', min=1, max=5, default=2)
@@ -61,8 +51,6 @@ class Preferences(AddonPreferences):
         bbox = self.place_tool.bbox
         box = col.box().column()
         box.label(text='Performance')
-        box.prop(bbox, 'active_bbox_calc_mode')
-        box.prop(bbox, 'other_bbox_calc_mode')
         box.prop(bbox, 'offset')
 
         box = col.box().column()

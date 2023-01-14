@@ -13,16 +13,25 @@ class PlaceToolProps(PropertyGroup):
                                 ("NORMAL", "Surface", "Set Object Rotation to Hit Normal", "SNAP_NORMAL", 1)],
                          default="NORMAL")
 
-    coll_hide: BoolProperty(name='Hide', default=False)
-    coll_stop: BoolProperty(name="Collision", default=False)
+    coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
+    coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
 
     duplicate: EnumProperty(name='Duplicate',
                             items=[("INSTANCE", "Instance", "Create a Instance of the Active Object"),
                                    ("COPY", "Object", "Create a Full Copy of the Active Object"), ],
                             default="INSTANCE")
 
-    exclude_collection:PointerProperty(type = bpy.types.Collection, name = "Exclude", description = "Exclude Collection")
+    # exclude_collection:PointerProperty(type = bpy.types.Collection, name = "Exclude", description = "Exclude Collection")
 
+    active_bbox_calc_mode: EnumProperty(name='Active',
+                                        items=[('ACCURATE', 'Final', 'Use visual obj bounding box, slower'),
+                                               ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
+                                        default='ACCURATE')
+
+    other_bbox_calc_mode: EnumProperty(name='Others',
+                                       items=[('ACCURATE', 'Final', 'Use visual obj bounding box, slower'),
+                                              ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
+                                       default='ACCURATE')
 
 
 
@@ -53,12 +62,34 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         layout.prop(prop, "orient")
         layout.prop(prop, "duplicate")
 
-        row = layout.row(align=True)
-        row.label(text=tips_('Collision') + ':')
-        row.prop(prop, "coll_stop", icon='OBJECT_ORIGIN', text='Stop')
-        row.prop(prop, "coll_hide", icon='ERROR' if not prop.coll_hide else 'PIVOT_BOUNDBOX', text='')
 
+        layout.popover(panel="PH_PT_PlaceTool", text = '',icon = 'PREFERENCES')
 
+class PH_PT_PlaceTool(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'WINDOW'
+    bl_label = "Place"
+    bl_idname = "PH_PT_PlaceTool"
+
+    def draw(self, context):
+        layout = self.layout
+
+        prop = context.scene.place_tool
+
+        layout.label(text= 'Performance')
+        col = layout.column()
+        col.use_property_split = True
+        col.use_property_decorate = False
+
+        row = col.row(align=True)
+        row.prop(prop, "active_bbox_calc_mode")
+        row = col.row(align=True)
+        row.prop(prop, "other_bbox_calc_mode")
+        layout.separator()
+
+        layout.label(text= 'Collisions')
+        layout.prop(prop, "coll_stop")
+        layout.prop(prop, "coll_hide")
 
 
 def register():
@@ -67,8 +98,12 @@ def register():
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
 
+    bpy.utils.register_class(PH_PT_PlaceTool)
+
 
 def unregister():
+    bpy.utils.unregister_tool(PH_PT_PlaceTool)
+
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
 
     bpy.utils.unregister_class(PlaceToolProps)

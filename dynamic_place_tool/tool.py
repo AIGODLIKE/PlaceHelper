@@ -63,10 +63,12 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         layout.use_property_decorate = False
 
         prop = context.scene.dynamic_place_tool
+        layout.label(text = 'Collisions')
         row = layout.row(align = True)
         row.prop(prop, "active", expand = True)
         row = layout.row(align = True)
         row.prop(prop, "passive",expand = True)
+        layout.separator()
         row = layout.row(align = True)
         row.prop(prop,"collision_margin")
 
