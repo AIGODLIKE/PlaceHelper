@@ -347,6 +347,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
 
     def invoke(self, context, event):
+        prop = bpy.context.scene.place_tool
+
+        self.axis = prop.axis
+
         self.clear_target()
         self.init_bbox_pref()
 
@@ -497,7 +501,13 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def clear_rotate(self, obj):
         """清除除了local z以外轴向的旋转"""
-        z = Vector((0, 0, 1))
+        if self.axis == 'Z':
+            z = Vector((0, 0, 1))
+        elif self.axis == 'Y':
+            z = Vector((0, 1, 0))
+        else:
+            z = Vector((1, 0, 0))
+
         rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
         self.rotate_clear = self.ori_matrix_world.to_euler(rotate_mode)
 

@@ -13,6 +13,12 @@ class PlaceToolProps(PropertyGroup):
                                 ("NORMAL", "Surface", "Set Object Rotation to Hit Normal", "SNAP_NORMAL", 1)],
                          default="NORMAL")
 
+    axis: EnumProperty(name="Axis",
+                       items=[("X", "X", ''),
+                                ("Y", "Y", ''),
+                                ("Z", "Z", '')],
+                          default="Z")
+
     coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
     coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
 
@@ -60,6 +66,8 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.place_tool
         layout.prop(prop, "orient")
+        if prop.orient == "NORMAL":
+            layout.prop(prop, "axis")
         layout.prop(prop, "duplicate")
 
 
