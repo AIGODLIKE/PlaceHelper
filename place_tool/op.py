@@ -34,8 +34,9 @@ def exclude_ray_cast(obj_list: list[bpy.types.Object]):
         obj.hide_set(False)
         obj.select_set(True)
 
-    for child,ori_vis in ori_child_vis.items():
+    for child, ori_vis in ori_child_vis.items():
         child.hide_set(ori_vis)
+
 
 @contextmanager
 def store_objs_mx(obj_list: list[bpy.types.Object], restore: bool) -> dict:
@@ -345,11 +346,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     off_cen_mx = {}
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
-
+    invert_axis: BoolProperty(name='Invert Axis', default=False)
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
 
         self.axis = prop.axis
+        self.invert_axis = prop.invert_axis
 
         self.clear_target()
         self.init_bbox_pref()
@@ -437,21 +439,16 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             # get bounding box offset
             offset_axis = 0
-            offset_xy = Vector((0, 0, 0))
             if self.has_bbox:
                 obj_A = ALIGN_OBJ['active']
                 obj_A.is_local = True
+                if not self.invert_axis:
+                     offset_axis = getattr(obj_A, 'min_' + self.axis.lower()) * -1
+                else:
+                    offset_axis = getattr(obj_A, 'max_' + self.axis.lower())
 
-                offset_axis = getattr(obj_A, 'min_' + self.axis.lower()) * -1
                 scale = getattr(obj_A.mx.to_scale(), self.axis.lower())
                 offset_axis = offset_axis * scale
-
-                offset_origin = obj_A.get_bbox_center(is_local=False)
-                offset_x = obj_A.mx.translation.x - offset_origin.x
-                offset_y = obj_A.mx.translation.y - offset_origin.y
-
-                # offset_xy = Vector((offset_x, offset_y, 0)) * -1
-                offset_xy = Vector((0, 0, 0))
 
             # ray cast calc
             self.tg_obj = None
@@ -460,9 +457,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 self.normal = normal.normalized()
 
                 bbox_offset = 1 + get_addon_pref().place_tool.bbox.offset
-                world_loc = (location) + self.normal * offset_axis * bbox_offset - offset_xy
+                world_loc = (location) + self.normal * offset_axis * bbox_offset
             else:
-                world_loc -= offset_xy
+                if self.invert_axis:
+                    world_loc += self.normal * offset_axis
 
             with store_objs_mx([context.object], self.stop_moving(exclude_obj_list=[self.tg_obj])):
                 context.object.matrix_world.translation = world_loc
@@ -501,12 +499,13 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def clear_rotate(self, obj):
         """清除除了local z以外轴向的旋转"""
+        v = -1 if self.invert_axis else 1
         if self.axis == 'Z':
-            z = Vector((0, 0, 1))
+            z = Vector((0, 0, v))
         elif self.axis == 'Y':
-            z = Vector((0, 1, 0))
+            z = Vector((0, v, 0))
         else:
-            z = Vector((1, 0, 0))
+            z = Vector((v, 0, 0))
 
         rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
         self.rotate_clear = self.ori_matrix_world.to_euler(rotate_mode)

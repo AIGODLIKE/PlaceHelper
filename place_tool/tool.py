@@ -18,7 +18,7 @@ class PlaceToolProps(PropertyGroup):
                                 ("Y", "Y", ''),
                                 ("Z", "Z", '')],
                           default="Z")
-
+    invert_axis: BoolProperty(name="Invert Axis", default=False)
     coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
     coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
 
@@ -68,6 +68,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         layout.prop(prop, "orient")
         if prop.orient == "NORMAL":
             layout.prop(prop, "axis")
+            layout.prop(prop, "invert_axis")
         layout.prop(prop, "duplicate")
 
 
