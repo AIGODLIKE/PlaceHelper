@@ -6,6 +6,7 @@ from bpy.types import PropertyGroup
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty,PointerProperty
 from bpy.app.translations import pgettext_iface as tips_
 
+from .gzg import update_gzg_pref
 
 class PlaceToolProps(PropertyGroup):
     orient: EnumProperty(name="Orientation",
@@ -17,8 +18,8 @@ class PlaceToolProps(PropertyGroup):
                        items=[("X", "X", ''),
                                 ("Y", "Y", ''),
                                 ("Z", "Z", '')],
-                          default="Z")
-    invert_axis: BoolProperty(name="Invert Axis", default=False)
+                          default="Z",update=update_gzg_pref)
+    invert_axis: BoolProperty(name="Invert Axis", default=False,update=update_gzg_pref)
     coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
     coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
 

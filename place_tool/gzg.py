@@ -4,6 +4,7 @@ from mathutils import Vector, Color, Euler, Matrix
 
 from ..util.gz import GizmoInfo, GZGBase
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
+from ..util.get_gz_matrix import local_matrix
 
 from ._runtime import ALIGN_OBJ, ALIGN_OBJS
 from ..get_addon_pref import get_addon_pref
@@ -45,9 +46,21 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
         obj_A = ALIGN_OBJ.get('active')
 
         if obj_A and len(context.selected_objects) == 1:
-            z = Vector((0, 0, 1))
-            norm = z
-            norm.rotate(context.object.matrix_world.to_euler('XYZ'))
+
+            x, y, z, xD, yD, zD =  local_matrix()
+            axis = context.scene.place_tool.axis
+            invert = context.scene.place_tool.invert_axis
+            if  axis =='X':
+                q = x if not invert else xD
+            elif axis =='Y':
+                q = y if not invert else yD
+            elif axis =='Z':
+                q = z if not invert else zD
+
+            m = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
+
+            self.rotate_gz.matrix_basis = m
+            self.scale_gz.matrix_basis = m
 
             self.rotate_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
             self.scale_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
