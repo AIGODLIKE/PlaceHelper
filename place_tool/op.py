@@ -644,7 +644,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         offset = offset * -1 + 1
 
         scale_factor = Vector((offset,) * 3)
-        pivot = self.obj_A.get_neg_z_center(is_local=False)
+        pivot = self.obj_A.get_axis_center(self.axis, self.invert_axis,is_local=False)
         scale_matrix = (
                 Matrix.Translation(pivot) @
                 Matrix.Diagonal(scale_factor).to_4x4() @

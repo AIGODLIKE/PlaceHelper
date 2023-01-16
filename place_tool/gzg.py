@@ -57,13 +57,12 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
             elif axis =='Z':
                 q = z if not invert else zD
 
-            m = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
+            pos = obj_A.get_axis_center(axis,not invert,is_local=False)
+            scale = Vector((1, 1, 1))
+            mx = Matrix.LocRotScale(pos, q, scale)
 
-            self.rotate_gz.matrix_basis = m
-            self.scale_gz.matrix_basis = m
-
-            self.rotate_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
-            self.scale_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
+            self.rotate_gz.matrix_basis = mx
+            self.scale_gz.matrix_basis = mx
 
         elif obj_A and len(context.selected_objects) > 1:
             try:
