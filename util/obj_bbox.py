@@ -164,7 +164,7 @@ class AlignObject:
             total = total + v
         return total / 8
 
-    def get_top_center(self, is_local: bool) -> Vector:
+    def get_pos_z_center(self, is_local: bool) -> Vector:
         """获取物体碰撞盒顶部中心点"""
         pt = self.get_bbox_center(is_local=True)
         pt.z += self.size[2] / 2
@@ -174,10 +174,22 @@ class AlignObject:
         else:
             return self.mx @ pt
 
-    def get_bottom_center(self, is_local: bool) -> Vector:
+    def get_neg_z_center(self, is_local: bool) -> Vector:
 
         pt = self.get_bbox_center(is_local=True)
         pt.z -= self.size[2] / 2
+
+        if is_local:
+            return pt
+        else:
+            return self.mx @ pt
+
+    def get_axis_center(self, axis: str, invert_axis: bool, is_local: bool) -> Vector:
+        """获取物体碰撞盒顶部中心点"""
+        pt = self.get_bbox_center(is_local=True)
+        _axis = {'X': 0, 'Y': 1, 'Z': 2}
+        invert = 1 if invert_axis else -1
+        pt[_axis[axis]] += self.size[_axis[axis]] / 2 * invert
 
         if is_local:
             return pt

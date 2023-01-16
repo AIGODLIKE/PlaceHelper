@@ -530,6 +530,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
 
     obj_name: StringProperty(name='Object Name')
     axis: EnumProperty(items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
+    invert_axis: BoolProperty(name='Invert Axis', default=False)
 
     def handle_obj(self, context, event):
         self.check_bbox_overlap(context)
@@ -546,8 +547,10 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
         obj_A = ALIGN_OBJ['active']
         pivot = obj_A.get_bbox_center(is_local=False)
         # get rotate axis
+
         if obj_A.size[2] != 0:
-            z = pivot - obj_A.get_bottom_center(is_local=False)
+
+            z = pivot - obj_A.get_neg_z_center(is_local=False)
         else:
             pt = obj_A.mx @ Vector((obj_A.min_x, obj_A.min_y, 0))
             pt1 = obj_A.mx @ Vector((obj_A.min_x, obj_A.max_y, 0))
@@ -624,7 +627,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         offset = offset * -1 + 1
 
         scale_factor = Vector((offset,) * 3)
-        pivot = self.obj_A.get_bottom_center(is_local=False)
+        pivot = self.obj_A.get_neg_z_center(is_local=False)
         scale_matrix = (
                 Matrix.Translation(pivot) @
                 Matrix.Diagonal(scale_factor).to_4x4() @

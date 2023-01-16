@@ -49,8 +49,8 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
             norm = z
             norm.rotate(context.object.matrix_world.to_euler('XYZ'))
 
-            self.rotate_gz.matrix_basis.translation = obj_A.get_top_center(is_local=False)
-            self.scale_gz.matrix_basis.translation = obj_A.get_top_center(is_local=False)
+            self.rotate_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
+            self.scale_gz.matrix_basis.translation = obj_A.get_pos_z_center(is_local=False)
 
         elif obj_A and len(context.selected_objects) > 1:
             try:
