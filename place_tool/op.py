@@ -176,6 +176,11 @@ class ModalBase(CheckBVHTree):
         return check(bpy.context, exclude_obj_list) and place_tool_props().coll_stop  # 先后顺序
 
     def invoke(self, context, event):
+        prop = bpy.context.scene.place_tool
+
+        self.axis = prop.axis
+        self.invert_axis = prop.invert_axis
+
         self.clear_target()
         self.init_bbox_pref()
 
@@ -347,6 +352,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
+
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
 
@@ -443,7 +449,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 obj_A = ALIGN_OBJ['active']
                 obj_A.is_local = True
                 if not self.invert_axis:
-                     offset_axis = getattr(obj_A, 'min_' + self.axis.lower()) * -1
+                    offset_axis = getattr(obj_A, 'min_' + self.axis.lower()) * -1
                 else:
                     offset_axis = getattr(obj_A, 'max_' + self.axis.lower())
 
@@ -539,6 +545,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
             offset = offset_x
 
         rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
+        _axis = {'X': 0, 'Y': 1, 'Z': 2}[self.axis]
 
         rot = context.object.rotation_euler.to_matrix().to_euler(rotate_mode)
         axis = self.axis.lower()
@@ -548,13 +555,23 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
         pivot = obj_A.get_bbox_center(is_local=False)
         # get rotate axis
 
-        if obj_A.size[2] != 0:
-
-            z = pivot - obj_A.get_neg_z_center(is_local=False)
+        if obj_A.size[_axis] != 0:
+            z = pivot - obj_A.get_axis_center(self.axis, self.invert_axis, is_local=False)
         else:
-            pt = obj_A.mx @ Vector((obj_A.min_x, obj_A.min_y, 0))
-            pt1 = obj_A.mx @ Vector((obj_A.min_x, obj_A.max_y, 0))
-            pt2 = obj_A.mx @ Vector((obj_A.max_x, obj_A.max_y, 0))
+            if self.axis == 'Z':
+                pt = obj_A.mx @ Vector((obj_A.min_x, obj_A.min_y, 0))
+                pt1 = obj_A.mx @ Vector((obj_A.min_x, obj_A.max_y, 0))
+                pt2 = obj_A.mx @ Vector((obj_A.max_x, obj_A.max_y, 0))
+
+            elif self.axis == 'Y':
+                pt = obj_A.mx @ Vector((obj_A.min_x, 0, obj_A.min_z))
+                pt1 = obj_A.mx @ Vector((obj_A.min_x, 0, obj_A.max_z))
+                pt2 = obj_A.mx @ Vector((obj_A.max_x, 0, obj_A.max_z))
+            else:
+                pt = obj_A.mx @ Vector((0, obj_A.min_y, obj_A.min_z))
+                pt1 = obj_A.mx @ Vector((0, obj_A.min_y, obj_A.max_z))
+                pt2 = obj_A.mx @ Vector((0, obj_A.max_y, obj_A.max_z))
+
             v1 = pt1 - pt  # 垂直于x轴的向量
             v2 = pt2 - pt  # 垂直于x轴的向量
             z = -v1.cross(v2)  # 垂直于x轴的向量
