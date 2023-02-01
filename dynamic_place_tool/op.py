@@ -54,19 +54,25 @@ def turn_collection_hierarchy_into_path(obj):
 
 @contextmanager
 def wrap_bgl_restore(width):
-    bgl.glEnable(bgl.GL_BLEND)
-    bgl.glEnable(bgl.GL_LINE_SMOOTH)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
-    bgl.glLineWidth(width)
-    bgl.glPointSize(8)
+    # bgl.glEnable(bgl.GL_BLEND)
+    # bgl.glEnable(bgl.GL_LINE_SMOOTH)
+    # bgl.glEnable(bgl.GL_DEPTH_TEST)
+    # bgl.glLineWidth(width)
+    # bgl.glPointSize(8)
+    # gpu.state.blend_set('ALPHA_PREMULTIPLIED')
+    gpu.state.line_width_set(width)
+    gpu.state.point_size_set(8)
 
     yield  # do the work
     # restore opengl defaults
-    bgl.glLineWidth(1)
-    bgl.glPointSize(5)
-    bgl.glDisable(bgl.GL_BLEND)
-    bgl.glDisable(bgl.GL_LINE_SMOOTH)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
+    # bgl.glDisable(bgl.GL_BLEND)
+    # bgl.glDisable(bgl.GL_LINE_SMOOTH)
+    # bgl.glEnable(bgl.GL_DEPTH_TEST)
+    # bgl.glLineWidth(1)
+    # bgl.glPointSize(5)
+    # gpu.state.blend_set('NONE')
+    gpu.state.line_width_set(1)
+    gpu.state.point_size_set(5)
 
 
 def get_draw_points(context, convex_hull: bool = False):
