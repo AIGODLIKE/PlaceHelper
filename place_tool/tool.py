@@ -101,6 +101,26 @@ class PH_PT_PlaceToolPanel(bpy.types.Panel):
         layout.prop(prop, "coll_stop")
         layout.prop(prop, "coll_hide")
 
+class PH_OT_change_place_axis(bpy.types.Operator):
+    bl_idname = 'ph.change_place_axis'
+    bl_label = 'Change Place Axis'
+    bl_description = 'Change Place Axis'
+
+    axis: EnumProperty(name="Axis",
+                       items=[("X", "X", ''),
+                                ("Y", "Y", ''),
+                                ("Z", "Z", '')],
+                          default="Z")
+    invert: BoolProperty(name="Invert Axis", default=False)
+    def invoke(self, context, event):
+        prop = context.scene.place_tool
+        if prop.axis == 'X':
+            prop.axis = 'Y'
+        elif prop.axis == 'Y':
+            prop.axis = 'Z'
+        elif prop.axis == 'Z':
+            prop.axis = 'X'
+        return {'FINISHED'}
 
 
 def register():

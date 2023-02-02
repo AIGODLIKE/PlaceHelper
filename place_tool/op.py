@@ -213,14 +213,15 @@ class ModalBase(CheckBVHTree):
 
         selected_objs = [obj for obj in context.selected_objects if obj.type in C_OBJECT_TYPE_HAS_BBOX]
         objs = [AlignObject(obj, is_local=False) for obj in selected_objs]
+
         objs_A = AlignObjects(objs)
         center = objs_A.get_bbox_center()
         bottom = objs_A.get_bottom_center()
+        if context.object in selected_objs and len(selected_objs) == 1:
+            bottom = AlignObject(context.object).get_axis_center(self.axis, self.invert_axis, is_local=False)
+
         top = objs_A.get_top_center()
         self.dis = (objs_A.max_z - objs_A.min_z) / 2
-        # print('dis:', self.dis)
-        # print('center:', center)
-        # print('bottom:', bottom)
 
         self.ori_bbox_pts = objs_A.get_bbox_pts()
 
@@ -367,11 +368,11 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.init_mouse(event)
         self.init_context_obj(context)
 
-        if context.object and len(context.selected_objects) > 1:
-            self.store_muil_obj_info(context)
-            self.create_bottom_parent()
-        else:
-            self.selected_objs = [context.object]
+        # if context.object and len(context.selected_objects) > 1:
+        self.store_muil_obj_info(context)
+        self.create_bottom_parent()
+        # else:
+        #     self.selected_objs = [context.object]
         # 预构建
         self.build_bbox_bvh(bpy.context)
         self.append_handles()
@@ -386,6 +387,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0
         empty.location = self.bottom
+
+        rot_obj = bpy.context.object
+        empty.rotation_euler = rot_obj.rotation_euler
 
         for obj in self.selected_objs:
             if obj.parent and obj.parent in self.selected_objs:
@@ -423,10 +427,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
-            if len(self.selected_objs) == 1:
-                self.handle_obj(context, event)
-            else:
-                self.handle_multi_obj(context, event)
+            # if len(self.selected_objs) == 1:
+            #     self.handle_obj(context, event)
+            # else:
+            self.handle_multi_obj(context, event)
 
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.tg_obj = None
@@ -445,6 +449,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             # get bounding box offset
             offset_axis = 0
+            offset_other = None
+
             if self.has_bbox:
                 obj_A = ALIGN_OBJ['active']
                 obj_A.is_local = True
@@ -455,6 +461,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
                 scale = getattr(obj_A.mx.to_scale(), self.axis.lower())
                 offset_axis = offset_axis * scale
+
+                # offset_other = obj_A.get_bbox_center_offset(self.axis, self.invert_axis)
 
             # ray cast calc
             self.tg_obj = None
@@ -470,6 +478,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             with store_objs_mx([context.object], self.stop_moving(exclude_obj_list=[self.tg_obj])):
                 context.object.matrix_world.translation = world_loc
+                # offset_other.rotate(context.object.matrix_world.to_quaternion())
+                # context.object.matrix_world.translation -= offset_other
                 if place_tool_props().orient == 'NORMAL':
                     self.clear_rotate(context.object)
 
@@ -493,6 +503,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 self.tmp_parent.location = world_loc
                 if place_tool_props().orient == 'NORMAL':
                     self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
+
                 self.objs_A.bvh_tree_update()
 
             # draw
@@ -523,8 +534,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.rotate_clear = self.rotate_clear.to_matrix().to_euler(obj.rotation_mode)
 
         offset_euler = z.rotation_difference(self.normal).to_euler()
+
         obj.rotation_euler = (
                 offset_euler.to_matrix().to_4x4() @ self.rotate_clear.to_matrix().to_4x4()).to_euler()
+
+        # rotate around center point
+        # obj.rotation_euler = self.rotate_clear
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
@@ -644,7 +659,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         offset = offset * -1 + 1
 
         scale_factor = Vector((offset,) * 3)
-        pivot = self.obj_A.get_axis_center(self.axis, self.invert_axis,is_local=False)
+        pivot = self.obj_A.get_axis_center(self.axis, self.invert_axis, is_local=False)
         scale_matrix = (
                 Matrix.Translation(pivot) @
                 Matrix.Diagonal(scale_factor).to_4x4() @

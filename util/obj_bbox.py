@@ -164,6 +164,21 @@ class AlignObject:
             total = total + v
         return total / 8
 
+    def get_bbox_center_offset(self, axis='Z', invert_axis=False) -> Vector:
+        """获取物体碰撞盒中心点相对于物体位置的偏移"""
+        offset = self.get_bbox_center(is_local=False) - self.mx.translation
+        if axis == 'X':
+            offset.x = 0
+        elif axis == 'Y':
+            offset.y = 0
+        elif axis == 'Z':
+            offset.z = 0
+
+        if invert_axis:
+            offset = Vector((-offset.x, -offset.y, -offset.z))
+
+        return offset
+
     def get_pos_z_center(self, is_local: bool) -> Vector:
         """获取物体碰撞盒顶部中心点"""
         pt = self.get_bbox_center(is_local=True)
