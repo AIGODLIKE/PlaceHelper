@@ -21,7 +21,7 @@ def global_matrix():
     return x, y, z, xD, yD, zD
 
 
-def local_matrix():
+def local_matrix(reverse_zD = False):
     rot = bpy.context.object.matrix_world.decompose()[1]
 
     x = rot @ Quaternion((0.0, 1.0, 0.0), radians(90))
@@ -31,6 +31,8 @@ def local_matrix():
     xD = rot @ Quaternion((0.0, 1.0, 0.0), radians(-90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[0]))
     yD = rot @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = rot @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
+    if reverse_zD:
+        zD = rot @ Quaternion((0.0, 1.0, 0), radians(-180))
 
     return x, y, z, xD, yD, zD
 

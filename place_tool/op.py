@@ -60,59 +60,49 @@ def mouse_offset(op, event, scale=0.01, scale_shift=0.0025):
     op.mouseDY = event.mouse_y
 
 
-class CheckBVHTree:
-    has_bbox = False
-
+class BVH_Helper:
+    """BVH树构建器/碰撞检测器"""
+    # state
     overlap = False
 
-    active_mode = 'ACCURATE'
-    scene_mode = 'FAST'
+    def __init__(self):
+        context = bpy.context
 
-    def obj_has_bbox(self, context):
-        """确认物体是否有碰撞盒，将影响到绘制/碰撞检测"""
-        if context.object.type in C_OBJECT_TYPE_HAS_BBOX:
-            self.has_bbox = True
-        else:
-            self.has_bbox = False
+        self.build_act_obj_mode = context.scene.place_tool.active_bbox_calc_mode
+        self.build_scn_obj_mode = context.scene.place_tool.other_bbox_calc_mode
 
-    def init_bbox_pref(self):
-        pref = get_addon_pref()
-        # 获取构建精度
-        self.active_mode = bpy.context.scene.place_tool.active_bbox_calc_mode
-        self.scene_mode = bpy.context.scene.place_tool.other_bbox_calc_mode
-
-    def build_bbox_bvh(self, context):
-        """预计算bvh，用于检测是否碰撞"""
-        self.clear_bbox_bvh()
-
-        if not self.has_bbox: return
+    def build_viewlayer_objs(self):
+        context = bpy.context
 
         for obj in context.view_layer.objects:
-            if obj.hide_get():
+            if obj.hide_get():  # ignore hide obj
                 continue
-            elif obj.type not in C_OBJECT_TYPE_HAS_BBOX:
+            elif obj.type not in C_OBJECT_TYPE_HAS_BBOX:  # ignore obj without bbox
                 continue
-            elif obj in context.object.children_recursive:
+            elif obj in context.object.children_recursive:  # ignore context obj children
                 continue
 
             if obj is context.object:
-                obj_A = AlignObject(obj, self.active_mode)
+                obj_A = AlignObject(obj, self.build_act_obj_mode)
                 SCENE_OBJS[obj] = obj_A
                 ALIGN_OBJ['active'] = obj_A
-
             else:
-                SCENE_OBJS[obj] = AlignObject(obj, self.scene_mode)
+                SCENE_OBJS[obj] = AlignObject(obj, self.build_scn_obj_mode)
 
-    def check_bbox_overlap(self, context, exclude_obj_list=None):
-        """检测是否有碰撞"""
-
+    def is_overlap(self, context, exclude_obj_list=None):
         obj = context.object
-        if not obj or not self.has_bbox: return
 
+        if obj is None:
+            return
+        elif context.object.type not in C_OBJECT_TYPE_HAS_BBOX:
+            return
+        # 更新激活物体
         ALIGN_OBJ['active'].bvh_tree_update()
         # 检测是否更新了激活物体
         for key, obj_A in SCENE_OBJS.items():
             if obj_A.obj == ALIGN_OBJ['active'].obj:
+                continue
+            elif obj_A.obj in context.object.children_recursive:
                 continue
             elif exclude_obj_list and key in exclude_obj_list:
                 continue
@@ -134,12 +124,12 @@ class CheckBVHTree:
 
         OVERLAP_OBJ.clear()
 
-    def clear_bbox_bvh(self):
+    def clear(self):
         OVERLAP_OBJ.clear()
         SCENE_OBJS.clear()
 
 
-class ModalBase(CheckBVHTree):
+class ModalBase():
     bl_options = {'REGISTER', 'UNDO'}
 
     _handle = None  # 绘制
@@ -169,9 +159,9 @@ class ModalBase(CheckBVHTree):
     def stop_moving(self, exclude_obj_list=None):
         """物体是否需要停止移动"""
         if exclude_obj_list and len(exclude_obj_list) > 1:
-            check = self.check_objects_overlap
+            check = self.bvh_helper.check_objects_overlap
         else:
-            check = self.check_bbox_overlap
+            check = self.bvh_helper.is_overlap
 
         return check(bpy.context, exclude_obj_list) and place_tool_props().coll_stop  # 先后顺序
 
@@ -182,12 +172,11 @@ class ModalBase(CheckBVHTree):
         self.invert_axis = prop.invert_axis
 
         self.clear_target()
-        self.init_bbox_pref()
+
+        self.bvh_helper = BVH_Helper()
 
         self.handle_copy_event(context, event)
-
         self.init_mouse(event)
-
         self.init_context_obj(context)
 
         if context.object and len(context.selected_objects) > 1:
@@ -195,10 +184,10 @@ class ModalBase(CheckBVHTree):
         else:
             self.selected_objs = [context.object]
         # 预构建
-        self.build_bbox_bvh(bpy.context)
+        self.bvh_helper.build_viewlayer_objs()
         self.append_handles()
         # 初始化颜色
-        self.check_bbox_overlap(bpy.context)
+        self.bvh_helper.check_objects_overlap(context, self.selected_objs)
 
         return {'RUNNING_MODAL'}
 
@@ -260,8 +249,6 @@ class ModalBase(CheckBVHTree):
 
     def init_context_obj(self, context):
         """初始化激活物体"""
-        self.obj_has_bbox(context)
-
         self.new_obj = None
         self.old_obj = context.object
 
@@ -296,16 +283,12 @@ class ModalBase(CheckBVHTree):
 
         self.reset_cursor_modal()
 
-        # clear bvh trees
-        if self.has_bbox:
-            self.clear_bbox_bvh()
-
         if hasattr(self, '_handle'):
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
 
         self._handle = None
 
-        self.clear_bbox_bvh()
+        self.bvh_helper.clear()
 
     # COPY
     # ----------------------------------------------------------------------------------------------
@@ -361,9 +344,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.invert_axis = prop.invert_axis
 
         self.clear_target()
-        self.init_bbox_pref()
 
         self.handle_copy_event(context, event)
+
+        self.bvh_helper = BVH_Helper()
 
         self.init_mouse(event)
         self.init_context_obj(context)
@@ -374,10 +358,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         # else:
         #     self.selected_objs = [context.object]
         # 预构建
-        self.build_bbox_bvh(bpy.context)
+        self.bvh_helper.build_viewlayer_objs()
         self.append_handles()
         # 初始化颜色
-        self.check_bbox_overlap(bpy.context)
+        self.bvh_helper.is_overlap(context, self.selected_objs)
 
         return {'RUNNING_MODAL'}
 
@@ -406,7 +390,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         self.tmp_parent = empty
         bpy.context.collection.objects.link(empty)
-        bpy.context.view_layer.objects.active = empty
+        bpy.context.view_layer.objects.active = rot_obj
         # empty.select_set(True)
 
     def clear_bottom_parent(self):
@@ -440,53 +424,17 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         return {"RUNNING_MODAL"}
 
-    def handle_obj(self, context, event):
-
-        with exclude_ray_cast([context.object]):
-            z = Vector((0, 0, 1))
-            self.normal = z
-            result, target_obj, view_point, world_loc, normal, location, matrix = ray_cast(context, event)
-
-            # get bounding box offset
-            offset_axis = 0
-            offset_other = None
-
-            if self.has_bbox:
-                obj_A = ALIGN_OBJ['active']
-                obj_A.is_local = True
-                if not self.invert_axis:
-                    offset_axis = getattr(obj_A, 'min_' + self.axis.lower()) * -1
-                else:
-                    offset_axis = getattr(obj_A, 'max_' + self.axis.lower())
-
-                scale = getattr(obj_A.mx.to_scale(), self.axis.lower())
-                offset_axis = offset_axis * scale
-
-                # offset_other = obj_A.get_bbox_center_offset(self.axis, self.invert_axis)
-
-            # ray cast calc
-            self.tg_obj = None
-            if result:
-                self.tg_obj = target_obj
-                self.normal = normal.normalized()
-
-                bbox_offset = 1 + get_addon_pref().place_tool.bbox.offset
-                world_loc = (location) + self.normal * offset_axis * bbox_offset
-            else:
-                if self.invert_axis:
-                    world_loc += self.normal * offset_axis
-
-            with store_objs_mx([context.object], self.stop_moving(exclude_obj_list=[self.tg_obj])):
-                context.object.matrix_world.translation = world_loc
-                # offset_other.rotate(context.object.matrix_world.to_quaternion())
-                # context.object.matrix_world.translation -= offset_other
-                if place_tool_props().orient == 'NORMAL':
-                    self.clear_rotate(context.object)
-
     def handle_multi_obj(self, context, event):
 
         with exclude_ray_cast(self.selected_objs):
-            z = Vector((0, 0, 1))
+            v = -1 if self.invert_axis else 1
+            if self.axis == 'Z':
+                z = Vector((0, 0, v))
+            elif self.axis == 'Y':
+                z = Vector((0, v, 0))
+            else:
+                z = Vector((v, 0, 0))
+
             self.normal = z
             result, target_obj, view_point, world_loc, normal, location, matrix = ray_cast(context, event)
 
@@ -554,7 +502,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
     invert_axis: BoolProperty(name='Invert Axis', default=False)
 
     def handle_obj(self, context, event):
-        self.check_bbox_overlap(context)
+        self.bvh_helper.is_overlap(context)
 
         with mouse_offset(self, event) as (offset_x, offset_y):
             offset = offset_x
@@ -649,7 +597,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
     cursor_modal = 'MOVE_Y'
 
     def handle_obj(self, context, event):
-        self.check_bbox_overlap(context)
+        self.bvh_helper.is_overlap(context)
 
         with mouse_offset(self, event, scale=0.01, scale_shift=0.005) as (offset_x, offset_y):
             offset = offset_y
