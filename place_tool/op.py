@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from ..utils import C_OBJECT_TYPE_HAS_BBOX
 from ..util.obj_bbox import AlignObject, AlignObjects
 from ..util.raycast import ray_cast
+from ..util.get_gz_matrix import local_matrix
 
 from ..get_addon_pref import get_addon_pref
 from .draw_bbox import draw_bbox_callback
@@ -147,7 +148,6 @@ class ModalBase():
     ori_mx = {}
     off_cen_mx = {}
     off_bot_mx = {}
-    dis = None
 
     @classmethod
     def poll(cls, context):
@@ -210,7 +210,6 @@ class ModalBase():
             bottom = AlignObject(context.object).get_axis_center(self.axis, self.invert_axis, is_local=False)
 
         top = objs_A.get_top_center()
-        self.dis = (objs_A.max_z - objs_A.min_z) / 2
 
         self.ori_bbox_pts = objs_A.get_bbox_pts()
 
@@ -394,20 +393,20 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         # empty.select_set(True)
 
     def clear_bottom_parent(self):
-        if self.tmp_parent:
-            # apply constraints
-            for obj in self.selected_objs:
-                obj.select_set(True)
-                tmp_mx = obj.matrix_world.copy()
-                for con in obj.constraints:
-                    if con.name == 'TMP_PARENT' and con.type == 'CHILD_OF':
-                        obj.constraints.remove(con)
+        if not self.tmp_parent: return
+        # apply constraints
+        for obj in self.selected_objs:
+            obj.select_set(True)
+            tmp_mx = obj.matrix_world.copy()
+            for con in obj.constraints:
+                if con.name == 'TMP_PARENT' and con.type == 'CHILD_OF':
+                    obj.constraints.remove(con)
 
-                obj.matrix_world = tmp_mx
-            # remove empty
-            bpy.data.objects.remove(self.tmp_parent)
-            self.tmp_parent = None
-            bpy.context.view_layer.objects.active = self.old_obj
+            obj.matrix_world = tmp_mx
+        # remove empty
+        bpy.data.objects.remove(self.tmp_parent)
+        self.tmp_parent = None
+        bpy.context.view_layer.objects.active = self.old_obj
 
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
@@ -425,15 +424,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def handle_multi_obj(self, context, event):
+        self.bvh_helper.is_overlap(context)
 
         with exclude_ray_cast(self.selected_objs):
-            v = -1 if self.invert_axis else 1
-            if self.axis == 'Z':
-                z = Vector((0, 0, v))
-            elif self.axis == 'Y':
-                z = Vector((0, v, 0))
-            else:
-                z = Vector((v, 0, 0))
+            z = Vector((0, 0, 1))
 
             self.normal = z
             result, target_obj, view_point, world_loc, normal, location, matrix = ray_cast(context, event)
@@ -450,7 +444,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             with store_objs_mx([context.object], self.stop_moving(exclude_obj_list=[self.tg_obj] + self.selected_objs)):
                 self.tmp_parent.location = world_loc
                 if place_tool_props().orient == 'NORMAL':
-                    self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
+                    # self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
+                    self.clear_rotate(self.tmp_parent)
 
                 self.objs_A.bvh_tree_update()
 
@@ -473,25 +468,31 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             z = Vector((v, 0, 0))
 
         rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
-        self.rotate_clear = self.ori_matrix_world.to_euler(rotate_mode)
+        self.rotate_clear = self.ori_matrix_world.to_quaternion()
 
         for a in ['x', 'y', 'z']:
-            if a != self.axis.lower():
-                setattr(self.rotate_clear, a, 0)
+            if a == self.axis.lower(): continue
+
+            if a == 'z' and self.invert_axis: # seem that the z with invert axis will mix x and y
+                setattr(self.rotate_clear, 'x', math.radians(180))
+                setattr(self.rotate_clear, 'y', math.radians(0))
+            # clear
+            setattr(self.rotate_clear, a, 0)
+
 
         self.rotate_clear = self.rotate_clear.to_matrix().to_euler(obj.rotation_mode)
 
-        offset_euler = z.rotation_difference(self.normal).to_euler()
+        offset_q = z.rotation_difference(self.normal)
 
         obj.rotation_euler = (
-                offset_euler.to_matrix().to_4x4() @ self.rotate_clear.to_matrix().to_4x4()).to_euler()
+                offset_q.to_matrix().to_4x4() @ self.rotate_clear.to_matrix().to_4x4()).to_euler()
 
         # rotate around center point
         # obj.rotation_euler = self.rotate_clear
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
-    """Rotate"""
+    """Rotate\nShift: Duplicate\nAlt: Set Axis"""
     bl_idname = 'ph.rotate_object'
     bl_label = 'Rotate'
 
@@ -589,7 +590,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
 
 
 class PH_OT_scale_object(ModalBase, bpy.types.Operator):
-    """Scale"""
+    """Scale\nShift: Duplicate\nAlt: Set Axis"""
     bl_idname = 'ph.scale_object'
     bl_label = 'Scale'
     bl_options = {'REGISTER', 'UNDO'}
