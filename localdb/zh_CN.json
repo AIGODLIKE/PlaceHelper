@@ -1,10 +1,14 @@
 {
-"Place": "放置",
+  "Place": "放置",
   "Transform Pro": "变换加强版",
   "Dynamic Place": "动态放置",
   "Stop When Intersecting": "碰撞时候停止",
   "Keep Color When Intersecting": "碰撞时不变颜色",
   "Invert Axis": "反转轴",
-  "Trace Collection Level": "追溯父级集合深度"
+  "Trace Collection Level": "追溯父级集合深度",
+  "Scale\nShift: Duplicate\nAlt: Set Axis": "缩放\nShift: 复制\nAlt: 设置轴",
+  "Rotate\\nShift: Duplicate\\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
+
+  "Set Place Axis": "设置放置轴"
 
 }

@@ -124,8 +124,8 @@ class PT_OT_show_place_axis(bpy.types.Operator):
 
 class PH_OT_set_place_axis(bpy.types.Operator):
     bl_idname = 'ph.set_place_axis'
-    bl_label = 'Change Place Axis'
-    bl_description = 'Change Place Axis'
+    bl_label = 'Set Place Axis'
+    bl_description = 'Set Place Axis'
 
     axis: EnumProperty(name="Axis",
                        items=[("X", "X", ''),
