@@ -117,13 +117,13 @@ class PT_OT_show_place_axis(bpy.types.Operator):
 
     def invoke(self, context, event):
         prop = context.scene.place_tool
-        prop.setting_axis = True
+        prop.setting_axis = True if not prop.setting_axis else False
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)
         return {'FINISHED'}
 
-class PH_OT_change_place_axis(bpy.types.Operator):
-    bl_idname = 'ph.change_place_axis'
+class PH_OT_set_place_axis(bpy.types.Operator):
+    bl_idname = 'ph.set_place_axis'
     bl_label = 'Change Place Axis'
     bl_description = 'Change Place Axis'
 
@@ -151,14 +151,14 @@ def register():
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
-    bpy.utils.register_class(PH_OT_change_place_axis)
+    bpy.utils.register_class(PH_OT_set_place_axis)
     bpy.utils.register_class(PT_OT_show_place_axis)
 
 
 def unregister():
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
     bpy.utils.unregister_class(PH_PT_PlaceToolPanel)
-    bpy.utils.unregister_class(PH_OT_change_place_axis)
+    bpy.utils.unregister_class(PH_OT_set_place_axis)
     bpy.utils.unregister_class(PT_OT_show_place_axis)
     # del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(PlaceToolProps)

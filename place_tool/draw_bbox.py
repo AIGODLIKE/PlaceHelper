@@ -50,8 +50,9 @@ def draw_bbox_callback(self, context):
                     bbox_pts.extend(get_obj_bbox_draw_pts(overlap_obj_A))
                 self.bbox_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in bbox_pts]
                 # 圆环和朝向
-                circle_pts = get_circle_lines(obj_A.size, obj_A.mx, obj_A.get_neg_z_center(is_local=True))
-                line_pts = get_normal_pts(obj_A.size, obj_A.mx, obj_A.get_neg_z_center(is_local=True))
+                bottom_pt = obj_A.get_axis_center(self.axis,self.invert_axis, is_local=True)
+                circle_pts = get_circle_lines(obj_A.size, obj_A.mx, bottom_pt)
+                line_pts = get_normal_pts(obj_A.size, obj_A.mx, bottom_pt)
                 circle_pts.extend(line_pts)
                 self.circle_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in circle_pts]
 

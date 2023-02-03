@@ -34,8 +34,7 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
         self.set_axis_gzs.clear()
 
     def add_set_axis_gz(self, context):
-        if len(self.set_axis_gzs) != 0:
-            return
+        if len(self.set_axis_gzs) != 0: return
 
         gzObject = GizmoInfo(scale_basis=get_addon_pref().place_tool.gz.scale_basis,
                              color=get_addon_pref().place_tool.bbox.color[:3])
@@ -44,7 +43,7 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
 
         def add_axis_gz(axis, invert):
             gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
-            prop = gz.target_set_operator("ph.change_place_axis")
+            prop = gz.target_set_operator("ph.set_place_axis")
             prop.axis = axis
             prop.invert = invert
             pos = context.object.matrix_world.translation
