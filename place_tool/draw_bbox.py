@@ -1,7 +1,6 @@
 # this file is used to draw bbox on blender‘s 3d View
 import blf
 import gpu
-import bgl
 
 from gpu_extras.presets import draw_circle_2d
 from gpu_extras.batch import batch_for_shader
@@ -32,7 +31,7 @@ def draw_bbox_callback(self, context):
 
     pref_bbox = get_addon_pref().place_tool.bbox
     width = pref_bbox.width
-    color = pref_bbox.color_alert if overlap_obj_A and (not context.scene.place_tool.coll_hide)  else pref_bbox.color
+    color = pref_bbox.color_alert if overlap_obj_A and (not context.scene.place_tool.coll_hide) else pref_bbox.color
 
     region = context.region
     r3d = context.space_data.region_3d
@@ -50,9 +49,9 @@ def draw_bbox_callback(self, context):
                     bbox_pts.extend(get_obj_bbox_draw_pts(overlap_obj_A))
                 self.bbox_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in bbox_pts]
                 # 圆环和朝向
-                bottom_pt = obj_A.get_axis_center(self.axis,self.invert_axis, is_local=True)
-                circle_pts = get_circle_lines(obj_A.size, obj_A.mx, bottom_pt)
-                line_pts = get_normal_pts(obj_A.size, obj_A.mx, bottom_pt)
+                bottom_pt = obj_A.get_axis_center(self.axis, self.invert_axis, is_local=True)
+                circle_pts = get_circle_lines(obj_A.size, obj_A.mx, bottom_pt, self.axis)
+                line_pts = get_normal_pts(obj_A.size, obj_A.mx, bottom_pt, self.axis, self.invert_axis)
                 circle_pts.extend(line_pts)
                 self.circle_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in circle_pts]
 
@@ -96,7 +95,8 @@ def wrap_bgl_restore(width):
     # bgl.glEnable(bgl.GL_DEPTH_TEST)
     # bgl.glLineWidth(width)
     # bgl.glPointSize(8)
-    # gpu.state.blend_set('ALPHA_PREMULTIPLIED')
+    ori_blend = gpu.state.blend_get()
+    gpu.state.blend_set('ALPHA')
     gpu.state.line_width_set(width)
     gpu.state.point_size_set(8)
 
@@ -107,10 +107,9 @@ def wrap_bgl_restore(width):
     # bgl.glEnable(bgl.GL_DEPTH_TEST)
     # bgl.glLineWidth(1)
     # bgl.glPointSize(5)
-    # gpu.state.blend_set('NONE')
+    gpu.state.blend_set(ori_blend)
     gpu.state.line_width_set(1)
     gpu.state.point_size_set(5)
-
 
 
 def draw_debug(obj_A, context):
@@ -152,7 +151,6 @@ def draw_debug(obj_A, context):
 
 def gen_pt_axis_co(pt: Vector, pt_center, offset: float = 0.1, threshold=0.1):
     """
-
     :param pt: 来源点
     :param offset: 偏移量
     :param threshold 用于避免快速移动出现的问题
@@ -224,9 +222,17 @@ def get_objs_bbox_draw_pts(size, pts, center: Vector, factor=0.1):
     return draw_points
 
 
-def get_normal_pts(size, obj_mx: Matrix, local_center: Vector, factor=0.3):
+def get_normal_pts(size, obj_mx: Matrix, local_center: Vector, axis='Z', invert_axis=False, factor=0.3):
     """get normal points from the bottom center of the bbox"""
-    z = Vector((0, 0, 1))
+    v = 1 if not invert_axis else -1
+
+    if axis == 'Z':
+        z = Vector((0, 0, v))
+    elif axis == 'X':
+        z = Vector((v, 0, 0))
+    else:
+        z = Vector((0, v, 0))
+
     length = size[-1] * factor
 
     pt1 = obj_mx @ local_center
@@ -234,13 +240,20 @@ def get_normal_pts(size, obj_mx: Matrix, local_center: Vector, factor=0.3):
     return [pt1, pt2]
 
 
-def get_circle_pts(size, obj_mx: Matrix, local_center: Vector, segments=32, factor=0.3):
+def get_circle_pts(size, obj_mx: Matrix, local_center: Vector, axis='Z', segments=32, factor=0.3):
     """get circle points from bottom center of bbox"""
     radius = sum(size[-1:]) / 2 * factor
-
     mul = (1.0 / (segments - 1)) * (pi * 2)
-    points = [(sin(i * mul) * radius, cos(i * mul) * radius, 0)
-              for i in range(segments)]
+
+    if axis == 'Z':
+        points = [(sin(i * mul) * radius, cos(i * mul) * radius, 0)
+                  for i in range(segments)]
+    elif axis == 'X':
+        points = [(0, sin(i * mul) * radius, cos(i * mul) * radius)
+                  for i in range(segments)]
+    else:
+        points = [(cos(i * mul) * radius, 0, sin(i * mul) * radius)
+                  for i in range(segments)]
 
     return [obj_mx @ (local_center + Vector(pt)) for pt in points]
 
