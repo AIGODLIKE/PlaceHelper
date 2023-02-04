@@ -34,7 +34,7 @@ class DynamicPlaceProps(PropertyGroup):
     trace_coll_level: IntProperty(name='Trace Collection Level', min=1, default=2)
 
     # draw
-    draw_active: BoolProperty(name='Draw Collision',description='Draw Active Object Collision lines, Performance will decrease' ,default=False)
+    draw_active: BoolProperty(name='Draw Active Collision',description='Draw Active Object Collision lines, Performance will decrease' ,default=False)
 
 
 class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
