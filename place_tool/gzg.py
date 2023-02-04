@@ -45,7 +45,7 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
             gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
             prop = gz.target_set_operator("ph.set_place_axis")
             prop.axis = axis
-            prop.invert = invert
+            prop.invert_axis = invert
             pos = context.object.matrix_world.translation
 
             if axis == 'X':
