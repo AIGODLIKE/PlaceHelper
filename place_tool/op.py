@@ -202,34 +202,37 @@ class ModalBase():
 
         selected_objs = [obj for obj in context.selected_objects if obj.type in C_OBJECT_TYPE_HAS_BBOX]
         objs = [AlignObject(obj, is_local=False) for obj in selected_objs]
+        if len(objs) != 0:
 
-        objs_A = AlignObjects(objs)
-        center = objs_A.get_bbox_center()
-        bottom = objs_A.get_bottom_center()
-        if context.object in selected_objs and len(selected_objs) == 1:
-            bottom = AlignObject(context.object).get_axis_center(self.axis, self.invert_axis, is_local=False)
+            objs_A = AlignObjects(objs)
+            center = objs_A.get_bbox_center()
+            bottom = objs_A.get_bottom_center()
+            if context.object in selected_objs and len(selected_objs) == 1:
+                bottom = AlignObject(context.object).get_axis_center(self.axis, self.invert_axis, is_local=False)
 
-        top = objs_A.get_top_center()
+            top = objs_A.get_top_center()
 
-        self.ori_bbox_pts = objs_A.get_bbox_pts()
+            self.ori_bbox_pts = objs_A.get_bbox_pts()
 
-        for obj in selected_objs:
-            self.ori_mx[obj] = obj.matrix_world.copy()
-            self.off_cen_mx[obj] = Matrix.Translation(obj.matrix_world.translation - center)
-            self.off_bot_mx[obj] = Matrix.Translation(obj.matrix_world.translation - bottom)
+            for obj in selected_objs:
+                self.ori_mx[obj] = obj.matrix_world.copy()
+                self.off_cen_mx[obj] = Matrix.Translation(obj.matrix_world.translation - center)
+                self.off_bot_mx[obj] = Matrix.Translation(obj.matrix_world.translation - bottom)
 
-        self.center = center
-        self.bottom = bottom
-        self.top = top
+            self.center = center
+            self.bottom = bottom
+            self.top = top
+            self.objs = objs
+            self.objs_A = objs_A
+
+            ALIGN_OBJS['bottom'] = bottom
+            ALIGN_OBJS['center'] = center
+            ALIGN_OBJS['top'] = top
+            # 存储到全局用于绘制gz/碰撞盒
+            self.off_bbox_pts_mx = [Matrix.Translation(pt - center) for pt in self.ori_bbox_pts]
+        else:
+            self.bottom = context.object.matrix_world.translation
         self.selected_objs = selected_objs
-        self.objs = objs
-        self.objs_A = objs_A
-        # 存储到全局用于绘制gz/碰撞盒
-        ALIGN_OBJS['bottom'] = bottom
-        ALIGN_OBJS['center'] = center
-        ALIGN_OBJS['top'] = top
-
-        self.off_bbox_pts_mx = [Matrix.Translation(pt - center) for pt in self.ori_bbox_pts]
 
     def clear_target(self):
         """清理临时变量"""
@@ -352,7 +355,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.init_context_obj(context)
 
         # if context.object and len(context.selected_objects) > 1:
-        self.store_muil_obj_info(context)
+        no_mesh = self.store_muil_obj_info(context)
+
         self.create_bottom_parent()
         # else:
         #     self.selected_objs = [context.object]
@@ -379,11 +383,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         rot_obj = bpy.context.object
         empty.rotation_euler = rot_obj.rotation_euler
 
-        for obj in self.selected_objs:
-            if obj.parent and obj.parent in self.selected_objs:
-                obj.select_set(False)
-                continue
-            # loop over the constraints in each object
+        def create_tmp_parent(obj):
             con = obj.constraints.new('CHILD_OF')
             con.name = 'TMP_PARENT'
             con.use_rotation_x = True
@@ -391,6 +391,17 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             con.use_rotation_z = True
             con.target = empty
             obj.select_set(False)
+
+        for obj in self.selected_objs:
+            if obj.parent and obj.parent in self.selected_objs:
+                obj.select_set(False)
+                continue
+            # loop over the constraints in each object
+            create_tmp_parent(obj)
+        # if obj is not mesh
+        if rot_obj not in self.selected_objs:
+            create_tmp_parent(rot_obj)
+            rot_obj.select_set(True)
 
         self.tmp_parent = empty
         bpy.context.collection.objects.link(empty)
@@ -400,7 +411,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     def clear_bottom_parent(self):
         if not self.tmp_parent: return
         # apply constraints
-        for obj in self.selected_objs:
+        def apply_const(obj):
             obj.select_set(True)
             tmp_mx = obj.matrix_world.copy()
             for con in obj.constraints:
@@ -408,6 +419,13 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                     obj.constraints.remove(con)
 
             obj.matrix_world = tmp_mx
+
+        for obj in self.selected_objs:
+            apply_const(obj)
+
+        if bpy.context.object not in self.selected_objs:
+            apply_const(bpy.context.object)
+
         # remove empty
         bpy.data.objects.remove(self.tmp_parent)
         self.tmp_parent = None
@@ -448,19 +466,20 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
                 self.tmp_parent.location = world_loc
+                print(self.tmp_parent.location)
                 if place_tool_props().orient == 'NORMAL':
                     # self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
                     self.clear_rotate(self.tmp_parent)
 
-                self.objs_A.bvh_tree_update()
+                if hasattr(self, 'objs_A') and context.object in self.selected_objs:
+                    self.objs_A.bvh_tree_update()
 
-            # draw
-            offset_mx = Matrix.Translation(world_loc - self.center)
-            ALIGN_OBJS['bbox_pts'] = self.objs_A.get_bbox_pts()
-            ALIGN_OBJS['top'] = offset_mx @ self.top
-            ALIGN_OBJS['center'] = offset_mx @ self.top  # 使用默认center容易闪烁，故改用top
-            ALIGN_OBJS['bottom'] = self.tmp_parent.location
-            ALIGN_OBJS['size'] = self.objs_A.size
+                    offset_mx = Matrix.Translation(world_loc - self.center)
+                    ALIGN_OBJS['bbox_pts'] = self.objs_A.get_bbox_pts()
+                    ALIGN_OBJS['top'] = offset_mx @ self.top
+                    ALIGN_OBJS['center'] = offset_mx @ self.top  # 使用默认center容易闪烁，故改用top
+                    ALIGN_OBJS['bottom'] = self.tmp_parent.location
+                    ALIGN_OBJS['size'] = self.objs_A.size
 
     def clear_rotate(self, obj):
         """清除除了local z以外轴向的旋转"""

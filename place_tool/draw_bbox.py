@@ -38,9 +38,9 @@ def draw_bbox_callback(self, context):
 
     with wrap_bgl_restore(width):
         if context.object and len(context.selected_objects) == 1:
-            obj_A = ALIGN_OBJ['active']
-
+            obj_A = ALIGN_OBJ.get('active',None)
             if context.object.type in C_OBJECT_TYPE and obj_A:  # mesh object
+
                 shader_2d.bind()
                 shader_2d.uniform_float("color", color)
                 # 碰撞盒
