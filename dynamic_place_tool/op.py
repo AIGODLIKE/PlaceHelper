@@ -36,8 +36,11 @@ G_DRAW_MESH = {
 
 
 def get_parent_collection_names(collection, parent_names):
+    all_coll = list(bpy.context.scene.collection.children_recursive)
+    all_coll.append(bpy.context.scene.collection)
+
     for parent_collection in bpy.data.collections:
-        if collection.name in parent_collection.children.keys():
+        if collection in parent_collection.children_recursive:
             parent_names.append(parent_collection.name)
             get_parent_collection_names(parent_collection, parent_names)
             return
@@ -50,6 +53,9 @@ def turn_collection_hierarchy_into_path(obj):
     get_parent_collection_names(parent_collection, parent_names)
     # parent_names.reverse()
     # print(parent_names)
+    if len(parent_names) == 1 and parent_names[0] != "Scene Collection":
+        parent_names.insert(0, "Scene Collection")
+
     return parent_names
 
 
@@ -386,8 +392,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
         passive_color = get_addon_pref().dynamic_place_tool.passive_color
-        for coll in coll_list:
-            collection = bpy.data.collections[coll]
+
+        def set_coll_obj(collection):
             for obj in collection.objects:
                 if obj.hide_viewport is False:
                     obj.select_set(True)
@@ -412,6 +418,15 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                     obj.color = passive_color
 
                 obj.select_set(False)
+
+        for coll in coll_list:
+            if coll == 'Scene Collection':
+                collection = bpy.context.scene.collection
+            else:
+                collection = bpy.data.collections[coll]
+            set_coll_obj(collection)
+            for child_coll in collection.children_recursive:
+                set_coll_obj(child_coll)
 
         context.view_layer.objects.active = active_obj
 
