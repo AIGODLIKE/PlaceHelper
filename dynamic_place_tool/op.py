@@ -49,6 +49,7 @@ def turn_collection_hierarchy_into_path(obj):
     parent_names.append(parent_collection.name)
     get_parent_collection_names(parent_collection, parent_names)
     # parent_names.reverse()
+    # print(parent_names)
     return parent_names
 
 
@@ -253,8 +254,18 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.startX = event.mouse_x
         self.startY = event.mouse_y
 
-        self.init_obj(context)
+        self.objs.clear()
+
+        for obj in context.selected_objects:
+            if obj.type != 'MESH':
+                obj.select_set(False)
+            elif obj.hide_viewport is True:
+                obj.select_set(False)
+            else:
+                self.objs.append(obj)
+
         self.init_collection_coll(context)
+        self.init_obj(context)
         self.init_force(context, event)
         self.init_frame(context)
         self.init_rbd_world(context)
@@ -265,6 +276,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                                                                                    'WINDOW',
                                                                                    'POST_VIEW')
         return {'RUNNING_MODAL'}
+        # return {'FINISHED'}
 
     def draw_obj_coll_callback_px(self, context):
         if not context.scene.dynamic_place_tool.draw_active: return
@@ -358,9 +370,9 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     def init_collection_coll(self, context):
         self.coll_obj.clear()
         active_obj = context.active_object
-        selected_objects = context.selected_objects.copy()
+        selected_objects = list(context.selected_objects)
 
-        trace_collection_level = bpy.context.scene.dynamic_place_tool.trace_coll_level
+        trace_collection_level = context.scene.dynamic_place_tool.trace_coll_level
         # get all selected object collection
         coll_list = []
         for obj in selected_objects:
@@ -438,15 +450,6 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.obj_colors.clear()
 
     def init_obj(self, context):
-        self.objs.clear()
-
-        for obj in context.selected_objects:
-            if obj.type != 'MESH':
-                obj.select_set(False)
-            elif obj.hide_viewport is True:
-                obj.select_set(False)
-            else:
-                self.objs.append(obj)
 
         # collision_shape
         active = context.scene.dynamic_place_tool.active
