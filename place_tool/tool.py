@@ -132,12 +132,12 @@ class PH_OT_set_place_axis(bpy.types.Operator):
                               ("Y", "Y", ''),
                               ("Z", "Z", '')],
                        default="Z")
-    invert: BoolProperty(name="Invert Axis", default=False)
+    invert_axis: BoolProperty(name="Invert Axis", default=False)
 
     def invoke(self, context, event):
         prop = context.scene.place_tool
         prop.axis = self.axis
-        prop.invert_axis = self.invert
+        prop.invert_axis = self.invert_axis
         prop.setting_axis = False
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)

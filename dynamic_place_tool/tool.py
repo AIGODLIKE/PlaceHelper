@@ -17,7 +17,7 @@ class DynamicPlaceProps(PropertyGroup):
         ('CENTER', 'Center', ''),
         ('CURSOR', 'Cursor', ''),
     ], default='CENTER')
-    strength: IntProperty(name='Strength', default=100, min=0, max=500)
+    strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
     active: EnumProperty(name='Active', items=[
         ('CONVEX_HULL', 'Convex Hull', ''),
@@ -49,8 +49,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
-        if prop.mode == 'DRAG':
-            layout.prop(prop, "location")
+        layout.prop(prop, "location")
         layout.prop(prop, "strength")
         layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text = '',icon = 'PREFERENCES')
 
