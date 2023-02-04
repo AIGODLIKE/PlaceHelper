@@ -34,9 +34,9 @@ class PlaceToolProps(PropertyGroup):
 
 
 class DynamicPlaceToolProps(PropertyGroup):
-    active_color: FloatVectorProperty(name='Active', subtype='COLOR', size=4, default=(0.8, 0, 0, 1.0), max=1,
+    active_color: FloatVectorProperty(name='Active', subtype='COLOR', size=4, default=(1, 0.095, 0.033, 1.0), max=1,
                                       min=0)
-    passive_color: FloatVectorProperty(name='Passive', subtype='COLOR', size=4, default=(0, 0, 1, 1.0), max=1,
+    passive_color: FloatVectorProperty(name='Passive', subtype='COLOR', size=4, default=(0.023, 0.233, 0.776, 1.0), max=1,
                                        min=0)
 
 
