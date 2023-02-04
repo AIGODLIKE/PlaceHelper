@@ -365,11 +365,16 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def create_bottom_parent(self):
+        offset = get_addon_pref().place_tool.bbox.offset
+        if self.invert_axis: offset = -offset
+
         empty = bpy.data.objects.new('Empty', None)
         empty.name = 'TMP_PARENT'
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0
         empty.location = self.bottom
+        z = getattr(empty.location, self.axis.lower())
+        setattr(empty.location, self.axis.lower(), z - offset)
 
         rot_obj = bpy.context.object
         empty.rotation_euler = rot_obj.rotation_euler
@@ -473,12 +478,11 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         for a in ['x', 'y', 'z']:
             if a == self.axis.lower(): continue
 
-            if a == 'z' and self.invert_axis: # seem that the z with invert axis will mix x and y
+            if a == 'z' and self.invert_axis:  # seem that the z with invert axis will mix x and y
                 setattr(self.rotate_clear, 'x', math.radians(180))
                 setattr(self.rotate_clear, 'y', math.radians(0))
             # clear
             setattr(self.rotate_clear, a, 0)
-
 
         self.rotate_clear = self.rotate_clear.to_matrix().to_euler(obj.rotation_mode)
 
