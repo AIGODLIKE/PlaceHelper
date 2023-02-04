@@ -9,7 +9,7 @@ from .get_gz_position import get_bmesh_active
 arc_angle = (0.0, 0.0, 90.0)
 
 
-def global_matrix():
+def global_matrix(reverse_zD = False):
     x = Quaternion((0.0, 1.0, 0.0), radians(90))
     y = Quaternion((1.0, 0.0, 0.0), radians(-90))
     z = Quaternion((0.0, 0.0, 1.0), radians(-90))
@@ -17,6 +17,8 @@ def global_matrix():
     xD = Quaternion((0.0, 1.0, 0.0), radians(-90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[0]))
     yD = Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
+    if reverse_zD:
+        zD = Quaternion((0.0, 1.0, 0), radians(-180))
 
     return x, y, z, xD, yD, zD
 
@@ -40,7 +42,7 @@ def local_matrix(obj=None, reverse_zD = False):
     return x, y, z, xD, yD, zD
 
 
-def gimbal_matrix():
+def gimbal_matrix(reverse_zD = False):
     ob = bpy.context.object
     rot = ob.matrix_world.decompose()[1]
 
@@ -53,11 +55,13 @@ def gimbal_matrix():
     yD = Quaternion((0.0, 0.0, 1.0), ob.rotation_euler[2]) @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion(
         (0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
+    if reverse_zD:
+        zD = Quaternion((0.0, 1.0, 0), radians(-180))
 
     return x, y, z, xD, yD, zD
 
 
-def view_matrix():
+def view_matrix(reverse_zD = False):
     view_inv = bpy.context.region_data.view_matrix.inverted()
     rot = view_inv.decompose()[1]
 
@@ -69,10 +73,13 @@ def view_matrix():
     yD = rot @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = rot @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
 
+    if reverse_zD:
+        zD = Quaternion((0.0, 1.0, 0), radians(-180))
+
     return x, y, z, xD, yD, zD
 
 
-def cursor_matrix():
+def cursor_matrix(reverse_zD = False):
     cursor_mat = bpy.context.scene.cursor.matrix
     rot = cursor_mat.decompose()[1]
 
@@ -84,10 +91,13 @@ def cursor_matrix():
     yD = rot @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = rot @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
 
+    if reverse_zD:
+        zD = rot @ Quaternion((0.0, 1.0, 0), radians(-180))
+
     return x, y, z, xD, yD, zD
 
 
-def custom_matrix():
+def custom_matrix(reverse_zD = False):
     custom_mat = bpy.context.scene.transform_orientation_slots[0].custom_orientation.matrix.to_4x4()
     rot = custom_mat.decompose()[1]
 
@@ -98,6 +108,8 @@ def custom_matrix():
     xD = rot @ Quaternion((0.0, 1.0, 0.0), radians(-90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[0]))
     yD = rot @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = rot @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
+    if reverse_zD:
+        zD = rot @ Quaternion((0.0, 1.0, 0), radians(-180))
 
     return x, y, z, xD, yD, zD
 
@@ -105,7 +117,7 @@ def custom_matrix():
 from .get_gz_position import get_active_face_position
 
 
-def normal_mesh_matrix():
+def normal_mesh_matrix(reverse_zD = False):
     def mul_v3_v3fl(r, a, f):
         r[0] = a[0] * f
         r[1] = a[1] * f
@@ -461,33 +473,36 @@ def normal_mesh_matrix():
     yD = rot @ Quaternion((1.0, 0.0, 0.0), radians(90)) @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[1]))
     zD = rot @ Quaternion((0.0, 0.0, 1.0), radians(arc_angle[2]))
 
+    if reverse_zD:
+        zD = rot @ Quaternion((0.0, 1.0, 0), radians(-180))
+
     return x, y, z, xD, yD, zD
 
 
-def get_matrix():
+def get_matrix(reverse_zD=False):
     orient_slots = bpy.context.window.scene.transform_orientation_slots[0].type
 
     if orient_slots == 'GLOBAL':
-        res = global_matrix()
+        res = global_matrix(reverse_zD)
 
     elif orient_slots == 'LOCAL':
-        res = local_matrix()
+        res = local_matrix(reverse_zD)
 
     elif orient_slots == 'GIMBAL':
-        res = gimbal_matrix()
+        res = gimbal_matrix(reverse_zD)
 
     elif orient_slots == 'VIEW':
-        res = view_matrix()
+        res = view_matrix(reverse_zD)
 
     elif orient_slots == 'CURSOR':
-        res = cursor_matrix()
+        res = cursor_matrix(reverse_zD)
 
     elif orient_slots == 'NORMAL':
         if bpy.context.mode == 'OBJECT':
-            res = local_matrix()
+            res = local_matrix(reverse_zD)
 
         elif bpy.context.mode == 'EDIT_MESH':
-            res = normal_mesh_matrix()
+            res = normal_mesh_matrix(reverse_zD)
 
 
     else:
