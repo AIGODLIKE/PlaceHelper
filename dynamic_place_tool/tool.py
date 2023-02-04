@@ -28,10 +28,14 @@ class DynamicPlaceProps(PropertyGroup):
         ('MESH', 'Mesh', ''),
     ], default='MESH')
 
-    collision_margin:FloatProperty(name = 'Margin',
-        min = 0,max = 1,default=0)
+    collision_margin: FloatProperty(name='Margin',
+                                    min=0, max=1, default=0)
 
-    trace_coll_level:IntProperty(name='Trace Collection Level',min =1 ,default=2)
+    trace_coll_level: IntProperty(name='Trace Collection Level', min=1, default=2)
+
+    # draw
+    draw_active: BoolProperty(name='Draw Collision',description='Draw Active Object Collision lines, Performance will decrease' ,default=False)
+
 
 class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.dynamic_place_tool"
@@ -45,7 +49,8 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
-        layout.prop(prop, "location")
+        if prop.mode == 'DRAG':
+            layout.prop(prop, "location")
         layout.prop(prop, "strength")
         layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text = '',icon = 'PREFERENCES')
 
@@ -74,6 +79,10 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         row.prop(prop,"collision_margin")
         row = layout.row(align = True)
         row.prop(prop,"trace_coll_level")
+        row = layout.row(align = True)
+        row.label(text = 'Performance')
+        row = layout.row(align = True)
+        row.prop(prop,'draw_active')
 
 def register():
     bpy.utils.register_class(DynamicPlaceProps)

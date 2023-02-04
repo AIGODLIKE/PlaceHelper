@@ -1,7 +1,7 @@
 import bpy
 import math
 from mathutils import Vector, Color, Euler, Matrix
-
+from itertools import product
 
 from ..util.gz import GizmoInfo, GZGBase
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
@@ -9,7 +9,6 @@ from ..util.get_gz_matrix import get_matrix
 
 GZ_CENTER = Vector((0, 0, 0))
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
-
 
 
 class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
@@ -47,9 +46,9 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
             for gz in self._move_gz.keys():
                 self.gizmos.remove(gz)
 
-            self.add_move_gz(context, 'X')
-            self.add_move_gz(context, 'Y')
-            self.add_move_gz(context, 'Z')
+            for axis, invert in product(['X', 'Y', 'Z'], [False, True]):
+                if context.scene.dynamic_place_tool.mode == 'FORCE' and invert:continue # no negative force
+                self.add_move_gz(context, axis, invert)
 
         elif context.scene.dynamic_place_tool.mode == 'GRAVITY':
             for gz in self._move_gz.keys():
@@ -65,7 +64,7 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
         self.gravity_gz = gz
 
-    def add_move_gz(self, context, axis):
+    def add_move_gz(self, context, axis, invert_axis=False):
         ui = bpy.context.preferences.themes[0].user_interface
 
         axis_x = ui.axis_x[:3]
@@ -94,16 +93,17 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
         prop = gz.target_set_operator("test.dynamic_place", index=0)
         prop.axis = axis
+        prop.invert_axis = invert_axis
 
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix(reverse_zD=True)
         if axis == 'X':
-            gz.matrix_basis = mXW
+            gz.matrix_basis = mXW if not invert_axis else mX_d
         elif axis == 'Y':
-            gz.matrix_basis = mYW
+            gz.matrix_basis = mYW if not invert_axis else mY_d
         elif axis == 'Z':
-            gz.matrix_basis = mZW
+            gz.matrix_basis = mZW if not invert_axis else mZ_d
 
-        self._move_gz[gz] = axis
+        self._move_gz[gz] = (axis, invert_axis)
 
     def correct_gz_loc(self, context):
         try:
@@ -116,15 +116,15 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
         except ZeroDivisionError:
             pass
 
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix(reverse_zD=True)
 
-        for gz, axis in self._move_gz.items():
+        for gz, (axis, invert_axis) in self._move_gz.items():
             if axis == 'X':
-                gz.matrix_basis = mXW
+                gz.matrix_basis = mXW if not invert_axis else mX_d
             elif axis == 'Y':
-                gz.matrix_basis = mYW
+                gz.matrix_basis = mYW if not invert_axis else mY_d
             elif axis == 'Z':
-                gz.matrix_basis = mZW
+                gz.matrix_basis = mZW if not invert_axis else mZ_d
 
             gz.matrix_basis.translation = self.center
 

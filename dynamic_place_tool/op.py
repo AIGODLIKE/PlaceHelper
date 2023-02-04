@@ -139,7 +139,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
     frame: IntProperty(default=1)
-    invert: BoolProperty(name='Invert', default=False)
+    invert_axis: BoolProperty(name='Invert', default=False)
 
     force = None
     objs = []
@@ -149,6 +149,11 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     draw_handle = None
     draw_pts = None
     tmp_mesh = None
+
+    # shading
+    obj_colors = {}
+    shading_type = None
+    color_type = None
 
     def modal(self, context, event):
         if event.type == 'MOUSEMOVE':
@@ -167,7 +172,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             self.mouseDX = event.mouse_x
             self.mouseDY = event.mouse_y
 
-            self.handle_drag_direction(context, event)
+            # self.handle_drag_direction(context, event)
 
             context.scene.frame_set(self.frame)
             bpy.ops.ptcache.bake_all(bake=False)
@@ -217,17 +222,17 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                 if invert_z:
                     self.force.field.strength *= -1
 
-        elif mode == 'DRAG':
-            if self.axis in {'X', 'Y'}:
-                self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
-                if invert_x and self.axis == 'X':
-                    self.force.field.strength *= -1
-                if invert_y and self.axis == 'Y':
-                    self.force.field.strength *= -1
-            else:
-                self.force.field.strength = value if self.startY - y > event.mouse_y - y else - value
-                if invert_z:
-                    self.force.field.strength *= -1
+        # elif mode == 'DRAG':
+        #     if self.axis in {'X', 'Y'}:
+        #         self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
+        #         if invert_x and self.axis == 'X':
+        #             self.force.field.strength *= -1
+        #         if invert_y and self.axis == 'Y':
+        #             self.force.field.strength *= -1
+        #     else:
+        #         self.force.field.strength = value if self.startY - y > event.mouse_y - y else - value
+        #         if invert_z:
+        #             self.force.field.strength *= -1
 
     def invoke(self, context, event):
         if context.active_object is None or context.active_object.hide_viewport or not context.active_object.select_get():
@@ -237,6 +242,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             context.window_manager.popup_menu(draw, title=f'Warning', icon='ERROR')
 
             return {"INTERFACE"}
+
+        self.init_space_view(context.selected_objects, context)
 
         self.active_obj = context.active_object
         self.mode = context.scene.dynamic_place_tool.mode
@@ -260,6 +267,8 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def draw_obj_coll_callback_px(self, context):
+        if not context.scene.dynamic_place_tool.draw_active: return
+
         if self.draw_pts is None:
             convex_hull = context.scene.dynamic_place_tool.active == 'CONVEX_HULL'
             self.draw_pts, self.tmp_mesh = get_draw_points(context, convex_hull=convex_hull)
@@ -297,6 +306,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
             bpy.data.objects.remove(self.force)
 
         context.view_layer.objects.active = self.active_obj
+        self.restore_space_view(context)
 
     def restore_rbd_world(self, context):
         context.scene.gravity = self.ori_gravity
@@ -335,7 +345,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     def init_rbd_world(self, context):
         self.ori_gravity = context.scene.gravity
         if self.mode == 'GRAVITY':
-            context.scene.gravity = (0, 0, -9.81 if not self.invert else 9.81)
+            context.scene.gravity = (0, 0, -9.81 if not self.invert_axis else 9.81)
         else:
             context.scene.gravity = (0, 0, 0)
 
@@ -363,7 +373,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         # collision_shape
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
-
+        passive_color = get_addon_pref().dynamic_place_tool.passive_color
         for coll in coll_list:
             collection = bpy.data.collections[coll]
             for obj in collection.objects:
@@ -385,6 +395,10 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                     obj.rigid_body.use_margin = True
                     obj.rigid_body.collision_margin = margin
 
+                    # obj color
+                    self.obj_colors[obj] = obj.color
+                    obj.color = passive_color
+
                 obj.select_set(False)
 
         context.view_layer.objects.active = active_obj
@@ -396,6 +410,32 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                 bpy.ops.rigidbody.object_remove()
             else:
                 obj.rigid_body.type = rigid_body_type
+
+    def init_space_view(self, objs, context):
+        self.obj_colors.clear()
+        active_color = get_addon_pref().dynamic_place_tool.active_color
+
+        # tmp color
+        for obj in objs:
+            if not getattr(obj, 'color'): continue
+            self.obj_colors[obj] = obj.color
+            obj.color = active_color
+        # tmp shading
+        self.shading_type = context.area.spaces[0].shading.type
+        self.color_type = context.area.spaces[0].shading.color_type
+        # print(self.shading_type, self.color_type)
+        # print(context.area.spaces[0].shading.type, context.area.spaces[0].shading.color_type)
+        context.area.spaces[0].shading.type = 'SOLID'
+        context.area.spaces[0].shading.color_type = 'OBJECT'
+
+    def restore_space_view(self, context):
+        # restore shading
+        context.area.spaces[0].shading.type = self.shading_type
+        context.area.spaces[0].shading.color_type = self.color_type
+        # restore color
+        for obj, color in self.obj_colors.items():
+            obj.color = color
+        self.obj_colors.clear()
 
     def init_obj(self, context):
         self.objs.clear()
@@ -446,17 +486,17 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         # location
         location_type = context.scene.dynamic_place_tool.location
         if location_type == 'CENTER':
-            mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
+            mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix(reverse_zD=True)
 
             if self.axis == 'X':
-                self.force.matrix_world = mXW
+                self.force.matrix_world = mXW if not self.invert_axis else mX_d
             elif self.axis == 'Y':
-                self.force.matrix_world = mYW
+                self.force.matrix_world = mYW if not self.invert_axis else mY_d
             elif self.axis == 'Z':
-                self.force.matrix_world = mZW
+                self.force.matrix_world = mZW if not self.invert_axis else mZ_d
 
             if self.mode == 'DRAG':
-                self.force.matrix_world.translation = self.get_bbox_pos(max=True)
+                self.force.matrix_world.translation = self.get_bbox_pos(max=self.invert_axis)
                 self.force.field.strength = 0
             else:
                 self.force.matrix_world.translation = get_objs_bbox_center(self.objs)

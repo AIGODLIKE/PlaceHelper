@@ -33,15 +33,46 @@ class PlaceToolProps(PropertyGroup):
     gz: PointerProperty(name='Gizmo', type=PlaceToolGizmoProps)
 
 
+class DynamicPlaceToolProps(PropertyGroup):
+    active_color: FloatVectorProperty(name='Active', subtype='COLOR', size=4, default=(0.8, 0, 0, 1.0), max=1,
+                                      min=0)
+    passive_color: FloatVectorProperty(name='Passive', subtype='COLOR', size=4, default=(0, 0, 1, 1.0), max=1,
+                                       min=0)
+
+
 class Preferences(AddonPreferences):
     bl_idname = __ADDON_NAME__
 
+    tool_type: EnumProperty(name='Tool', items=[('PLACE_TOOL', 'Place', ''), ('TRANSFORM_TOOL', 'Transform', ''),
+                                                ('DYNAMIC_PLACE_TOOL', 'Dynamic Place', '')], default='PLACE_TOOL')
+
     place_tool: PointerProperty(type=PlaceToolProps)
+    dynamic_place_tool: PointerProperty(type=DynamicPlaceToolProps)
+
     debug: BoolProperty(name='Debug', default=False)
 
     def draw(self, context):
         layout = self.layout
+        row = layout.row(align=True)
+        row.prop(self, 'tool_type', expand=True)
 
+        if self.tool_type == 'PLACE_TOOL':
+            self.draw_place_tool(context, layout)
+        elif self.tool_type == 'TRANSFORM_TOOL':
+            pass
+        elif self.tool_type == 'DYNAMIC_PLACE_TOOL':
+            self.draw_dynamic_place_tool(context, layout)
+
+    def draw_dynamic_place_tool(self, context, layout):
+        col = layout.box().column()
+        col.use_property_split = True
+
+        col.label(text='Display')
+        tool = self.dynamic_place_tool
+        col.prop(tool, 'active_color')
+        col.prop(tool, 'passive_color')
+
+    def draw_place_tool(self, context, layout):
         col = layout.box().column()
         col.use_property_split = True
 
@@ -77,6 +108,7 @@ def register():
     bpy.utils.register_class(PlaceToolBBoxProps)
     bpy.utils.register_class(PlaceToolGizmoProps)
     bpy.utils.register_class(PlaceToolProps)
+    bpy.utils.register_class(DynamicPlaceToolProps)
     bpy.utils.register_class(Preferences)
 
 
@@ -84,4 +116,5 @@ def unregister():
     bpy.utils.unregister_class(PlaceToolBBoxProps)
     bpy.utils.unregister_class(PlaceToolGizmoProps)
     bpy.utils.unregister_class(PlaceToolProps)
+    bpy.utils.unregister_class(DynamicPlaceToolProps)
     bpy.utils.unregister_class(Preferences)
