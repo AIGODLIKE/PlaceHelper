@@ -466,7 +466,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
                 self.tmp_parent.location = world_loc
-                print(self.tmp_parent.location)
+                # print(self.tmp_parent.location)
                 if place_tool_props().orient == 'NORMAL':
                     # self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
                     self.clear_rotate(self.tmp_parent)

@@ -478,6 +478,9 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         context.object.rigid_body.use_margin = True
         context.object.rigid_body.collision_margin = margin
 
+        for obj in self.objs:
+            obj.select_set(True)
+
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
     def get_bbox_pos(self, max=False):
