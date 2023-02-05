@@ -228,7 +228,15 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
 
                 if invert_z:
                     self.force.field.strength *= -1
-
+        elif mode == 'GRAVITY':
+            x, y, z = context.scene.gravity
+            x, y, z = abs(x), abs(y), abs(z)
+            if self.startY - y > event.mouse_y - y:
+                context.scene.gravity[2] = -z
+            else:
+                context.scene.gravity[2] = z
+            if invert_z:
+                context.scene.gravity[2] *= -1
         # elif mode == 'DRAG':
         #     if self.axis in {'X', 'Y'}:
         #         self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
@@ -361,7 +369,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         self.frame = 1
 
     def init_rbd_world(self, context):
-        self.ori_gravity = context.scene.gravity
+        self.ori_gravity = context.scene.gravity.copy()
         if self.mode == 'GRAVITY':
             context.scene.gravity = (0, 0, -9.81 if not self.invert_axis else 9.81)
         else:
