@@ -34,7 +34,7 @@ for file in os.listdir(dir):
     if not file.endswith('.json'): continue
     with open(os.path.join(dir, file), 'r', encoding='utf-8') as f:
         d = json.load(f)
-        help_cls = TranslationHelper('camhp_' + file, d)
+        help_cls = TranslationHelper('placehelper' + file, d)
         help_classes.append(help_cls)
 
 
