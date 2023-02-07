@@ -46,7 +46,12 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
             prop = gz.target_set_operator("ph.set_place_axis")
             prop.axis = axis
             prop.invert_axis = invert
-            pos = context.object.matrix_world.translation
+            obj_A = ALIGN_OBJ.get('active')
+
+            if obj_A:
+                pos = obj_A.get_bbox_center(is_local=False)
+            else:
+                pos = context.object.matrix_world.translation
 
             if axis == 'X':
                 q = x if not invert else xD
