@@ -432,7 +432,7 @@ class PH_OT_translate(bpy.types.Operator):
         ],
         default='VIEW',
     )
-
+    invert_constraint: BoolProperty(name='Not Moving this Axis', default=False)
     matrix_basis: FloatVectorProperty(size=(4, 4), subtype='MATRIX')
     pp = None
 
@@ -499,6 +499,9 @@ class PH_OT_translate(bpy.types.Operator):
             axis_set = (False, False, True)
         else:
             axis_set = (True, True, True)
+
+        if self.invert_constraint and axis_set != (True, True, True):
+            axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])
 
         if context.mode == 'OBJECT':
             if event.shift:

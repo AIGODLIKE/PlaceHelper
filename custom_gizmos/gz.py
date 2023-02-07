@@ -61,8 +61,8 @@ def create_geo_shape(obj=None, type='TRIS', scale=1):
     return custom_shape_verts
 
 
-class TEST_GT_custom_move_3d(Gizmo):
-    bl_idname = "TEST_GT_custom_move_3d"
+class PH_GT_custom_move_3d(Gizmo):
+    bl_idname = "PH_GT_custom_move_3d"
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -78,7 +78,7 @@ class TEST_GT_custom_move_3d(Gizmo):
                                                                                 scale=0.1))
 
 
-class TEST_GT_custom_scale_3d(Gizmo):
+class PH_GT_custom_scale_3d(Gizmo):
     bl_idname = "TEST_GE_custom_scale_3d"
 
     def ensure_gizmo(self):
@@ -100,8 +100,8 @@ class TEST_GT_custom_scale_3d(Gizmo):
         self.ensure_gizmo()
 
 
-class TEST_GT_custom_rotate_z_3d(Gizmo):
-    bl_idname = "TEST_GT_custom_rotate_z_3d"
+class PH_GT_custom_rotate_z_3d(Gizmo):
+    bl_idname = "PH_GT_custom_rotate_z_3d"
 
     def ensure_gizmo(self):
         if not hasattr(self, "custom_shape"):
@@ -121,11 +121,31 @@ class TEST_GT_custom_rotate_z_3d(Gizmo):
     def setup(self):
         self.ensure_gizmo()
 
+class PH_GT_custom_move_plane_3d(Gizmo):
+    def ensure_gizmo(self):
+        if not hasattr(self, "custom_shape"):
+            obj = load_shape_geo_obj('gz_shape_PLANE')
+
+            self.custom_shape = self.new_custom_shape('TRIS', create_geo_shape(obj=obj,
+                                                                               scale=0.2))
+
+    def draw(self, context):
+        self.ensure_gizmo()
+        self.draw_custom_shape(self.custom_shape)
+
+    def draw_select(self, context, select_id):
+        self.ensure_gizmo()
+        self.draw_custom_shape(self.custom_shape, select_id=select_id)
+
+    def setup(self):
+        self.use_draw_offset_scale = True
+        self.ensure_gizmo()
 
 classes = (
-    TEST_GT_custom_move_3d,
-    TEST_GT_custom_scale_3d,
-    TEST_GT_custom_rotate_z_3d
+    PH_GT_custom_move_3d,
+    PH_GT_custom_scale_3d,
+    PH_GT_custom_rotate_z_3d,
+    PH_GT_custom_move_plane_3d
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

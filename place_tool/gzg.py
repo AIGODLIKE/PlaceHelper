@@ -80,7 +80,7 @@ class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
                              color=get_addon_pref().place_tool.gz.color,
                              color_highlight=get_addon_pref().place_tool.gz.color_highlight, )
 
-        self.rotate_gz = gzObject.set_up(self, 'TEST_GT_custom_rotate_z_3d')
+        self.rotate_gz = gzObject.set_up(self, 'PH_GT_custom_rotate_z_3d')
         prop = self.rotate_gz.target_set_operator(
             "ph.rotate_object", index=0)
         prop.axis = 'Z'

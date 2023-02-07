@@ -13,11 +13,12 @@ bl_info = {
 
 __ADDON_NAME__ = __name__
 
-from . import place_tool, transform_tool,dynamic_place_tool, preferences,localdb
+from . import custom_gizmos, place_tool, transform_tool, dynamic_place_tool, preferences, localdb
 
 
 def register():
     preferences.register()
+    custom_gizmos.register()
     place_tool.register()
     transform_tool.register()
     dynamic_place_tool.register()
@@ -29,6 +30,7 @@ def unregister():
     dynamic_place_tool.unregister()
     transform_tool.unregister()
     place_tool.unregister()
+    custom_gizmos.unregister()
     preferences.unregister()
 
 
