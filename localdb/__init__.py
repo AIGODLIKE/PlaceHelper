@@ -1,5 +1,6 @@
 import bpy
 
+register_name = 'placehelper'
 
 class TranslationHelper():
     def __init__(self, name: str, data: dict, lang='zh_CN'):
@@ -34,7 +35,7 @@ for file in os.listdir(dir):
     if not file.endswith('.json'): continue
     with open(os.path.join(dir, file), 'r', encoding='utf-8') as f:
         d = json.load(f)
-        help_cls = TranslationHelper('placehelper' + file, d)
+        help_cls = TranslationHelper(register_name + file, d)
         help_classes.append(help_cls)
 
 
