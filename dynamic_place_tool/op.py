@@ -400,6 +400,7 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
         passive_color = get_addon_pref().dynamic_place_tool.passive_color
+        use_color = get_addon_pref().dynamic_place_tool.use_color
 
         def set_coll_obj(collection):
             for obj in collection.objects:
@@ -422,8 +423,9 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
                     obj.rigid_body.collision_margin = margin
 
                     # obj color
-                    self.obj_colors[obj] = obj.color
-                    obj.color = passive_color
+                    if use_color:
+                        self.obj_colors[obj] = obj.color
+                        obj.color = passive_color
 
                 obj.select_set(False)
 
@@ -449,12 +451,14 @@ class TEST_OT_dynamic_place(bpy.types.Operator):
     def init_space_view(self, objs, context):
         self.obj_colors.clear()
         active_color = get_addon_pref().dynamic_place_tool.active_color
+        use_color = get_addon_pref().dynamic_place_tool.use_color
 
         # tmp color
         for obj in objs:
             if not getattr(obj, 'color'): continue
             self.obj_colors[obj] = obj.color
-            obj.color = active_color
+            if use_color:
+                obj.color = active_color
         # tmp shading
         self.shading_type = context.area.spaces[0].shading.type
         self.color_type = context.area.spaces[0].shading.color_type

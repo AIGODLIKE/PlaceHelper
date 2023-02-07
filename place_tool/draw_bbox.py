@@ -31,7 +31,7 @@ def draw_bbox_callback(self, context):
 
     pref_bbox = get_addon_pref().place_tool.bbox
     width = pref_bbox.width
-    color = pref_bbox.color_alert if overlap_obj_A and (not context.scene.place_tool.coll_hide) else pref_bbox.color
+    color = pref_bbox.color_alert if overlap_obj_A and (pref_bbox.coll_alert) else pref_bbox.color
 
     region = context.region
     r3d = context.space_data.region_3d

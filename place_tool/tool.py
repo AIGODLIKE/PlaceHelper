@@ -23,7 +23,7 @@ class PlaceToolProps(PropertyGroup):
     setting_axis: BoolProperty(name="Setting Axis", default=False)
 
     invert_axis: BoolProperty(name="Invert Axis", default=False, update=update_gzg_pref)
-    coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
+    # coll_hide: BoolProperty(name='Keep Color When Intersecting', default=False)
     coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
 
     duplicate: EnumProperty(name='Duplicate',
@@ -107,7 +107,7 @@ class PH_PT_PlaceToolPanel(bpy.types.Panel):
 
         layout.label(text='Collisions')
         layout.prop(prop, "coll_stop")
-        layout.prop(prop, "coll_hide")
+        # layout.prop(prop, "coll_hide")
 
 
 class PT_OT_show_place_axis(bpy.types.Operator):

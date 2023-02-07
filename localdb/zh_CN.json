@@ -4,6 +4,7 @@
   "Dynamic Place": "动态放置",
   "Stop When Intersecting": "碰撞时候停止",
   "Keep Color When Intersecting": "碰撞时不变颜色",
+  "Collision Alert": "碰撞警告",
   "Invert Axis": "反转轴",
   "Trace Collection Level": "追溯父级集合深度",
   "Draw Active Collision": "绘制激活项目碰撞",
@@ -11,6 +12,7 @@
   "Scale\nShift: Duplicate\nAlt: Set Axis": "缩放\nShift: 复制\nAlt: 设置轴",
   "Rotate\\nShift: Duplicate\\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
   "Please select the active object": "请选择一个物体为激活项",
+  "Use Color When Moving": "运行时变色",
 
   "Set Place Axis": "设置放置轴"
 
