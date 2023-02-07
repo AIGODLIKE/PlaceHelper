@@ -2,16 +2,23 @@ import bpy
 import bgl
 import bmesh
 import numpy as np
+import gpu
 
 from bpy.types import Gizmo
 from mathutils import Vector
 from bpy_extras import view3d_utils
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 SHAPES = {}
 
+@contextmanager
+def wrap_gpu_state():
+    gpu.state.blend_set('ALPHA')
+    yield
+    gpu.state.blend_set('NONE')
 
 def load_shape_geo_obj(obj_name='gz_shape_ROTATE'):
     """ 加载一个几何形状的模型，用于绘制几何形状的控件 """
@@ -68,7 +75,8 @@ class PH_GT_custom_move_3d(Gizmo):
         self.draw_custom_shape(self.custom_shape)
 
     def draw_select(self, context, select_id):
-        self.draw_custom_shape(self.custom_shape, select_id=select_id)
+        with wrap_gpu_state():
+            self.draw_custom_shape(self.custom_shape, select_id=select_id)
 
     def setup(self):
         if not hasattr(self, "custom_shape"):
@@ -89,8 +97,9 @@ class PH_GT_custom_scale_3d(Gizmo):
                                                                                scale=0.1))
 
     def draw(self, context):
-        self.ensure_gizmo()
-        self.draw_custom_shape(self.custom_shape)
+        with wrap_gpu_state():
+            self.ensure_gizmo()
+            self.draw_custom_shape(self.custom_shape)
 
     def draw_select(self, context, select_id):
         self.ensure_gizmo()
@@ -111,8 +120,9 @@ class PH_GT_custom_rotate_z_3d(Gizmo):
                                                                                scale=0.2))
 
     def draw(self, context):
-        self.ensure_gizmo()
-        self.draw_custom_shape(self.custom_shape)
+        with wrap_gpu_state():
+            self.ensure_gizmo()
+            self.draw_custom_shape(self.custom_shape)
 
     def draw_select(self, context, select_id):
         self.ensure_gizmo()
@@ -130,8 +140,9 @@ class PH_GT_custom_move_plane_3d(Gizmo):
                                                                                scale=0.2))
 
     def draw(self, context):
-        self.ensure_gizmo()
-        self.draw_custom_shape(self.custom_shape)
+        with wrap_gpu_state():
+            self.ensure_gizmo()
+            self.draw_custom_shape(self.custom_shape)
 
     def draw_select(self, context, select_id):
         self.ensure_gizmo()
