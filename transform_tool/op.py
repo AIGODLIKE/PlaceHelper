@@ -6,113 +6,14 @@ from mathutils import Vector, Matrix, Euler, Quaternion
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty, FloatVectorProperty, \
     BoolVectorProperty, PointerProperty
 from bpy.app.translations import pgettext_iface as iface_
+from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
 
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
 move_view_tool_props = lambda: bpy.context.scene.move_view_tool
 
 
-class ModalBase:
-    old_obj = None  # 原物体
-    new_obj = None  # 复制物体
-
-    ori_mx = {}
-    selected_objs = []
-    new_objs = []
-
-    def init_mouse(self, event):
-        """初始化鼠标"""
-        self.mouse_x = event.mouse_x
-        self.mouse_y = event.mouse_y
-        self.mouseDX = event.mouse_x
-        self.mouseDY = event.mouse_y
-        # start
-        self.startX = event.mouse_x
-        self.startY = event.mouse_y
-
-    def init_context_obj(self, context):
-        """初始化激活物体"""
-
-        self.new_obj = None
-        self.old_obj = context.object
-
-        self.ori_matrix_world = context.object.matrix_world.copy()
-
-        self.ori_mx.clear()
-        for obj in context.selected_objects:
-            self.ori_mx[obj] = obj.matrix_world.copy()
-
-    # COPY
-    # ----------------------------------------------------------------------------------------------
-    def restore_old_obj(self):
-        self.old_obj.matrix_world = self.ori_matrix_world
-        self.old_obj.select_set(False)
-
-        for obj, mx in self.ori_mx.items():
-            obj.matrix_world = mx
-
-        self.selected_objs.clear()
-        self.ori_mx.clear()
-        self.new_objs.clear()
-
-    def copy_obj(self, context):
-        if self.new_obj is None:
-            # selected obj
-            self.selected_objs.clear()
-
-            for obj in context.selected_objects:
-                if obj == context.object: continue
-
-                self.selected_objs.append(obj)
-                new_obj = obj.copy()
-                self.new_objs.append(new_obj)
-
-                if move_view_tool_props().duplicate == 'COPY' and new_obj.data:
-                    new_data = new_obj.data.copy()
-                    new_obj.data = new_data
-
-                context.collection.objects.link(new_obj)
-
-            # active obj
-            self.old_obj = context.object
-            self.new_obj = self.old_obj.copy()
-
-            if move_view_tool_props().duplicate == 'COPY' and self.new_obj.data:
-                new_data = self.old_obj.data.copy()
-                self.new_obj.data = new_data
-
-            context.collection.objects.link(self.new_obj)
-            context.view_layer.objects.active = self.new_obj
-            self.new_obj.select_set(True)
-
-    def cancel_copy_obj(self, context):
-        if context.object is not self.old_obj:
-            context.view_layer.objects.active = self.old_obj
-            self.old_obj.select_set(True)
-
-        if self.new_obj:
-            bpy.data.objects.remove(self.new_obj)
-            self.new_obj = None
-
-            for obj in self.new_objs:
-                bpy.data.objects.remove(obj)
-
-            self.new_objs.clear()
-
-            for obj in self.selected_objs:
-                obj.select_set(True)
-
-    def handle_copy_event(self, context, event):
-        if event.ctrl:
-            self.copy_obj(context)
-            self.restore_old_obj()
-        else:
-            self.cancel_copy_obj(context)
-    # MOVE VIEW
-    # ---
-
-
-class TEST_OT_move_view_object(ModalBase, bpy.types.Operator):
+class TEST_OT_move_view_object(bpy.types.Operator):
     """Move"""
     bl_idname = 'test.move_view_object'
     bl_label = 'Move View'
@@ -122,8 +23,30 @@ class TEST_OT_move_view_object(ModalBase, bpy.types.Operator):
 
     offset_display = 0
 
+    ori_mx = {}
+
+    def init_mouse(self, event):
+        self.mouse_x = event.mouse_x
+        self.mouse_y = event.mouse_y
+        self.mouseDX = event.mouse_x
+        self.mouseDY = event.mouse_y
+        self.startX = event.mouse_x
+        self.startY = event.mouse_y
+
+    def init_context_obj(self, context):
+        """初始化激活物体"""
+
+        self.ori_mx.clear()
+        for obj in context.selected_objects:
+            self.ori_mx[obj] = obj.matrix_world.copy()
+
+    def restore_old_obj(self):
+        for obj, mx in self.ori_mx.items():
+            obj.matrix_world = mx
+
+        self.ori_mx.clear()
+
     def modal(self, context, event):
-        self.handle_copy_event(context, event)
 
         if event.type == 'MOUSEMOVE':
             axis = self.axis.lower()
@@ -140,31 +63,16 @@ class TEST_OT_move_view_object(ModalBase, bpy.types.Operator):
             self.mouseDX = event.mouse_x
             self.mouseDY = event.mouse_y
 
-            # if axis == 'z':
-            #     if loc3d_2_r2d(context.region, r3d, mx.translation).y < self.startY:
-            #         offset *= -1
-            # else:
-            #     if loc3d_2_r2d(context.region, r3d, mx.translation).x < self.startX:
-            #         offset *= -1
-
-            # # View Moving
-            # # check moving direction
-            #
-            # # if event.alt:
-            # setattr(r3d.view_location, axis, getattr(r3d.view_location, axis) + offset)
-
-            if axis == 'x':
-                axis_set = (True, False, False)
-            elif axis == 'y':
-                axis_set = (False, True, False)
+            if axis == 'z':
+                if loc3d_2_r2d(context.region, r3d, mx.translation).y < self.startY:
+                    offset *= -1
             else:
-                axis_set = (False, False, True)
+                if loc3d_2_r2d(context.region, r3d, mx.translation).x < self.startX:
+                    offset *= -1
 
-            bpy.ops.gp.transform_from_value(
-                'INVOKE_DEFAULT',
-                axis=axis_set,
-                operator='TRANSLATION',
-                value_transform=offset)
+            # View Moving
+            setattr(r3d.view_location, axis, getattr(r3d.view_location, axis) + offset)
+
             # Set Position
 
             for obj in context.selected_objects:
@@ -178,6 +86,10 @@ class TEST_OT_move_view_object(ModalBase, bpy.types.Operator):
         elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             context.area.header_text_set(None)
             return {'FINISHED'}
+        elif event.type in {'RIGHTMOUSE', 'ESC'}:
+            context.area.header_text_set(None)
+            self.restore_old_obj()
+            return {'CANCELLED'}
 
         return {'RUNNING_MODAL'}
 

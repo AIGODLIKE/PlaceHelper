@@ -11,12 +11,15 @@ from .gzg import update_gzg_pref
 
 class DynamicPlaceProps(PropertyGroup):
     mode: EnumProperty(name='Mode',
-                       items=[('GRAVITY', 'Gravity', 'Gravity'), ('FORCE', 'Scale', 'Scale'), ('DRAG', 'Drag', 'Drag')],
+                       items=[('FORCE', 'Scale', 'Scale'), ('DRAG', 'Drag', 'Drag')],
                        default='DRAG', update=update_gzg_pref)
     location: EnumProperty(name='Location', items=[
         ('CENTER', 'Center', ''),
         ('CURSOR', 'Cursor', ''),
-    ], default='CENTER')
+    ], default='CENTER', update=update_gzg_pref)
+
+    use_gravity: BoolProperty(name='Use Gravity', default=True)
+    gravity_strength: FloatProperty(name='Gravity Strength', default=2, min=0, soft_max=10)
     strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
     active: EnumProperty(name='Active', items=[
@@ -34,7 +37,9 @@ class DynamicPlaceProps(PropertyGroup):
     trace_coll_level: IntProperty(name='Trace Collection Level', min=1, default=2)
 
     # draw
-    draw_active: BoolProperty(name='Draw Active Collision',description='Draw Active Object Collision lines, Performance will decrease' ,default=False)
+    draw_active: BoolProperty(name='Draw Active Collision',
+                              description='Draw Active Object Collision lines, Performance will decrease',
+                              default=False)
 
 
 class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
@@ -51,10 +56,11 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
         layout.prop(prop, "mode")
         layout.prop(prop, "location")
         layout.prop(prop, "strength")
-        layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text = '',icon = 'PREFERENCES')
+        layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
 
         # prop = tool.operator_properties('test.dynamic_place')
         # layout.prop(prop, "invert")
+
 
 class PH_PT_DynamicPlaceTool(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -68,20 +74,21 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         layout.use_property_decorate = False
 
         prop = context.scene.dynamic_place_tool
-        layout.label(text = 'Collisions')
-        row = layout.row(align = True)
-        row.prop(prop, "active", expand = True)
-        row = layout.row(align = True)
-        row.prop(prop, "passive",expand = True)
+        layout.label(text='Collisions')
+        row = layout.row(align=True)
+        row.prop(prop, "active", expand=True)
+        row = layout.row(align=True)
+        row.prop(prop, "passive", expand=True)
         layout.separator()
-        row = layout.row(align = True)
-        row.prop(prop,"collision_margin")
-        row = layout.row(align = True)
-        row.prop(prop,"trace_coll_level")
-        row = layout.row(align = True)
-        row.label(text = 'Performance')
-        row = layout.row(align = True)
-        row.prop(prop,'draw_active')
+        row = layout.row(align=True)
+        row.prop(prop, "collision_margin")
+        row = layout.row(align=True)
+        row.prop(prop, "trace_coll_level")
+        row = layout.row(align=True)
+        row.label(text='Performance')
+        row = layout.row(align=True)
+        row.prop(prop, 'draw_active')
+
 
 def register():
     bpy.utils.register_class(DynamicPlaceProps)

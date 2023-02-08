@@ -20,13 +20,14 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
     _move_gz = {}
     mode = None
+    location = None
 
     @classmethod
     def poll(cls, context):
         return context.object and len(context.selected_objects) > 0 and context.object.type == 'MESH'
 
     def setup(self, context):
-        self.gravity_gz = None
+        self.cursor_gz = None
         self.mode = None
         self._move_gz.clear()
 
@@ -35,34 +36,47 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
     def update_gz_type(self, context):
         if self.mode == context.scene.dynamic_place_tool.mode: return
+        if self.location == context.scene.dynamic_place_tool.location: return
 
         self.mode = context.scene.dynamic_place_tool.mode
 
-        if context.scene.dynamic_place_tool.mode in {'FORCE', 'DRAG'}:
-            if self.gravity_gz:
-                self.gizmos.remove(self.gravity_gz)
-                self.gravity_gz = None
-
+        if context.scene.dynamic_place_tool.mode == 'DRAG':
+            # remove all gizmos
             for gz in self._move_gz.keys():
                 self.gizmos.remove(gz)
+            self._move_gz.clear()
 
-            for axis, invert in product(['X', 'Y', 'Z'], [False, True]):
-                if context.scene.dynamic_place_tool.mode == 'FORCE' and invert:continue # no negative force
-                self.add_move_gz(context, axis, invert)
+            if self.cursor_gz:
+                self.gizmos.remove(self.cursor_gz)
+            self.cursor_gz = None
 
-        elif context.scene.dynamic_place_tool.mode == 'GRAVITY':
+            if context.scene.dynamic_place_tool.location == 'CURSOR':
+                self.add_cursor_gz(context)
+            else:
+                # add normal gizmos
+                for axis, invert in product(['X', 'Y', 'Z'], [False, True]):
+                    self.add_move_gz(context, axis, invert)
+
+        elif context.scene.dynamic_place_tool.mode == 'FORCE':
             for gz in self._move_gz.keys():
                 self.gizmos.remove(gz)
-            self.add_gravity_gz(context)
+            self._move_gz.clear()
+            if context.scene.dynamic_place_tool.location == 'CURSOR':
+                self.add_cursor_gz(context)
+            else:
+                # add normal gizmos
+                for axis, invert in product(['X', 'Y', 'Z'], [False, True]):
+                    if context.scene.dynamic_place_tool.mode == 'FORCE' and invert: continue  # no negative force
+                    self.add_move_gz(context, axis, invert)
 
-    def add_gravity_gz(self, context):
+    def add_cursor_gz(self, context):
         gzObject = GizmoInfo(scale_basis=1,
                              use_draw_modal=False)
         gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
-        prop = gz.target_set_operator("test.dynamic_place", index=0)
+        prop = gz.target_set_operator("ph.gravity_place", index=0)
         prop.axis = 'Z'
 
-        self.gravity_gz = gz
+        self.cursor_gz = gz
 
     def add_move_gz(self, context, axis, invert_axis=False):
         ui = bpy.context.preferences.themes[0].user_interface
@@ -91,7 +105,7 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
         else:
             gz.draw_style = 'BOX'
 
-        prop = gz.target_set_operator("test.dynamic_place", index=0)
+        prop = gz.target_set_operator("ph.gravity_place", index=0)
         prop.axis = axis
         prop.invert_axis = invert_axis
 
@@ -128,10 +142,12 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
             gz.matrix_basis.translation = self.center
 
-        if self.gravity_gz:
-            rotate = Euler((math.radians(180), 0, 0), 'XYZ')
-            self.gravity_gz.matrix_basis = rotate.to_matrix()
-            self.gravity_gz.matrix_basis.translation = self.center
+        if self.cursor_gz:
+            end = context.scene.cursor.location
+            vec = end - self.center
+
+            mx = Matrix.LocRotScale(self.center, Vector((0, 0, 1)).rotation_difference(vec), Vector((1, 1, 1)))
+            self.cursor_gz.matrix_basis = mx
 
     def refresh(self, context):
         if context.object:
