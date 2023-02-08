@@ -242,10 +242,14 @@ class DynamicBase:
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
         passive_color = get_addon_pref().dynamic_place_tool.passive_color
+        passive_color = tuple(passive_color)
         use_color = get_addon_pref().dynamic_place_tool.use_color
 
         def set_coll_obj(collection):
             for obj in collection.objects:
+                if obj.name in self.obj_colors or obj in self.coll_obj:
+                    continue
+
                 if obj.hide_viewport is False:
                     obj.select_set(True)
 
@@ -265,8 +269,9 @@ class DynamicBase:
                     obj.rigid_body.collision_margin = margin
 
                     # obj color
+                    self.obj_colors[obj] = tuple(obj.color)
+                    # print('store color: ', obj.name,tuple(obj.color))
                     if use_color:
-                        self.obj_colors[obj] = obj.color
                         obj.color = passive_color
 
                 obj.select_set(False)
@@ -293,12 +298,13 @@ class DynamicBase:
     def init_space_view(self, objs, context):
         self.obj_colors.clear()
         active_color = get_addon_pref().dynamic_place_tool.active_color
+        active_color = tuple(active_color)
         use_color = get_addon_pref().dynamic_place_tool.use_color
 
         # tmp color
         for obj in objs:
             if not getattr(obj, 'color'): continue
-            self.obj_colors[obj] = obj.color
+            self.obj_colors[obj] = tuple(obj.color)
             if use_color:
                 obj.color = active_color
         # tmp shading
@@ -310,12 +316,13 @@ class DynamicBase:
         context.area.spaces[0].shading.color_type = 'OBJECT'
 
     def restore_space_view(self, context):
+        # restore color
+        for obj, color in self.obj_colors.items():
+            print('restore color', obj.name, obj.color, color)
+            obj.color = color
         # restore shading
         context.area.spaces[0].shading.type = self.shading_type
         context.area.spaces[0].shading.color_type = self.color_type
-        # restore color
-        for obj, color in self.obj_colors.items():
-            obj.color = color
         self.obj_colors.clear()
 
     def init_obj(self, context):
