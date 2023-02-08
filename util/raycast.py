@@ -6,6 +6,14 @@ from bpy_extras.view3d_utils import region_2d_to_location_3d as r2d_2_loc3d
 
 from contextlib import contextmanager
 
+def mouse_ray(context, event):
+    """获取鼠标射线"""
+    region = context.region
+    rv3d = context.region_data
+    coord = event.mouse_region_x, event.mouse_region_y
+    ray_origin = r2d_2_origin3d(region, rv3d, coord)
+    ray_direction = r2d_2_vec3d(region, rv3d, coord)
+    return ray_origin, ray_direction
 
 def ray_cast(context, event, start_point=None):
     mouse_pos = event.mouse_region_x, event.mouse_region_y

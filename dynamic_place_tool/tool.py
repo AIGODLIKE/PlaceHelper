@@ -50,6 +50,25 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_widget = "TEST_GGT_test_group3"
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"
+    # bl_keymap = (
+    #     ("view3d.select",
+    #      {"type": "LEFTMOUSE", "value": "CLICK"},
+    #      {"properties": [("deselect_all", True)]},
+    #      ),
+    #
+    #     ("ph.move_object",
+    #      {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": False},
+    #      {"properties": []}),
+    #
+    #     ("ph.move_object",
+    #      {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": True},
+    #      {"properties": []}),
+    #
+    #     ("ph.show_place_axis",
+    #      {"type": 'LEFTMOUSE',"value":'CLICK', "alt": True},
+    #      {"properties": []})
+    #
+    #      )
 
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.dynamic_place_tool
@@ -90,8 +109,36 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         row.prop(prop, 'draw_active')
 
 
+class PH_OT_set_dynamic_place_mode(bpy.types.Operator):
+    bl_idname = 'ph.set_dynamic_place_mode'
+    bl_label = 'Mode'
+
+    axis: EnumProperty(name="Axis",
+                       items=[("X", "X", ''),
+                              ("Y", "Y", ''),
+                              ("Z", "Z", '')],
+                       default="Z")
+    invert_axis: BoolProperty(name="Invert Axis", default=False)
+
+    def invoke(self, context, event):
+        def draw(self, context):
+            layout = self.layout
+            prop = bpy.context.scene.dynamic_place_tool
+            layout.prop(prop, "mode")
+            layout.prop(prop, "location")
+            layout.prop(prop, "strength")
+            layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
+
+        context.window_manager.popup_menu(draw, title='Dynamic Place', icon='PREFERENCES')
+
+        # update_gzg_pref(None, context)
+
+        return {'FINISHED'}
+
+
 def register():
     bpy.utils.register_class(DynamicPlaceProps)
+    bpy.utils.register_class(PH_OT_set_dynamic_place_mode)
     bpy.utils.register_class(PH_PT_DynamicPlaceTool)
     bpy.types.Scene.dynamic_place_tool = bpy.props.PointerProperty(type=DynamicPlaceProps)
 
@@ -102,3 +149,4 @@ def unregister():
     bpy.utils.unregister_tool(PH_TL_DynamicPlaceTool)
     bpy.utils.unregister_class(DynamicPlaceProps)
     bpy.utils.unregister_class(PH_PT_DynamicPlaceTool)
+    bpy.utils.unregister_class(PH_OT_set_dynamic_place_mode)

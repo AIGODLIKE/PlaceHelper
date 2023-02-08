@@ -318,7 +318,7 @@ class DynamicBase:
     def restore_space_view(self, context):
         # restore color
         for obj, color in self.obj_colors.items():
-            print('restore color', obj.name, obj.color, color)
+            # print('restore color', obj.name, obj.color, color)
             obj.color = color
         # restore shading
         context.area.spaces[0].shading.type = self.shading_type
