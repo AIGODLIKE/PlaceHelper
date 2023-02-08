@@ -356,7 +356,7 @@ class DynamicBase:
             return True
 
 
-class PH_OT_gravity_place(DynamicBase,bpy.types.Operator):
+class PH_OT_gravity_place(DynamicBase, bpy.types.Operator):
     bl_idname = 'ph.gravity_place'
     bl_label = 'Dynamic Place'
 
@@ -413,7 +413,6 @@ class PH_OT_gravity_place(DynamicBase,bpy.types.Operator):
 
         return {'RUNNING_MODAL'}
 
-
     def invoke(self, context, event):
         if self.show_menu(context): return {"INTERFACE"}
 
@@ -447,7 +446,7 @@ class PH_OT_gravity_place(DynamicBase,bpy.types.Operator):
 
         self.set_gravity_vec(context)
 
-        bpy.context.window_manager.modal_handler_add(self)
+        context.window_manager.modal_handler_add(self)
 
         return {'RUNNING_MODAL'}
 
@@ -466,60 +465,78 @@ class PH_OT_gravity_place(DynamicBase,bpy.types.Operator):
         self.restore_space_view(context)
 
 
-class TEST_OT_dynamic_place(DynamicBase, bpy.types.Operator):
-    """Dynamic Place"""
-    bl_idname = 'test.dynamic_place'
+class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
+    bl_idname = 'ph.scale_force'
     bl_label = 'Dynamic Place'
-    bl_options = {'REGISTER', 'UNDO', 'GRAB_CURSOR', 'BLOCKING'}
-
-    frame: IntProperty(default=1)
 
     force = None
-    objs = []
-    coll_obj = {}
 
-    draw_handle = None
-    draw_pts = None
-    tmp_mesh = None
+    def invoke(self, context, event):
+        if self.show_menu(context): return {"INTERFACE"}
 
-    def modal(self, context, event):
-        if event.type == 'MOUSEMOVE':
-            self.mouseDX = self.mouseDX - event.mouse_x
-            self.mouseDY = self.mouseDY - event.mouse_y
+        self.init_space_view(context.selected_objects, context)
 
-            # if event.mouse_prev_x - event.mouse_x < 0:
-            #     if self.force:
-            #         self.force.field.strength *= -1
+        self.active_obj = context.active_object
+        self.mode = context.scene.dynamic_place_tool.mode
 
-            multiplier = 1 if event.shift else 2
+        self.mouseDX = event.mouse_x
+        self.mouseDY = event.mouse_y
+        self.startX = event.mouse_x
+        self.startY = event.mouse_y
 
-            # self.force.field.strength += offset
+        self.objs.clear()
 
-            # 重置
-            self.mouseDX = event.mouse_x
-            self.mouseDY = event.mouse_y
-
-            # self.handle_drag_direction(context, event)
-
-            context.scene.frame_set(self.frame)
-            bpy.ops.ptcache.bake_all(bake=False)
-
-            if not event.ctrl:
-                self.frame += multiplier
+        for obj in context.selected_objects:
+            if obj.type != 'MESH':
+                obj.select_set(False)
+            elif obj.hide_viewport is True:
+                obj.select_set(False)
             else:
-                self.frame -= multiplier
+                self.objs.append(obj)
 
-            self.mouseDX = event.mouse_x
-            self.mouseDY = event.mouse_y
+        self.init_collection_coll(context)
+        self.init_obj(context)
+        self.init_force(context)
+        self.init_frame(context)
+        self.init_rbd_world(context)
 
-            if self.mode == 'DRAG':
-                self.force.field.strength = context.scene.dynamic_place_tool.strength
-
-        elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
-            self.free(context)
-            return {'FINISHED'}
-
+        bpy.context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
+
+    def init_force(self, context):
+        self.force = None
+
+        active = context.object
+        bpy.ops.object.effector_add(type='FORCE')
+        self.force = context.active_object
+        self.force.select_set(False)
+
+        self.force.field.shape = 'PLANE'
+
+        location_type = context.scene.dynamic_place_tool.location
+        if location_type == 'CURSOR':
+            pt_end = get_objs_bbox_center(self.objs)
+            pt_start = context.scene.cursor.location
+            vec = pt_end - pt_start
+            q = Vector((0, 0, 1)).rotation_difference(vec)
+            self.force.rotation_quaternion = q
+            self.force.location = pt_end
+        else:
+            mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix(reverse_zD=True)
+            if self.axis == 'X':
+                self.force.matrix_world = mXW if not self.invert_axis else mX_d
+            elif self.axis == 'Y':
+                self.force.matrix_world = mYW if not self.invert_axis else mY_d
+            elif self.axis == 'Z':
+                self.force.matrix_world = mZW if not self.invert_axis else mZ_d
+            else:  # all
+                self.force.field.shape = 'POINT'
+
+        self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
+        self.force.field.strength = context.scene.dynamic_place_tool.strength * -1
+
+        self.force.field.falloff_power = 1
+        context.view_layer.objects.active = active
 
     def handle_drag_direction(self, context, event):
         from .gzg import GZ_CENTER
@@ -548,79 +565,13 @@ class TEST_OT_dynamic_place(DynamicBase, bpy.types.Operator):
 
                 if invert_z:
                     self.force.field.strength *= -1
-        elif mode == 'GRAVITY':
-            x, y, z = context.scene.gravity
-            x, y, z = abs(x), abs(y), abs(z)
-            if self.startY - y > event.mouse_y - y:
-                context.scene.gravity[2] = -z
-            else:
-                context.scene.gravity[2] = z
-            # if invert_z:
-            #     context.scene.gravity[2] *= -1
-        # elif mode == 'DRAG':
-        #     if self.axis in {'X', 'Y'}:
-        #         self.force.field.strength = value if self.startX - x > event.mouse_x - x else - value
-        #         if invert_x and self.axis == 'X':
-        #             self.force.field.strength *= -1
-        #         if invert_y and self.axis == 'Y':
-        #             self.force.field.strength *= -1
-        #     else:
-        #         self.force.field.strength = value if self.startY - y > event.mouse_y - y else - value
-        #         if invert_z:
-        #             self.force.field.strength *= -1
-
-    def invoke(self, context, event):
-        if context.active_object is None or context.active_object.hide_viewport or not context.active_object.select_get():
-            def draw(cls, _context):
-                cls.layout.label(text="Please select the active object")
-
-            context.window_manager.popup_menu(draw, title=f'Warning', icon='ERROR')
-
-            return {"INTERFACE"}
-
-        self.init_space_view(context.selected_objects, context)
-
-        self.active_obj = context.active_object
-        self.mode = context.scene.dynamic_place_tool.mode
-
-        self.mouseDX = event.mouse_x
-        self.mouseDY = event.mouse_y
-        self.startX = event.mouse_x
-        self.startY = event.mouse_y
-
-        self.objs.clear()
-
-        for obj in context.selected_objects:
-            if obj.type != 'MESH':
-                obj.select_set(False)
-            elif obj.hide_viewport is True:
-                obj.select_set(False)
-            else:
-                self.objs.append(obj)
-
-        self.init_collection_coll(context)
-        self.init_obj(context)
-        self.init_force(context, event)
-        self.init_frame(context)
-        self.init_rbd_world(context)
-
-        bpy.context.window_manager.modal_handler_add(self)
-        TEST_OT_dynamic_place.draw_handle = bpy.types.SpaceView3D.draw_handler_add(self.draw_obj_coll_callback_px,
-                                                                                   (context,),
-                                                                                   'WINDOW',
-                                                                                   'POST_VIEW')
-        return {'RUNNING_MODAL'}
-        # return {'FINISHED'}
-
-    def apply_current(self, context):
-        bpy.ops.object.visual_transform_apply()
 
     def free(self, context):
         # remove draw handler
-        if TEST_OT_dynamic_place.draw_handle:
-            bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
-        if self.tmp_mesh:
-            bpy.data.meshes.remove(self.tmp_mesh)
+        # if TEST_OT_dynamic_place.draw_handle:
+        #     bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
+        # if self.tmp_mesh:
+        #     bpy.data.meshes.remove(self.tmp_mesh)
 
         for obj in self.objs:
             obj.select_set(True)
@@ -638,58 +589,43 @@ class TEST_OT_dynamic_place(DynamicBase, bpy.types.Operator):
         context.view_layer.objects.active = self.active_obj
         self.restore_space_view(context)
 
-    def get_bbox_pos(self, max=False):
-        min_x, min_y, min_z, max_x, max_y, max_z = get_objs_axis_aligned_bbox(self.objs)
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            self.mouseDX = self.mouseDX - event.mouse_x
+            self.mouseDY = self.mouseDY - event.mouse_y
 
-        pos = get_objs_bbox_center(self.objs)
-        if self.axis == 'X':
-            pos.x = min_x if not max else max_x
-        elif self.axis == 'Y':
-            pos.y = min_y if not max else max_y
-        elif self.axis == 'Z':
-            pos.z = min_z if not max else max_z
+            multiplier = 1 if event.shift else 2
 
-        return pos
+            # 重置
+            self.mouseDX = event.mouse_x
+            self.mouseDY = event.mouse_y
 
-    def init_force(self, context, event):
-        self.force = None
-        if self.mode == 'GRAVITY': return
+            self.handle_drag_direction(context, event)
 
-        active = context.object
-        bpy.ops.object.effector_add(type='FORCE')
-        self.force = context.active_object
-        self.force.select_set(False)
-        # shape
-        self.force.field.shape = 'PLANE'
-        # location
-        location_type = context.scene.dynamic_place_tool.location
-        if location_type == 'CENTER':
-            mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix(reverse_zD=True)
+            context.scene.frame_set(self.frame)
+            bpy.ops.ptcache.bake_all(bake=False)
 
-            if self.axis == 'X':
-                self.force.matrix_world = mXW if not self.invert_axis else mX_d
-            elif self.axis == 'Y':
-                self.force.matrix_world = mYW if not self.invert_axis else mY_d
-            elif self.axis == 'Z':
-                self.force.matrix_world = mZW if not self.invert_axis else mZ_d
+            if not event.ctrl:
+                self.frame += multiplier
+            else:
+                self.frame -= multiplier
+
+            self.mouseDX = event.mouse_x
+            self.mouseDY = event.mouse_y
 
             if self.mode == 'DRAG':
-                self.force.matrix_world.translation = self.get_bbox_pos(max=self.invert_axis)
-                self.force.field.strength = 0
-            else:
-                self.force.matrix_world.translation = get_objs_bbox_center(self.objs)
-                self.force.field.strength = context.scene.dynamic_place_tool.strength * -1
-        else:  # 'CURSOR'
-            self.force.matrix_world.translation = context.scene.cursor.location
+                self.force.field.strength = context.scene.dynamic_place_tool.strength
 
-        self.force.field.falloff_power = 1
+        elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            self.free(context)
+            return {'FINISHED'}
 
-        context.view_layer.objects.active = active
+        return {'RUNNING_MODAL'}
 
 
 classes = (
-    TEST_OT_dynamic_place,
     PH_OT_gravity_place,
+    PH_OT_scale_force,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

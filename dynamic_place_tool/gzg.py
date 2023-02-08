@@ -105,7 +105,8 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
         else:
             gz.draw_style = 'BOX'
 
-        prop = gz.target_set_operator("ph.gravity_place", index=0)
+        op = 'ph.scale_force' if context.scene.dynamic_place_tool.mode == 'FORCE' else 'ph.gravity_place'
+        prop = gz.target_set_operator(op, index=0)
         prop.axis = axis
         prop.invert_axis = invert_axis
 
