@@ -18,7 +18,7 @@ class DynamicPlaceProps(PropertyGroup):
         ('CURSOR', 'Cursor', ''),
     ], default='CENTER', update=update_gzg_pref)
 
-    use_gravity: BoolProperty(name='Use Gravity', default=True)
+    # use_gravity: BoolProperty(name='Use Gravity', default=True)
     gravity_strength: FloatProperty(name='Gravity Strength', default=2, min=0, soft_max=10)
     strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
@@ -84,7 +84,11 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
         layout.prop(prop, "location")
-        layout.prop(prop, "strength")
+        if prop.mode == 'FORCE':
+            layout.prop(prop, "strength")
+        elif prop.mode == 'DRAG':
+            layout.prop(prop, "gravity_strength")
+
         layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
 
         # prop = tool.operator_properties('test.dynamic_place')
