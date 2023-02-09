@@ -145,6 +145,7 @@ class DynamicBase:
     # draw
     draw_pts = None
     draw_handle = None
+    tmp_mesh = None
 
     # rbd setting
     objs = []
@@ -447,10 +448,20 @@ class PH_OT_gravity_place(DynamicBase, bpy.types.Operator):
         self.set_gravity_vec(context)
 
         context.window_manager.modal_handler_add(self)
-
+        PH_OT_gravity_place.draw_handle = bpy.types.SpaceView3D.draw_handler_add(
+            self.draw_obj_coll_callback_px,
+            (context,),
+            'WINDOW',
+            'POST_VIEW')
         return {'RUNNING_MODAL'}
 
     def free(self, context):
+        # remove draw handler
+        if PH_OT_gravity_place.draw_handle:
+            bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
+        if self.tmp_mesh:
+            bpy.data.meshes.remove(self.tmp_mesh)
+
         for obj in self.objs:
             obj.select_set(True)
 
@@ -501,6 +512,11 @@ class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
         self.init_rbd_world(context)
 
         bpy.context.window_manager.modal_handler_add(self)
+        PH_OT_scale_force.draw_handle = bpy.types.SpaceView3D.draw_handler_add(
+            self.draw_obj_coll_callback_px,
+            (context,),
+            'WINDOW',
+            'POST_VIEW')
         return {'RUNNING_MODAL'}
 
     def init_force(self, context):
@@ -568,10 +584,10 @@ class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
 
     def free(self, context):
         # remove draw handler
-        # if TEST_OT_dynamic_place.draw_handle:
-        #     bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
-        # if self.tmp_mesh:
-        #     bpy.data.meshes.remove(self.tmp_mesh)
+        if PH_OT_scale_force.draw_handle:
+            bpy.types.SpaceView3D.draw_handler_remove(self.draw_handle, 'WINDOW')
+        if self.tmp_mesh:
+            bpy.data.meshes.remove(self.tmp_mesh)
 
         for obj in self.objs:
             obj.select_set(True)

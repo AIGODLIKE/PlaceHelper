@@ -23,12 +23,22 @@ class DynamicPlaceProps(PropertyGroup):
     strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
     active: EnumProperty(name='Active', items=[
-        ('CONVEX_HULL', 'Convex Hull', ''),
-        ('MESH', 'Mesh', ''),
+        ('CONVEX_HULL', 'Convex Hull', '','MESH_ICOSPHERE',0),
+        ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE',1),
+        ('BOX', 'Box', '', 'MESH_CUBE',2),
+        ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER',3),
+        ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE',4),
+        ('CONE', 'Cone', '', 'MESH_CONE',5),
+        ('MESH', 'Mesh', '', 'MESH_DATA',6),
     ], default='CONVEX_HULL')
     passive: EnumProperty(name='Passive', items=[
-        ('CONVEX_HULL', 'Convex Hull', ''),
-        ('MESH', 'Mesh', ''),
+        ('CONVEX_HULL', 'Convex Hull', '', 'MESH_ICOSPHERE', 0),
+        ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE', 1),
+        ('BOX', 'Box', '', 'MESH_CUBE', 2),
+        ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER', 3),
+        ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE', 4),
+        ('CONE', 'Cone', '', 'MESH_CONE', 5),
+        ('MESH', 'Mesh', '', 'MESH_DATA', 6),
     ], default='MESH')
 
     collision_margin: FloatProperty(name='Margin',
@@ -51,7 +61,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"
     # bl_keymap = (
-    #     ("view3d.select",
+    #     ("view3d.select_box",
     #      {"type": "LEFTMOUSE", "value": "CLICK"},
     #      {"properties": [("deselect_all", True)]},
     #      ),
@@ -95,9 +105,9 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
         prop = context.scene.dynamic_place_tool
         layout.label(text='Collisions')
         row = layout.row(align=True)
-        row.prop(prop, "active", expand=True)
+        row.prop(prop, "active")
         row = layout.row(align=True)
-        row.prop(prop, "passive", expand=True)
+        row.prop(prop, "passive")
         layout.separator()
         row = layout.row(align=True)
         row.prop(prop, "collision_margin")
