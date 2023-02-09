@@ -51,7 +51,8 @@ class Preferences(AddonPreferences):
 
     place_tool: PointerProperty(type=PlaceToolProps)
     dynamic_place_tool: PointerProperty(type=DynamicPlaceToolProps)
-
+    #
+    use_event_handle_all: BoolProperty(name='Gizmo Handle All Event', default=False)
     debug: BoolProperty(name='Debug', default=False)
 
     def draw(self, context):
@@ -64,13 +65,16 @@ class Preferences(AddonPreferences):
         col.separator()
         col.operator('ph.run_doc')
 
+        col = row_all.column()
+
         if self.tool_type == 'PLACE_TOOL':
-            self.draw_place_tool(context, row_all)
+            self.draw_place_tool(context, col)
         elif self.tool_type == 'TRANSFORM_TOOL':
             pass
         elif self.tool_type == 'DYNAMIC_PLACE_TOOL':
-            self.draw_dynamic_place_tool(context, row_all)
+            self.draw_dynamic_place_tool(context, col)
 
+        col.prop(self, 'use_event_handle_all')
         # layout.prop(self, 'debug')
 
     def draw_dynamic_place_tool(self, context, layout):
@@ -90,17 +94,12 @@ class Preferences(AddonPreferences):
         col = _layout.box().column()
         col.use_property_split = True
 
-
-
-        col = _layout.box().column()
-        col.use_property_split = True
-
-        col.label(text='Bounding Box',icon = 'META_CUBE')
+        col.label(text='Bounding Box', icon='META_CUBE')
         col1 = col.column()
         bbox = self.place_tool.bbox
         col1.prop(bbox, 'offset')
 
-        col2 = col.column(heading = 'Display')
+        col2 = col.column(heading='Display')
         col2.prop(bbox, 'coll_alert')
         col2.prop(bbox, 'width')
         col2.prop(bbox, 'color')
@@ -119,12 +118,12 @@ class Preferences(AddonPreferences):
         box.prop(self.place_tool.gz, 'color_highlight')
 
 
-
 class PH_OT_run_doc(bpy.types.Operator):
     bl_idname = 'ph.run_doc'
     bl_label = 'Documentation'
 
     port: IntProperty(name='Port', default=9021)
+
     def execute(self, context):
         import os
         import sys

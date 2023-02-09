@@ -13,6 +13,7 @@
   "Rotate\\nShift: Duplicate\\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
   "Please select the active object": "请选择一个物体为激活项",
   "Use Color When Moving": "运行时变色",
+  "Gizmo Handle All Event":"Gizmo 接收所有按键",
 
   "Set Place Axis": "设置放置轴"
 
