@@ -19,7 +19,7 @@ class DynamicPlaceProps(PropertyGroup):
     ], default='CENTER', update=update_gzg_pref)
 
     # use_gravity: BoolProperty(name='Use Gravity', default=True)
-    gravity_strength: FloatProperty(name='Gravity Strength', default=2, min=0, soft_max=10)
+    gravity_strength: FloatProperty(name='Gravity', default=2, min=0, soft_max=10)
     strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
     active: EnumProperty(name='Active', items=[
