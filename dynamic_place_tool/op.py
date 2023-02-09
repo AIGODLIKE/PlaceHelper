@@ -158,7 +158,7 @@ class DynamicBase:
     color_type = None
 
     # pass in
-    axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
+    axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z'),('VIEW', 'View', 'View')])
     invert_axis: BoolProperty(name='Invert', default=False)
 
     def draw_obj_coll_callback_px(self, context):
@@ -576,11 +576,13 @@ class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
                     self.force.field.strength *= -1
                 if invert_y and self.axis == 'Y':
                     self.force.field.strength *= -1
-            else:
+            elif self.axis == 'Z':
                 self.force.field.strength = - value if self.startY - y > event.mouse_y - y else value
 
                 if invert_z:
                     self.force.field.strength *= -1
+            elif self.axis =='VIEW':
+                self.force.field.strength = - value if self.startX - x > event.mouse_x - x else value
 
     def free(self, context):
         # remove draw handler

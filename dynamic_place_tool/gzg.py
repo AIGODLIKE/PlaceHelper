@@ -5,7 +5,7 @@ from itertools import product
 
 from ..util.gz import GizmoInfo, GZGBase
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
-from ..util.get_gz_matrix import get_matrix
+from ..util.get_gz_matrix import get_matrix, view_matrix
 
 GZ_CENTER = Vector((0, 0, 0))
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
@@ -69,6 +69,8 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
                     if context.scene.dynamic_place_tool.mode == 'FORCE' and invert: continue  # no negative force
                     self.add_move_gz(context, axis, invert)
 
+                self.add_move_gz(context, 'VIEW', True)
+
     def add_cursor_gz(self, context):
         gzObject = GizmoInfo(scale_basis=1,
                              use_draw_modal=False)
@@ -90,20 +92,25 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
             color = axis_x
         elif axis == 'Y':
             color = axis_y
-        else:
+        elif axis == 'Z':
             color = axis_z
+        else:
+            color = (0.8, 0.8, 0.8)
 
         gzObject = GizmoInfo(scale_basis=1,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False)
 
-        gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
-
-        if context.scene.dynamic_place_tool.mode == 'DRAG':
-            gz.draw_style = 'NORMAL'
+        if context.scene.dynamic_place_tool.mode == 'FORCE':
+            if axis == 'VIEW':
+                gz = gzObject.set_up(self, 'GIZMO_GT_dial_3d')
+            else:
+                gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
+                gz.draw_style = 'BOX'
         else:
-            gz.draw_style = 'BOX'
+            gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
+            gz.draw_style = 'NORMAL'
 
         op = 'ph.scale_force' if context.scene.dynamic_place_tool.mode == 'FORCE' else 'ph.gravity_place'
         prop = gz.target_set_operator(op, index=0)
@@ -117,6 +124,10 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
             gz.matrix_basis = mYW if not invert_axis else mY_d
         elif axis == 'Z':
             gz.matrix_basis = mZW if not invert_axis else mZ_d
+        else:
+            mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
+            q = mZW
+            gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
 
         self._move_gz[gz] = (axis, invert_axis)
 
@@ -140,6 +151,10 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
                 gz.matrix_basis = mYW if not invert_axis else mY_d
             elif axis == 'Z':
                 gz.matrix_basis = mZW if not invert_axis else mZ_d
+            else:
+                mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
+                q = mZW
+                gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
 
             gz.matrix_basis.translation = self.center
 
