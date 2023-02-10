@@ -3,7 +3,7 @@ import bpy
 from mathutils import Vector, Matrix, Quaternion, Euler
 from .op import C_OBJECT_TYPE_HAS_BBOX
 
-from ..util.gz import GizmoInfo, GZGBase
+from ..util.gz import GizmoInfo
 from ..util.get_gz_matrix import get_matrix
 from ..util.get_gz_position import get_position
 
@@ -36,25 +36,10 @@ def get_mx(axis):
         return mZW
 
 
-class GZGBase():
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        if not obj:
-            return
-        elif obj.mode != 'OBJECT':
-            return
-        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname != 'ph.place_tool':
-            return
-        elif obj.select_get() and obj.type in C_OBJECT_TYPE_HAS_BBOX:
-            return True
-
-
-class TEST_GGT_test_group2(GZGBase, bpy.types.GizmoGroup):
+class PH_GZG_transform_pro(bpy.types.GizmoGroup):
     bl_label = "Test Widget"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
-    # 'TOOL_INIT' also sounds appropriate, but then the gizmo doesn't appear!
     bl_options = {'3D'}
 
     _move_gz = {}
@@ -62,7 +47,19 @@ class TEST_GGT_test_group2(GZGBase, bpy.types.GizmoGroup):
 
     @classmethod
     def poll(cls, context):
-        return context.object and len(context.selected_objects) > 0
+
+        obj = context.object
+        if not obj:
+            return
+        elif obj.mode != 'OBJECT':
+            return
+        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname not in {
+            'ph.transform_pro',
+            'ph.transform_pro_edit'
+        }:
+            return
+
+        return True
 
     def setup(self, context):
         self._move_gz.clear()
@@ -171,7 +168,7 @@ class TEST_GGT_test_group2(GZGBase, bpy.types.GizmoGroup):
 
 
 classes = (
-    TEST_GGT_test_group2,
+    PH_GZG_transform_pro,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

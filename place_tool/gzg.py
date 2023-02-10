@@ -2,7 +2,7 @@ import bpy
 import math
 from mathutils import Vector, Color, Euler, Matrix
 
-from ..util.gz import GizmoInfo, GZGBase
+from ..util.gz import GizmoInfo, C_OBJECT_TYPE_HAS_BBOX
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
 from ..util.get_gz_matrix import local_matrix
 
@@ -12,14 +12,25 @@ from ..get_addon_pref import get_addon_pref
 from itertools import product
 
 
-class PH_GZG_place_tool(GZGBase, bpy.types.GizmoGroup):
+class PH_GZG_place_tool(bpy.types.GizmoGroup):
     bl_label = "Test Widget"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
-    # 'TOOL_INIT' also sounds appropriate, but then the gizmo doesn't appear!
     bl_options = {'3D'}
 
     set_axis_gzs = []
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        if not obj:
+            return
+        elif obj.mode != 'OBJECT':
+            return
+        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname != 'ph.place_tool':
+            return
+        elif obj.select_get() and obj.type in C_OBJECT_TYPE_HAS_BBOX:
+            return True
 
     def setup(self, context):
         self.add_rotate_gz(context)

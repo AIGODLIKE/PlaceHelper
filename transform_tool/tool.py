@@ -20,12 +20,12 @@ class MoveToolProps(PropertyGroup):
                             default="COPY")
 
 
-class TestTool2(bpy.types.WorkSpaceTool):
-    bl_idname = "TEST.test_tool2"
+class PH_TL_TransformPro(bpy.types.WorkSpaceTool):
+    bl_idname = "ph.transform_pro"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = "OBJECT"
     bl_label = "Transform Pro"
-    bl_widget = "TEST_GGT_test_group2"
+    bl_widget = "PH_GZG_transform_pro"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"
 
@@ -33,12 +33,12 @@ class TestTool2(bpy.types.WorkSpaceTool):
         prop = bpy.context.scene.move_view_tool
         layout.prop(prop, "duplicate")
 
-class TestTool2_Edit(bpy.types.WorkSpaceTool):
-    bl_idname = "TEST.test_tool2"
+class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
+    bl_idname = "ph.transform_pro_edit"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = "EDIT_MESH"
     bl_label = "Transform Pro"
-    bl_widget = "TEST_GGT_test_group2"
+    bl_widget = "PH_GZG_transform_pro"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"
 
@@ -50,13 +50,13 @@ def register():
     bpy.utils.register_class(MoveToolProps)
     bpy.types.Scene.move_view_tool = bpy.props.PointerProperty(type=MoveToolProps)
 
-    bpy.utils.register_tool(TestTool2, separator=False)
-    bpy.utils.register_tool(TestTool2_Edit, separator=False)
+    bpy.utils.register_tool(PH_TL_TransformPro, separator=False)
+    bpy.utils.register_tool(PH_TL_TransformPro_edit, separator=False)
 
 
 def unregister():
-    bpy.utils.unregister_tool(TestTool2)
-    bpy.utils.unregister_tool(TestTool2_Edit)
+    bpy.utils.unregister_tool(PH_TL_TransformPro)
+    bpy.utils.unregister_tool(PH_TL_TransformPro_edit)
 
     del  bpy.types.Scene.place_tool
     bpy.utils.unregister_class(MoveToolProps)

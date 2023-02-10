@@ -3,7 +3,7 @@ import math
 from mathutils import Vector, Color, Euler, Matrix
 from itertools import product
 
-from ..util.gz import GizmoInfo, GZGBase
+from ..util.gz import GizmoInfo
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
 from ..util.get_gz_matrix import get_matrix, view_matrix
 
@@ -11,11 +11,10 @@ GZ_CENTER = Vector((0, 0, 0))
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
 
-class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
+class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
     bl_label = "Test Widget"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
-    # 'TOOL_INIT' also sounds appropriate, but then the gizmo doesn't appear!
     bl_options = {'3D'}
 
     _move_gz = {}
@@ -24,7 +23,17 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
     @classmethod
     def poll(cls, context):
-        return context.object and len(context.selected_objects) > 0 and context.object.type == 'MESH'
+        if context.mode != 'OBJECT':
+            return
+        elif context.object is None:
+            return
+        elif len(context.selected_objects) == 0:
+            return
+
+        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname != 'ph.dynamic_place_tool':
+            return
+
+        return context.object.type == 'MESH'
 
     def setup(self, context):
         self.cursor_gz = None
@@ -172,7 +181,7 @@ class TEST_GGT_test_group3(GZGBase, bpy.types.GizmoGroup):
 
 
 classes = (
-    TEST_GGT_test_group3,
+    PH_GZG_dynamic_place,
 )
 
 

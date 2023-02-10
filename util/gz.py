@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from .obj_bbox import C_OBJECT_TYPE_HAS_BBOX
 from ..get_addon_pref import get_addon_pref
 
+
 @dataclass
 class GizmoInfo:
     # color
@@ -26,19 +27,3 @@ class GizmoInfo:
         self.gz.use_event_handle_all = get_addon_pref().use_event_handle_all
 
         return self.gz
-
-
-class GZGBase():
-    tool_id = 'ph.place_tool'
-
-    @classmethod
-    def poll(cls, context):
-        obj = context.object
-        if not obj:
-            return
-        elif obj.mode != 'OBJECT':
-            return
-        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname != 'ph.place_tool':
-            return
-        elif obj.select_get() and obj.type in C_OBJECT_TYPE_HAS_BBOX:
-            return True
