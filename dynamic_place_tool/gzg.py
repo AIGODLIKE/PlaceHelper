@@ -106,7 +106,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
         else:
             color = (0.8, 0.8, 0.8)
 
-        gzObject = GizmoInfo(scale_basis=1,
+        gzObject = GizmoInfo(scale_basis=1 if axis != 'VIEW' else 0.3,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False)
@@ -114,6 +114,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
         if context.scene.dynamic_place_tool.mode == 'FORCE':
             if axis == 'VIEW':
                 gz = gzObject.set_up(self, 'GIZMO_GT_dial_3d')
+                gz.line_width = 3
             else:
                 gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
                 gz.draw_style = 'BOX'

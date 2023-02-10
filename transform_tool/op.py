@@ -406,7 +406,7 @@ class PH_OT_translate(bpy.types.Operator):
         elif self.axis == 'Z':
             axis_set = (False, False, True)
         else:
-            axis_set = (True, True, True)
+            axis_set = (False, False, False)
 
         if self.invert_constraint and axis_set != (True, True, True):
             axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])

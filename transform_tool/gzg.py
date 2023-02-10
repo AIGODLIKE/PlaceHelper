@@ -4,7 +4,7 @@ from mathutils import Vector, Matrix, Quaternion, Euler
 from .op import C_OBJECT_TYPE_HAS_BBOX
 
 from ..util.gz import GizmoInfo
-from ..util.get_gz_matrix import get_matrix
+from ..util.get_gz_matrix import get_matrix, view_matrix
 from ..util.get_gz_position import get_position
 
 
@@ -68,6 +68,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         self.add_move_gz(context, 'X')
         self.add_move_gz(context, 'Y')
         self.add_move_gz(context, 'Z')
+        self.add_move_gz(context, 'VIEW')
 
         self.add_move_gz_plane(context, 'X')
         self.add_move_gz_plane(context, 'Y')
@@ -109,27 +110,38 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
     def add_move_gz(self, context, axis):
         color, color_highlight = get_color(axis)
 
-        gzObject = GizmoInfo(scale_basis=1,
+        if axis == 'VIEW':
+            color = (0.8, 0.8, 0.8)
+
+        gzObject = GizmoInfo(scale_basis=1 if axis != 'VIEW' else 0.3,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False,
                              use_event_handle_all=False)
 
-        gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
+        if axis == 'VIEW':
+            gz = gzObject.set_up(self, 'GIZMO_GT_dial_3d')
+            gz.line_width = 3
+        else:
+            gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
+
         prop = gz.target_set_operator("ph.translate", index=0)
         prop.invert_constraint = False
         prop.axis = axis
 
         mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
         if axis == 'X':
-            mx = mXW
+            gz.matrix_basis = mXW
         elif axis == 'Y':
-            mx = mY_d
+            gz.matrix_basis = mY_d
+        elif axis == 'Z':
+            gz.matrix_basis = mZW
         else:
-            mx = mZW
+            mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
+            q = mZW
+            gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
 
         loc = get_position()
-        gz.matrix_basis = mx
         gz.matrix_basis.translation = loc
 
         self._move_gz[gz] = axis
@@ -147,7 +159,12 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
                 return mZW
 
         for gz, axis in self._move_gz.items():
-            gz.matrix_basis = get_mx(axis)
+            if axis == 'VIEW':
+                res= view_matrix()
+                q = res[2]
+                gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
+            else:
+                gz.matrix_basis = get_mx(axis)
             gz.matrix_basis.translation = loc
 
         for gz, axis in self._move_gz_plane.items():
