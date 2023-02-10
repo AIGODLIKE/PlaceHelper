@@ -17,7 +17,7 @@ class TEST_OT_move_view_object(bpy.types.Operator):
     """Move"""
     bl_idname = 'test.move_view_object'
     bl_label = 'Move View'
-    bl_options = {'REGISTER', 'UNDO', 'GRAB_CURSOR', 'BLOCKING'}
+    bl_options = {'REGISTER', 'UNDO_GROUPED', 'GRAB_CURSOR', 'BLOCKING'}
 
     axis: EnumProperty(items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
 
@@ -358,36 +358,32 @@ class PH_OT_translate(bpy.types.Operator):
         return mat
 
     @staticmethod
-    def translate(self, context, axis_set, matrix_orient):
+    def translate(self, context, axis_set, matrix_orient, copy=None):
         tpp = context.scene.tool_settings.transform_pivot_point
         os = context.window.scene.transform_orientation_slots[0].type
 
+        trans_args = {
+            'mode': 'TRANSLATION',
+            'release_confirm': True,
+            'constraint_axis': axis_set,
+        }
+
         if tpp == 'INDIVIDUAL_ORIGINS':
-            bpy.ops.transform.transform(
-                'INVOKE_DEFAULT',
-                mode='TRANSLATION',
-                constraint_axis=axis_set,
-                release_confirm=True,
-            )
+            pass
         else:
             if os == 'NORMAL':
-                bpy.ops.transform.transform(
-                    'INVOKE_DEFAULT',
-                    mode='TRANSLATION',
-                    orient_axis=self.axis,
-                    orient_matrix=matrix_orient,
-                    constraint_axis=axis_set,
-                    release_confirm=True,
-                    center_override=self.pp,
-                )
-            else:
-                bpy.ops.transform.transform(
-                    'INVOKE_DEFAULT',
-                    mode='TRANSLATION',
-                    constraint_axis=axis_set,
-                    release_confirm=True,
-                    # center_override=self.pp,
-                )
+                trans_args['orient_axis'] = self.axis
+                trans_args['orient_matrix'] = matrix_orient
+                trans_args['center_override'] = self.pp
+
+        if copy is None:
+            bpy.ops.transform.transform('INVOKE_DEFAULT', **trans_args)
+        else:
+            trans_args.pop('mode')
+            bpy.ops.object.duplicate_move('INVOKE_DEFAULT',
+                                          OBJECT_OT_duplicate={"linked": False if copy != 'COPY' else True,
+                                                               "mode": 'TRANSLATION'},
+                                          TRANSFORM_OT_translate=trans_args)
 
     def modal(self, context, event):
         if event.value == 'RELEASE' or event.type in {'RET'}:
@@ -416,19 +412,17 @@ class PH_OT_translate(bpy.types.Operator):
             axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])
 
         if context.mode == 'OBJECT':
-            if event.shift:
-                bpy.ops.object.duplicate_move()
+            self.translate(self, context, axis_set, self.get_orient_matrix(self),
+                           copy=None if not event.shift else context.scene.move_view_tool.duplicate)
 
-            self.translate(self, context, axis_set, self.get_orient_matrix(self))
-
-        if context.mode == 'EDIT_MESH':
+        elif context.mode == 'EDIT_MESH':
             if event.shift:
                 bpy.ops.mesh.extrude_context_move('INVOKE_DEFAULT',
                                                   MESH_OT_extrude_context={'use_normal_flip': False, 'mirror': False},
                                                   TRANSFORM_OT_translate={'constraint_axis': axis_set,
                                                                           'release_confirm': True})
             else:
-                self.translate(self, context, axis_set, self.get_orient_matrix(self))
+                self.translate(self, context, axis_set, self.get_orient_matrix(self), copy=None)
 
         return {'RUNNING_MODAL'}
 

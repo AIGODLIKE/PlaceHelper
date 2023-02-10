@@ -51,9 +51,9 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         obj = context.object
         if not obj:
             return
-        elif obj.mode != 'OBJECT':
+        elif obj.mode not in {'OBJECT', 'EDIT'}:
             return
-        elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname not in {
+        elif context.workspace.tools.from_space_view3d_mode(context.mode, create=False).idname not in {
             'ph.transform_pro',
             'ph.transform_pro_edit'
         }:
