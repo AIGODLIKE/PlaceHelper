@@ -88,6 +88,8 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.view3d.select('INVOKE_DEFAULT', deselect_all=True)
+        if not context.object: return {'FINISHED'}
+
         from ..util.obj_bbox import AlignObject
         from ._runtime import ALIGN_OBJ
 
