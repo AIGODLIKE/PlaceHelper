@@ -51,6 +51,9 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         obj = context.object
         if not obj:
             return
+        elif len(context.selected_objects) == 0:
+            return
+
         elif obj.mode not in {'OBJECT', 'EDIT'}:
             return
         elif context.workspace.tools.from_space_view3d_mode(context.mode, create=False).idname not in {
@@ -160,7 +163,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
 
         for gz, axis in self._move_gz.items():
             if axis == 'VIEW':
-                res= view_matrix()
+                res = view_matrix()
                 q = res[2]
                 gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
             else:
