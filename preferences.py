@@ -63,7 +63,7 @@ class Preferences(AddonPreferences):
         col = row_all.column(align=True)
         col.prop(self, 'tool_type', expand=True)
         col.separator()
-        col.operator('ph.run_doc')
+        # col.operator('ph.run_doc')
 
         col = row_all.column()
 

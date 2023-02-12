@@ -1,9 +1,9 @@
 bl_info = {
-    "name": "Place Helper",
-    "author": "幻之境科技 (开发:Atticus)",
+    "name": "Place Helper 放置助手",
+    "author": "AIGODLIKE社区(开发:Atticus)",
     "blender": (3, 2, 0),
     "version": (1, 0),
-    "category": "幻之境",
+    "category": "辣椒出品",
     "support": "COMMUNITY",
     "doc_url": "",
     "tracker_url": "",
