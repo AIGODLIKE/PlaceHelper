@@ -122,7 +122,7 @@ class PH_OT_run_doc(bpy.types.Operator):
     bl_idname = 'ph.run_doc'
     bl_label = 'Documentation'
 
-    port: IntProperty(name='Port', default=9021)
+    port: IntProperty(name='Port', default=1145)
 
     def execute(self, context):
         import os
