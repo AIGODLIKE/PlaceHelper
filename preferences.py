@@ -144,7 +144,7 @@ class PH_OT_run_doc(bpy.types.Operator):
 
         # create new server
         exec_py = sys.executable
-        exec_dir = os.path.dirname(__file__)
+        exec_dir = os.path.join(os.path.dirname(__file__),'docs')
         cmd = f'{exec_py} -m http.server --directory "{exec_dir}" {self.port}'
         subprocess.Popen(cmd, shell=True)
         bpy.ops.wm.url_open(url=f'http://localhost:{self.port}')
