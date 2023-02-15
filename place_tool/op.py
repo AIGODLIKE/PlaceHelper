@@ -410,6 +410,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def clear_bottom_parent(self):
         if not self.tmp_parent: return
+
         # apply constraints
         def apply_const(obj):
             obj.select_set(True)
@@ -525,6 +526,8 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
     axis: EnumProperty(items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')])
     invert_axis: BoolProperty(name='Invert Axis', default=False)
 
+    precision = 3
+
     def handle_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
 
@@ -572,6 +575,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
 
         with store_objs_mx([context.object], self.stop_moving()):
             context.object.matrix_world = rot_matrix @ context.object.matrix_world
+            context.object.rotation_euler = [round(r, self.precision) for r in context.object.rotation_euler]
 
     def handle_multi_obj(self, context, event):
         with mouse_offset(self, event) as (offset_x, offset_y):
@@ -590,6 +594,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
                            self.stop_moving(exclude_obj_list=[self.tg_obj] + self.selected_objs)):
             for obj in self.selected_objs:
                 obj.matrix_world = rot_matrix @ obj.matrix_world
+                obj.rotation_euler = [round(r, self.precision) for r in obj.rotation_euler]
             self.objs_A.bvh_tree_update()
 
         ALIGN_OBJS['top'] = rot_matrix @ ALIGN_OBJS['top']
@@ -619,6 +624,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     cursor_modal = 'MOVE_Y'
+    precision = 3
 
     def handle_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -641,6 +647,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
 
         with store_objs_mx([self.obj_A.obj], self.stop_moving()):
             context.object.matrix_world = scale_matrix @ context.object.matrix_world
+            context.object.scale = [round(s, self.precision) for s in context.object.scale]
 
     def handle_multi_obj(self, context, event):
         with mouse_offset(self, event, scale=0.01, scale_shift=0.005) as (offset_x, offset_y):
@@ -663,6 +670,7 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         with store_objs_mx(self.selected_objs, self.stop_moving(exclude_obj_list=[self.tg_obj] + self.selected_objs)):
             for obj in self.selected_objs:
                 obj.matrix_world = scale_matrix @ obj.matrix_world
+                obj.scale = [round(s, self.precision) for s in obj.scale]
             self.objs_A.bvh_tree_update()
 
         ALIGN_OBJS['top'] = scale_matrix @ ALIGN_OBJS['top']
