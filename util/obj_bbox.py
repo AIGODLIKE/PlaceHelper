@@ -60,22 +60,9 @@ class AlignObject:
     # -------------------------------------------------------------------------
 
     def _calc_bbox(self):
-        if self.obj.type == 'MESH' and self.mode == 'ACCURATE':
-            me = self.eval_obj.data
-            vertices = np.empty(len(me.vertices) * 3, dtype='f')
-            me.vertices.foreach_get("co", vertices)
-            vertices = vertices.reshape(len(me.vertices), 3)
 
-            max_xyz_id = np.argmax(vertices, axis=0)
-            min_xyz_id = np.argmin(vertices, axis=0)
-
-            self.max_x = float(vertices[max_xyz_id[0], 0])
-            self.max_y = float(vertices[max_xyz_id[1], 1])
-            self.max_z = float(vertices[max_xyz_id[2], 2])
-            self.min_x = float(vertices[min_xyz_id[0], 0])
-            self.min_y = float(vertices[min_xyz_id[1], 1])
-            self.min_z = float(vertices[min_xyz_id[2], 2])
-        else:
+        def default_bbox():
+            # print('default_bbox')
             bbox_points = [Vector(v) for v in self.obj.bound_box]
 
             self.max_x = max(bbox_points, key=lambda v: v.x).x
@@ -85,6 +72,87 @@ class AlignObject:
             self.min_x = min(bbox_points, key=lambda v: v.x).x
             self.min_y = min(bbox_points, key=lambda v: v.y).y
             self.min_z = min(bbox_points, key=lambda v: v.z).z
+
+        def mesh_bbox(me):
+            # print('mesh_bbox')
+            vertices = np.empty(len(me.vertices) * 3, dtype='f')
+            me.vertices.foreach_get("co", vertices)
+            vertices = vertices.reshape(len(me.vertices), 3)
+
+            max_xyz_id = np.argmax(vertices, axis=0)
+            min_xyz_id = np.argmin(vertices, axis=0)
+
+            return vertices, max_xyz_id, min_xyz_id
+
+        if not (self.obj.type == 'MESH' and self.mode == 'ACCURATE'):
+            return default_bbox()
+
+        me = self.eval_obj.data
+        if len(me.vertices) != 0:
+            vertices, max_xyz_id, min_xyz_id = mesh_bbox(me)
+            self.max_x = float(vertices[max_xyz_id[0], 0])
+            self.max_y = float(vertices[max_xyz_id[1], 1])
+            self.max_z = float(vertices[max_xyz_id[2], 2])
+            self.min_x = float(vertices[min_xyz_id[0], 0])
+            self.min_y = float(vertices[min_xyz_id[1], 1])
+            self.min_z = float(vertices[min_xyz_id[2], 2])
+            return
+
+        find = False
+        deps = bpy.context.view_layer.depsgraph
+
+        instance = {}  # ob_inst:list[ob_inst.matrix_world]
+        pts = []
+        for ob_inst in deps.object_instances:
+            if not ob_inst.is_instance: continue
+            if ob_inst.parent is not self.eval_obj: continue
+
+            matrix_world = ob_inst.matrix_world
+
+            me = ob_inst.object.to_mesh()
+            if len(me.vertices) == 0: continue
+            vertices, max_xyz_id, min_xyz_id = mesh_bbox(me)
+            max_x = float(vertices[max_xyz_id[0], 0])
+            max_y = float(vertices[max_xyz_id[1], 1])
+            max_z = float(vertices[max_xyz_id[2], 2])
+            min_x = float(vertices[min_xyz_id[0], 0])
+            min_y = float(vertices[min_xyz_id[1], 1])
+            min_z = float(vertices[min_xyz_id[2], 2])
+
+            v_max_x = Vector((max_x, 0, 0))
+            v_max_y = Vector((0, max_y, 0))
+            v_max_z = Vector((0, 0, max_z))
+            v_min_x = Vector((min_x, 0, 0))
+            v_min_y = Vector((0, min_y, 0))
+            v_min_z = Vector((0, 0, min_z))
+
+            pts.append(matrix_world @ v_max_x)
+            pts.append(matrix_world @ v_max_y)
+            pts.append(matrix_world @ v_max_z)
+            pts.append(matrix_world @ v_min_x)
+            pts.append(matrix_world @ v_min_y)
+            pts.append(matrix_world @ v_min_z)
+            ob_inst.object.to_mesh_clear()
+
+            find = True
+
+        if not find:
+            print('did not find any instance')
+            return default_bbox()
+
+        # calc max and min
+        if len(pts) == 0: return default_bbox()
+        # print(pts)
+        # use numpy to calc max and min
+        pts = np.array(pts)
+        max_xyz_id = np.argmax(pts, axis=0)
+        min_xyz_id = np.argmin(pts, axis=0)
+        self.max_x = float(pts[max_xyz_id[0], 0])
+        self.max_y = float(pts[max_xyz_id[1], 1])
+        self.max_z = float(pts[max_xyz_id[2], 2])
+        self.min_x = float(pts[min_xyz_id[0], 0])
+        self.min_y = float(pts[min_xyz_id[1], 1])
+        self.min_z = float(pts[min_xyz_id[2], 2])
 
     def _calc_bbox_pts(self):
         """
