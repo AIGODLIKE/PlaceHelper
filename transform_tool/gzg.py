@@ -183,6 +183,9 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
             gz.matrix_offset = mx_offset
             gz.matrix_basis.translation = loc
 
+    def draw_prepare(self, context):
+        self.refresh(context)
+
     def refresh(self, context):
         self.correct_gz_loc(context)
 

@@ -163,6 +163,9 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         else:
             self.remove_set_axis_gz()
 
+    def draw_prepare(self, context):
+        self.refresh(context)
+
 
 classes = (
     PH_GZG_place_tool,

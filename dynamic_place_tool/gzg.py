@@ -180,6 +180,8 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
             self.correct_gz_loc(context)
             self.update_gz_type(context)
 
+    def draw_prepare(self,context):
+        self.refresh(context)
 
 classes = (
     PH_GZG_dynamic_place,
