@@ -158,7 +158,7 @@ class DynamicBase:
     color_type = None
 
     # pass in
-    axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z'),('VIEW', 'View', 'View')])
+    axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z'), ('VIEW', 'View', 'View')])
     invert_axis: BoolProperty(name='Invert', default=False)
 
     def draw_obj_coll_callback_px(self, context):
@@ -346,7 +346,11 @@ class DynamicBase:
         bpy.ops.rigidbody.object_settings_copy('INVOKE_DEFAULT')
 
     def apply_current(self, context):
-        bpy.ops.object.visual_transform_apply()
+        if context.scene.dynamic_place_tool.bake_animation:
+            bpy.ops.rigidbody.bake_to_keyframes(frame_start=1,
+                                                frame_end=self.frame, step=1)
+        else:
+            bpy.ops.object.visual_transform_apply()
 
     def show_menu(self, context):
         if context.active_object is None or context.active_object.hide_viewport or not context.active_object.select_get():
@@ -466,7 +470,8 @@ class PH_OT_gravity_place(DynamicBase, bpy.types.Operator):
             obj.select_set(True)
 
         self.apply_current(context)
-        bpy.ops.rigidbody.objects_remove()
+        if not context.scene.dynamic_place_tool.bake_animation:
+            bpy.ops.rigidbody.objects_remove()
         # restore
         self.restore_frame(context)
         self.restore_rbd_world(context)
@@ -581,7 +586,7 @@ class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
 
                 if invert_z:
                     self.force.field.strength *= -1
-            elif self.axis =='VIEW':
+            elif self.axis == 'VIEW':
                 self.force.field.strength = - value if self.startX - x > event.mouse_x - x else value
 
     def free(self, context):
@@ -595,7 +600,8 @@ class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
             obj.select_set(True)
 
         self.apply_current(context)
-        bpy.ops.rigidbody.objects_remove()
+        if not context.scene.dynamic_place_tool.bake_animation:
+            bpy.ops.rigidbody.objects_remove()
         # restore
         self.restore_frame(context)
         self.restore_rbd_world(context)

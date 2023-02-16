@@ -22,6 +22,9 @@ class DynamicPlaceProps(PropertyGroup):
     gravity_strength: FloatProperty(name='Gravity', default=2, min=0, soft_max=10)
     strength: IntProperty(name='Strength', default=100, min=-500, max=500)
 
+    # bake
+    bake_animation: BoolProperty(name='Bake Animation', default=False)
+
     active: EnumProperty(name='Active', items=[
         ('CONVEX_HULL', 'Convex Hull', '','MESH_ICOSPHERE',0),
         ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE',1),
@@ -88,7 +91,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
             layout.prop(prop, "strength")
         elif prop.mode == 'DRAG':
             layout.prop(prop, "gravity_strength")
-
+        layout.prop(prop, "bake_animation")
         layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
 
         # prop = tool.operator_properties('test.dynamic_place')
