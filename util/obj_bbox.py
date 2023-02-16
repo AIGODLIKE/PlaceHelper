@@ -11,9 +11,9 @@ faces = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (
 
 class AlignObject:
 
-    def __init__(self, obj: bpy.types.Object, mode: str = 'ACCURATE', is_local: bool = False):
+    def __init__(self, obj: bpy.types.Object, mode: str = 'ACCURATE', is_local: bool = False,
+                 build_instance: bool = True):
         """
-
         :param obj:
         :param mode: 用于bvh检测的模式，FAST或者ACCURATE ,DRAW 模式下无数据写入
         :param is_local: 返回数值为物体/世界坐标
@@ -21,10 +21,10 @@ class AlignObject:
         self.obj = obj
         self.mode = mode  # 'FAST' or 'ACCURATE' or 'DRAW'
         self.is_local = is_local
+        self.build_instance = build_instance
 
         self._calc_bbox()
         self._bbox_pts = self._calc_bbox_pts()
-
         self.bvh_tree_update()
 
     # Evaluate object
@@ -60,6 +60,7 @@ class AlignObject:
     # -------------------------------------------------------------------------
 
     def _calc_bbox(self):
+        print('calc_bbox')
 
         def default_bbox():
             # print('default_bbox')
@@ -74,7 +75,6 @@ class AlignObject:
             self.min_z = min(bbox_points, key=lambda v: v.z).z
 
         def mesh_bbox(me):
-            # print('mesh_bbox')
             vertices = np.empty(len(me.vertices) * 3, dtype='f')
             me.vertices.foreach_get("co", vertices)
             vertices = vertices.reshape(len(me.vertices), 3)
@@ -87,6 +87,8 @@ class AlignObject:
         if not (self.obj.type == 'MESH' and self.mode == 'ACCURATE'):
             return default_bbox()
 
+        # single mesh
+        # ----------------
         me = self.eval_obj.data
         if len(me.vertices) != 0:
             vertices, max_xyz_id, min_xyz_id = mesh_bbox(me)
@@ -98,19 +100,23 @@ class AlignObject:
             self.min_z = float(vertices[min_xyz_id[2], 2])
             return
 
+        # instance
+        # ----------------
+        if not self.build_instance: return default_bbox()
+
         find = False
         deps = bpy.context.view_layer.depsgraph
 
-        instance = {}  # ob_inst:list[ob_inst.matrix_world]
         pts = []
         for ob_inst in deps.object_instances:
             if not ob_inst.is_instance: continue
             if ob_inst.parent is not self.eval_obj: continue
-
             matrix_world = ob_inst.matrix_world
 
             me = ob_inst.object.to_mesh()
             if len(me.vertices) == 0: continue
+            find = True
+
             vertices, max_xyz_id, min_xyz_id = mesh_bbox(me)
             max_x = float(vertices[max_xyz_id[0], 0])
             max_y = float(vertices[max_xyz_id[1], 1])
@@ -133,8 +139,6 @@ class AlignObject:
             pts.append(matrix_world @ v_min_y)
             pts.append(matrix_world @ v_min_z)
             ob_inst.object.to_mesh_clear()
-
-            find = True
 
         if not find:
             print('did not find any instance')

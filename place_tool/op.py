@@ -71,6 +71,8 @@ class BVH_Helper:
 
         self.build_act_obj_mode = context.scene.place_tool.active_bbox_calc_mode
         self.build_scn_obj_mode = context.scene.place_tool.other_bbox_calc_mode
+        self.build_act_inst = context.scene.place_tool.build_active_inst
+        self.build_scn_inst = context.scene.place_tool.build_other_inst
 
     def build_viewlayer_objs(self):
         context = bpy.context
@@ -84,11 +86,11 @@ class BVH_Helper:
                 continue
 
             if obj is context.object:
-                obj_A = AlignObject(obj, self.build_act_obj_mode)
+                obj_A = AlignObject(obj, self.build_act_obj_mode, build_instance=self.build_act_inst)
                 SCENE_OBJS[obj] = obj_A
                 ALIGN_OBJ['active'] = obj_A
             else:
-                SCENE_OBJS[obj] = AlignObject(obj, self.build_scn_obj_mode)
+                SCENE_OBJS[obj] = AlignObject(obj, self.build_scn_obj_mode, build_instance=self.build_scn_inst)
 
     def is_overlap(self, context, exclude_obj_list=None):
         obj = context.object
@@ -208,7 +210,7 @@ class ModalBase():
             center = objs_A.get_bbox_center()
             bottom = objs_A.get_bottom_center()
             if context.object in selected_objs and len(selected_objs) == 1:
-                bottom = AlignObject(context.object).get_axis_center(self.axis, self.invert_axis, is_local=False)
+                bottom = objs[0].get_axis_center(self.axis, self.invert_axis, is_local=False)
 
             top = objs_A.get_top_center()
 
@@ -355,7 +357,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.init_context_obj(context)
 
         # if context.object and len(context.selected_objects) > 1:
-        no_mesh = self.store_muil_obj_info(context)
+        self.store_muil_obj_info(context)
 
         self.create_bottom_parent()
         # else:
