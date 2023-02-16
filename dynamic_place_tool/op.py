@@ -157,6 +157,12 @@ class DynamicBase:
     shading_type = None
     color_type = None
 
+    # cache
+    frame_range = 1000
+    ori_frame_start = None
+    ori_frame_end = None
+    ori_frame_current = None
+
     # pass in
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z'), ('VIEW', 'View', 'View')])
     invert_axis: BoolProperty(name='Invert', default=False)
@@ -207,12 +213,12 @@ class DynamicBase:
         self.ori_frame_step = context.scene.frame_step
         self.ori_frame_current = context.scene.frame_current
 
-        context.scene.frame_start = 1
-        context.scene.frame_end = 1000
+        context.scene.frame_start = self.ori_frame_current
+        context.scene.frame_end = self.ori_frame_current + self.frame_range
         context.scene.frame_step = 1
 
         self.fit_frame_range()
-        self.frame = 1
+        self.frame = context.scene.frame_start
 
     def init_rbd_world(self, context):
         self.ori_gravity = context.scene.gravity.copy()
@@ -221,8 +227,8 @@ class DynamicBase:
         self.ori_point_cache_frame_start = context.scene.rigidbody_world.point_cache.frame_start
         self.ori_point_cache_frame_end = context.scene.rigidbody_world.point_cache.frame_end
 
-        context.scene.rigidbody_world.point_cache.frame_start = 1
-        context.scene.rigidbody_world.point_cache.frame_end = 1000
+        context.scene.rigidbody_world.point_cache.frame_start = self.ori_frame_current
+        context.scene.rigidbody_world.point_cache.frame_end = self.ori_frame_current + self.frame_range
 
     def init_collection_coll(self, context):
         self.coll_obj.clear()
