@@ -96,8 +96,10 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
         from ._runtime import ALIGN_OBJ
 
         if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
+            if ALIGN_OBJ['active'].obj is context.object: return {'FINISHED'}
             ALIGN_OBJ['active'] = AlignObject(context.object,
-                                              context.scene.place_tool.active_bbox_calc_mode)
+                                              context.scene.place_tool.active_bbox_calc_mode,
+                                              context.scene.place_tool.build_active_inst)
 
         return {'FINISHED'}
 

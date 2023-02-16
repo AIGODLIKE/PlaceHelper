@@ -5,6 +5,7 @@ from mathutils import Vector, Color, Euler, Matrix
 from ..util.gz import GizmoInfo, C_OBJECT_TYPE_HAS_BBOX
 from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
 from ..util.get_gz_matrix import local_matrix
+from ..util.obj_bbox import AlignObject
 
 from ._runtime import ALIGN_OBJ, ALIGN_OBJS
 from ..get_addon_pref import get_addon_pref
@@ -115,23 +116,26 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         obj_A = ALIGN_OBJ.get('active')
 
         if obj_A and len(context.selected_objects) == 1:
+            try:
+                x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
+                axis = context.scene.place_tool.axis
+                invert = context.scene.place_tool.invert_axis
+                if axis == 'X':
+                    q = x if not invert else xD
+                elif axis == 'Y':
+                    q = y if not invert else yD
+                elif axis == 'Z':
+                    q = z if not invert else zD
 
-            x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
-            axis = context.scene.place_tool.axis
-            invert = context.scene.place_tool.invert_axis
-            if axis == 'X':
-                q = x if not invert else xD
-            elif axis == 'Y':
-                q = y if not invert else yD
-            elif axis == 'Z':
-                q = z if not invert else zD
+                pos = obj_A.get_axis_center(axis, not invert, is_local=False)
+                scale = Vector((1, 1, 1))
+                mx = Matrix.LocRotScale(pos, q, scale)
 
-            pos = obj_A.get_axis_center(axis, not invert, is_local=False)
-            scale = Vector((1, 1, 1))
-            mx = Matrix.LocRotScale(pos, q, scale)
+                self.rotate_gz.matrix_basis = mx
+                self.scale_gz.matrix_basis = mx
+            except ReferenceError:
+                pass
 
-            self.rotate_gz.matrix_basis = mx
-            self.scale_gz.matrix_basis = mx
 
         elif obj_A and len(context.selected_objects) > 1:
             try:
@@ -151,6 +155,12 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
             except (ZeroDivisionError, AttributeError):
                 pass
+
+        elif not obj_A or obj_A.obj != context.object:
+            if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
+                ALIGN_OBJ['active'] = AlignObject(context.object,
+                                                  context.scene.place_tool.active_bbox_calc_mode,
+                                                  context.scene.place_tool.build_active_inst)
 
     def refresh(self, context):
         if context.object:
