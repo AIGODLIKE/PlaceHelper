@@ -143,6 +143,10 @@ class AlignObject:
         # calc max and min
         if len(pts) == 0: return default_bbox()
         # print(pts)
+
+        # invert matrix_world back to object parent's matrix_world
+        pts = [self.mx.inverted() @ pt for pt in pts]
+
         # use numpy to calc max and min
         pts = np.array(pts)
         max_xyz_id = np.argmax(pts, axis=0)
