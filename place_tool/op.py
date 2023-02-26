@@ -234,6 +234,7 @@ class ModalBase():
             self.off_bbox_pts_mx = [Matrix.Translation(pt - center) for pt in self.ori_bbox_pts]
         else:
             self.bottom = context.object.matrix_world.translation
+            selected_objs = [context.object]
         self.selected_objs = selected_objs
 
     def clear_target(self):

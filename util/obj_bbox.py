@@ -60,7 +60,7 @@ class AlignObject:
     # -------------------------------------------------------------------------
 
     def _calc_bbox(self):
-        print('calc_bbox')
+        # print('calc_bbox')
 
         def default_bbox():
             # print('default_bbox')
