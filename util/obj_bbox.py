@@ -112,8 +112,10 @@ class AlignObject:
             if not ob_inst.is_instance: continue
             if ob_inst.parent is not self.eval_obj: continue
             matrix_world = ob_inst.matrix_world
-
-            me = ob_inst.object.to_mesh()
+            try: # 只评估网格物体实例
+                me = ob_inst.object.to_mesh()
+            except:
+                continue
             if len(me.vertices) == 0: continue
             find = True
 
