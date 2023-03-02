@@ -378,13 +378,14 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         empty = bpy.data.objects.new('Empty', None)
         empty.name = 'TMP_PARENT'
         empty.empty_display_type = 'PLAIN_AXES'
-        empty.empty_display_size = 0
+        # empty.empty_display_size = 0
         empty.location = self.bottom
         z = getattr(empty.location, self.axis.lower())
         setattr(empty.location, self.axis.lower(), z - offset)
 
         rot_obj = bpy.context.object
         empty.rotation_euler = rot_obj.rotation_euler
+        # self.clear_rotate(empty)
 
         def create_tmp_parent(obj):
             con = obj.constraints.new('CHILD_OF')
@@ -495,27 +496,28 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         else:
             z = Vector((v, 0, 0))
 
-        rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
-        self.rotate_clear = self.ori_matrix_world.to_quaternion()
+        self.rotate_clear = obj.matrix_local.to_quaternion()
 
         for a in ['x', 'y', 'z']:
             if a == self.axis.lower(): continue
 
-            if a == 'z' and self.invert_axis:  # seem that the z with invert axis will mix x and y
-                setattr(self.rotate_clear, 'x', math.radians(180))
-                setattr(self.rotate_clear, 'y', math.radians(0))
+            # if self.invert_axis:
+            #     if a == 'z':  # seem that the z with invert axis will mix x and y
+            #         setattr(self.rotate_clear, 'x', math.radians(180))
+            #         setattr(self.rotate_clear, 'y', math.radians(0))
+
             # clear
             setattr(self.rotate_clear, a, 0)
 
-        self.rotate_clear = self.rotate_clear.to_matrix().to_euler(obj.rotation_mode)
+        self.rotate_clear = self.rotate_clear.to_matrix()
+        try:
+            offset_q = z.rotation_difference(self.normal)
+        except:
+            offset_q = Vector((0, 0, 1)).rotation_difference(z)
 
-        offset_q = z.rotation_difference(self.normal)
+        obj.rotation_euler = (offset_q.to_matrix() @ self.rotate_clear).to_euler()
 
-        obj.rotation_euler = (
-                offset_q.to_matrix().to_4x4() @ self.rotate_clear.to_matrix().to_4x4()).to_euler()
-
-        # rotate around center point
-        # obj.rotation_euler = self.rotate_clear
+        # obj.rotation_euler = offset_q.to_euler()
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
