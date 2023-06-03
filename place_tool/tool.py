@@ -38,12 +38,12 @@ class PlaceToolProps(PropertyGroup):
                                                ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
                                         default='ACCURATE')
 
-    other_bbox_calc_mode: EnumProperty(name='Others',
+    other_bbox_calc_mode: EnumProperty(name='Scene Objects',
                                        items=[('ACCURATE', 'Final', 'Use visual obj bounding box, slower'),
                                               ('FAST', 'Base', 'Use basic mesh bounding box, faster'), ],
                                        default='ACCURATE')
     build_active_inst: BoolProperty(name='Active Instance Bounding Box', default=True)
-    build_other_inst: BoolProperty(name='Other Instance Bounding Box', default=False)
+    build_other_inst: BoolProperty(name='Consider Scene Geo Nodes Instance', default=False)
 
 
 class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
@@ -124,12 +124,10 @@ class PH_PT_PlaceToolPanel(bpy.types.Panel):
 
         # row = col.row(align=True)
         # row.prop(prop, "active_bbox_calc_mode")
-        row = col.row(align=True)
-        row.prop(prop, "other_bbox_calc_mode")
+        layout.prop(prop, "other_bbox_calc_mode")
         # row = col.row(align=True)
         # row.prop(prop, "build_active_inst")
-        row = col.row(align=True)
-        row.prop(prop, "build_other_inst")
+        layout.prop(prop, "build_other_inst")
         layout.separator()
 
         layout.label(text='Collisions')

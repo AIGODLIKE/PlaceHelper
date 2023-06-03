@@ -15,7 +15,10 @@
   "Use Color When Moving": "运行时变色",
   "Gizmo Handle All Event":"Gizmo 接收所有按键",
   "Active Instance Bounding Box":"活动项实例碰撞盒",
-  "Other Instance Bounding Box":"其他项实例碰撞盒",
+  "Consider Scene Geo Nodes Instance":"评估场景几何节点实例",
+  "Use visual obj bounding box, slower":"使用可视化物体碰撞盒，速度慢一些",
+  "Use basic mesh bounding box, faster":"使用基础网格碰撞盒，速度快一些",
+  "Scene Objects":"场景物体",
 
 
   "Set Place Axis": "设置放置轴"
