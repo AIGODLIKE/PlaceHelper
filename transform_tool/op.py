@@ -381,7 +381,7 @@ class PH_OT_translate(bpy.types.Operator):
         else:
             trans_args.pop('mode')
             bpy.ops.object.duplicate_move('INVOKE_DEFAULT',
-                                          OBJECT_OT_duplicate={"linked": False if copy != 'COPY' else True,
+                                          OBJECT_OT_duplicate={"linked": False if copy != 'INSTANCE' else True,
                                                                "mode": 'TRANSLATION'},
                                           TRANSFORM_OT_translate=trans_args)
 
