@@ -1,6 +1,6 @@
 bl_info = {
     "name": "Place Helper 放置助手",
-    "author": "AIGODLIKE社区(开发:Atticus)",
+    "author": "AIGODLIKE社区,Atticus",
     "blender": (3, 2, 0),
     "version": (1, 1),
     "category": "辣椒出品",

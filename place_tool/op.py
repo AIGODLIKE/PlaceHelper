@@ -6,8 +6,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
 
 from contextlib import contextmanager
 
-from ..utils import C_OBJECT_TYPE_HAS_BBOX
-from ..util.obj_bbox import AlignObject, AlignObjects
+from ..util.obj_bbox import AlignObject, AlignObjects,C_OBJECT_TYPE_HAS_BBOX
 from ..util.raycast import ray_cast
 from ..util.get_gz_matrix import local_matrix
 

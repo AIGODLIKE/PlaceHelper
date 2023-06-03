@@ -38,7 +38,7 @@ def draw_bbox_callback(self, context):
 
     with wrap_bgl_restore(width):
         if context.object and len(context.selected_objects) == 1:
-            obj_A = ALIGN_OBJ.get('active',None)
+            obj_A = ALIGN_OBJ.get('active', None)
             if context.object.type in C_OBJECT_TYPE and obj_A:  # mesh object
 
                 shader_2d.bind()
@@ -55,8 +55,17 @@ def draw_bbox_callback(self, context):
                 circle_pts.extend(line_pts)
                 self.circle_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in circle_pts]
 
-                batch = batch_for_shader(shader_2d, 'LINES', {"pos": self.bbox_pts_2d + self.circle_pts_2d})
-                batch.draw(shader_2d)
+                try:
+                    batch = batch_for_shader(shader_2d, 'LINES', {"pos": self.circle_pts_2d})
+                    batch.draw(shader_2d)
+                except TypeError:
+                    pass
+
+                try:
+                    batch = batch_for_shader(shader_2d, 'LINES', {"pos": self.bbox_pts_2d})
+                    batch.draw(shader_2d)
+                except TypeError:  # scale too big
+                    pass
 
                 draw_debug(obj_A, context)
 
