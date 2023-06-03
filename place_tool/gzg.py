@@ -159,8 +159,9 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         elif not obj_A or obj_A.obj != context.object:
             if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
                 ALIGN_OBJ['active'] = AlignObject(context.object,
-                                                  context.scene.place_tool.active_bbox_calc_mode,
-                                                  context.scene.place_tool.build_active_inst)
+                                                  'ACCURATE',True)
+                                                  # context.scene.place_tool.build_active_inst)
+
 
     def refresh(self, context):
         if context.object:

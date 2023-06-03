@@ -98,8 +98,10 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
         if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
             if ALIGN_OBJ['active'].obj is context.object: return {'FINISHED'}
             ALIGN_OBJ['active'] = AlignObject(context.object,
-                                              context.scene.place_tool.active_bbox_calc_mode,
-                                              context.scene.place_tool.build_active_inst)
+                                              'ACCURATE',
+                                              True)
+                                              # context.scene.place_tool.active_bbox_calc_mode,
+                                              # context.scene.place_tool.build_active_inst)
 
         return {'FINISHED'}
 
@@ -120,12 +122,12 @@ class PH_PT_PlaceToolPanel(bpy.types.Panel):
         col.use_property_split = True
         col.use_property_decorate = False
 
-        row = col.row(align=True)
-        row.prop(prop, "active_bbox_calc_mode")
+        # row = col.row(align=True)
+        # row.prop(prop, "active_bbox_calc_mode")
         row = col.row(align=True)
         row.prop(prop, "other_bbox_calc_mode")
-        row = col.row(align=True)
-        row.prop(prop, "build_active_inst")
+        # row = col.row(align=True)
+        # row.prop(prop, "build_active_inst")
         row = col.row(align=True)
         row.prop(prop, "build_other_inst")
         layout.separator()

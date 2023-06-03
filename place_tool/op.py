@@ -68,9 +68,11 @@ class BVH_Helper:
     def __init__(self):
         context = bpy.context
 
-        self.build_act_obj_mode = context.scene.place_tool.active_bbox_calc_mode
+        # self.build_act_obj_mode = context.scene.place_tool.active_bbox_calc_mode
+        self.build_act_obj_mode = 'ACCURATE'
         self.build_scn_obj_mode = context.scene.place_tool.other_bbox_calc_mode
-        self.build_act_inst = context.scene.place_tool.build_active_inst
+        # self.build_act_inst = context.scene.place_tool.build_active_inst
+        self.build_act_inst = True
         self.build_scn_inst = context.scene.place_tool.build_other_inst
 
     def build_viewlayer_objs(self):

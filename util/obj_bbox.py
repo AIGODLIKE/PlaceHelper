@@ -8,11 +8,13 @@ C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 # 创建bbox的面顶点顺序
 faces = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (4, 0, 3, 7)]
 
+
 def DebugWrapper(func):
-    def wrapper(*args,**kwargs):
+    def wrapper(*args, **kwargs):
         # func name
         print(func.__name__)
-        return func(*args,**kwargs)
+        return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -91,9 +93,11 @@ class AlignObject:
 
             return vertices, max_xyz_id, min_xyz_id
 
-        if not (self.obj.type == 'MESH' and self.mode == 'ACCURATE'):
+        if self.obj.type != 'MESH':
             return default_bbox()
 
+        if self.mode != 'ACCURATE':
+            return default_bbox()
         # single mesh
         # ----------------
         me = self.eval_obj.data
@@ -119,7 +123,7 @@ class AlignObject:
             if not ob_inst.is_instance: continue
             if ob_inst.parent is not self.eval_obj: continue
             matrix_world = ob_inst.matrix_world
-            try: # 只评估网格物体实例
+            try:  # 只评估网格物体实例
                 me = ob_inst.object.to_mesh()
             except:
                 continue
