@@ -21,10 +21,22 @@ from ..util.get_position import get_objs_bbox_center, get_objs_axis_aligned_bbox
 from ..util.get_gz_matrix import get_matrix
 from ..get_addon_pref import get_addon_pref
 
-shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-shader_tex = gpu.shader.from_builtin('2D_IMAGE')
+
+def get_shader(type = '3d'):
+    shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+    shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+    shader_tex = gpu.shader.from_builtin('2D_IMAGE')
+
+    if type == '3d':
+        return shader_3d
+    elif type == '2d':
+        return shader_2d
+    elif type == 'debug':
+        return shader_debug
+    elif type == 'tex':
+        return shader_tex
+
 
 C_OBJECT_TYPE_RBD = {'MESH'}
 
@@ -33,7 +45,6 @@ G_DRAW_MESH = {
     'pt_mesh': None,
     'tmp_mesh': None,
 }
-
 
 def get_parent_collection_names(collection, parent_names):
     all_coll = list(bpy.context.scene.collection.children_recursive)
@@ -181,6 +192,7 @@ class DynamicBase:
         color = pref_bbox.color
 
         with wrap_bgl_restore(width):
+            shader_3d = get_shader('3d')
             shader_3d.bind()
             shader_3d.uniform_float("color", color)
             batch = batch_for_shader(shader_3d, 'LINES', {"pos": draw_pts})

@@ -16,10 +16,22 @@ from ..get_addon_pref import get_addon_pref
 from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
 
 C_OBJECT_TYPE = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
-shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-shader_tex = gpu.shader.from_builtin('2D_IMAGE')
+
+
+def get_shader(type = '3d'):
+    shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+    shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+    shader_tex = gpu.shader.from_builtin('2D_IMAGE')
+
+    if type == '3d':
+        return shader_3d
+    elif type == '2d':
+        return shader_2d
+    elif type == 'debug':
+        return shader_debug
+    elif type == 'tex':
+        return shader_tex
 
 
 def draw_bbox_callback(self, context):
@@ -41,6 +53,7 @@ def draw_bbox_callback(self, context):
             obj_A = ALIGN_OBJ.get('active', None)
             if context.object.type in C_OBJECT_TYPE and obj_A:  # mesh object
 
+                shader_2d = get_shader('2d')
                 shader_2d.bind()
                 shader_2d.uniform_float("color", color)
                 # 碰撞盒
@@ -76,6 +89,8 @@ def draw_bbox_callback(self, context):
         # objects
         elif context.object and len(context.selected_objects) > 1:
             objs_A = ALIGN_OBJS
+
+            shader_2d = get_shader('2d')
 
             shader_2d.bind()
             shader_2d.uniform_float("color", color)
@@ -127,6 +142,8 @@ def draw_debug(obj_A, context):
 
     region = context.region
     r3d = context.space_data.region_3d
+
+    shader_debug = get_shader('debug')
 
     shader_debug.bind()
     shader_debug.uniform_float("color", (0, 1, 0, 1))
