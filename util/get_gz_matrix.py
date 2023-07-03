@@ -504,6 +504,12 @@ def get_matrix(reverse_zD=False):
         elif bpy.context.mode == 'EDIT_MESH':
             res = normal_mesh_matrix(reverse_zD=reverse_zD)
 
+    elif orient_slots == 'PARENT':
+        if bpy.context.object.parent:
+            obj = bpy.context.object.parent
+            res = local_matrix(obj=obj, reverse_zD=reverse_zD)
+        else:
+            res = global_matrix(reverse_zD=reverse_zD)
 
     else:
         res = custom_matrix()
