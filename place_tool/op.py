@@ -379,7 +379,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         empty = bpy.data.objects.new('Empty', None)
         empty.name = 'TMP_PARENT'
         empty.empty_display_type = 'PLAIN_AXES'
-        # empty.empty_display_size = 0
+        empty.empty_display_size = 0
         empty.location = self.bottom
         z = getattr(empty.location, self.axis.lower())
         setattr(empty.location, self.axis.lower(), z - offset)
