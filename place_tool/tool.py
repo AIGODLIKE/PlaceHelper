@@ -69,8 +69,11 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
 
         ("ph.show_place_axis",
          {"type": 'LEFTMOUSE', "value": 'CLICK', "alt": True},
-         {"properties": []})
+         {"properties": []}),
 
+        ("test.test_place",
+         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "ctrl": True},
+         {"properties": []}),
     )
 
     def draw_settings(context, layout, tool):
@@ -100,8 +103,8 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
             ALIGN_OBJ['active'] = AlignObject(context.object,
                                               'ACCURATE',
                                               True)
-                                              # context.scene.place_tool.active_bbox_calc_mode,
-                                              # context.scene.place_tool.build_active_inst)
+            # context.scene.place_tool.active_bbox_calc_mode,
+            # context.scene.place_tool.build_active_inst)
 
         return {'FINISHED'}
 
