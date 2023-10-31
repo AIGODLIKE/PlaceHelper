@@ -200,7 +200,7 @@ def register():
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
-    bpy.utils.register_tool(PH_TL_ScatterTool, separator=False)
+    # bpy.utils.register_tool(PH_TL_ScatterTool, separator=False)
 
     bpy.utils.register_class(PH_PT_wrap_view3d_select)
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
