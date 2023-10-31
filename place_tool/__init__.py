@@ -1,4 +1,4 @@
-from . import op, gzg, tool, _runtime,test
+from . import op, gzg, tool, _runtime, test, scatter_single
 
 
 def register():
@@ -6,6 +6,7 @@ def register():
     gzg.register()
     tool.register()
     test.register()
+    scatter_single.register()
 
 
 def unregister():
@@ -13,3 +14,4 @@ def unregister():
     gzg.unregister()
     op.unregister()
     test.unregister()
+    scatter_single.unregister()
