@@ -210,6 +210,8 @@ def register():
 
 def unregister():
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
+    # bpy.utils.unregister_tool(PH_TL_ScatterTool)
+
     bpy.utils.unregister_class(PH_PT_PlaceToolPanel)
     bpy.utils.unregister_class(PH_PT_wrap_view3d_select)
     bpy.utils.unregister_class(PH_OT_set_place_axis)

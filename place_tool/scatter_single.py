@@ -37,7 +37,6 @@ class PH_OT_scatter_single(bpy.types.Operator):
                 # new scale use offset_y
                 delta_scale = -offset_x * 0.05 * ori_scale[0]
                 new_scale = ori_scale + Vector((delta_scale, delta_scale, delta_scale))
-                print(new_scale)
 
                 rot_matrix = (
                         Matrix.Translation(pivot) @
