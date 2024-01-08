@@ -23,10 +23,10 @@ from ..get_addon_pref import get_addon_pref
 
 
 def get_shader(type = '3d'):
-    shader_3d = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-    shader_2d = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-    shader_debug = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-    shader_tex = gpu.shader.from_builtin('2D_IMAGE')
+    shader_3d = gpu.shader.from_builtin('UNIFORM_COLOR')
+    shader_2d = gpu.shader.from_builtin('UNIFORM_COLOR')
+    shader_debug = gpu.shader.from_builtin('UNIFORM_COLOR')
+    shader_tex = gpu.shader.from_builtin('IMAGE')
 
     if type == '3d':
         return shader_3d
