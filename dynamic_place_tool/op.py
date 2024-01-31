@@ -22,7 +22,7 @@ from ..util.get_gz_matrix import get_matrix
 from ..get_addon_pref import get_addon_pref
 
 
-def get_shader(type = '3d'):
+def get_shader(type='3d'):
     shader_3d = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_2d = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_debug = gpu.shader.from_builtin('UNIFORM_COLOR')
@@ -45,6 +45,7 @@ G_DRAW_MESH = {
     'pt_mesh': None,
     'tmp_mesh': None,
 }
+
 
 def get_parent_collection_names(collection, parent_names):
     all_coll = list(bpy.context.scene.collection.children_recursive)
@@ -270,7 +271,8 @@ class DynamicBase:
                     continue
 
                 if obj.hide_viewport is False:
-                    obj.select_set(True)
+                    if obj.name in context.view_layer.objects:
+                        obj.select_set(True)
 
                 if obj not in selected_objects and obj.type in C_OBJECT_TYPE_RBD and obj.hide_viewport is False:
                     context.view_layer.objects.active = obj
