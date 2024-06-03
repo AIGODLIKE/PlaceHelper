@@ -267,6 +267,9 @@ class DynamicBase:
 
         def set_coll_obj(collection):
             for obj in collection.objects:
+                if obj.name not in context.view_layer.objects:
+                    continue
+
                 if obj.name in self.obj_colors or obj in self.coll_obj:
                     continue
 
@@ -297,14 +300,23 @@ class DynamicBase:
 
                 obj.select_set(False)
 
+        all_ready_set = []
+
         for coll in coll_list:
-            if coll == 'Scene Collection':
-                collection = bpy.context.scene.collection
-            else:
-                collection = bpy.data.collections[coll]
+            if context.view_layer.layer_collection.children[coll].exclude is True:
+                continue
+            if coll in all_ready_set:
+                continue
+
+            collection = bpy.context.scene.collection if coll == 'Scene Collection' else bpy.data.collections[coll]
             set_coll_obj(collection)
+            all_ready_set.append(coll)
+
             for child_coll in collection.children_recursive:
+                if child_coll.name in all_ready_set:
+                    continue
                 set_coll_obj(child_coll)
+                all_ready_set.append(child_coll.name)
 
         context.view_layer.objects.active = active_obj
 
