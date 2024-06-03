@@ -303,6 +303,8 @@ class DynamicBase:
         all_ready_set = []
 
         for coll in coll_list:
+            if coll not in context.view_layer.layer_collection.children:
+                continue
             if context.view_layer.layer_collection.children[coll].exclude is True:
                 continue
             if coll in all_ready_set:
