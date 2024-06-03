@@ -6,7 +6,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
 
 from contextlib import contextmanager
 
-from ..util.obj_bbox import AlignObject, AlignObjects,C_OBJECT_TYPE_HAS_BBOX
+from ..util.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
 from ..util.raycast import ray_cast
 from ..util.get_gz_matrix import local_matrix
 
@@ -386,6 +386,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         rot_obj = bpy.context.object
         empty.rotation_euler = rot_obj.rotation_euler
+
         # self.clear_rotate(empty)
 
         def create_tmp_parent(obj):
@@ -450,6 +451,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             self.remove_handles()
             return {"FINISHED"}
 
+        if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
+            self.tmp_parent.rotation_euler[2] += math.radians(30) if event.type == 'WHEELUPMOUSE' else math.radians(-30)
+            self.tmp_parent_rot_z = self.tmp_parent.rotation_euler[2]
+
         return {"RUNNING_MODAL"}
 
     def handle_multi_obj(self, context, event):
@@ -476,6 +481,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 if place_tool_props().orient == 'NORMAL':
                     # self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
                     self.clear_rotate(self.tmp_parent)
+                    if hasattr(self, 'tmp_parent_rot_z'):
+                        self.tmp_parent.rotation_euler[2] = self.tmp_parent_rot_z
 
                 if hasattr(self, 'objs_A') and context.object in self.selected_objs:
                     self.objs_A.bvh_tree_update()
