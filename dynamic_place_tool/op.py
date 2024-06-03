@@ -315,8 +315,13 @@ class DynamicBase:
             all_ready_set.append(coll)
 
             for child_coll in collection.children_recursive:
+                if child_coll not in context.view_layer.layer_collection.children:
+                    continue
+                if context.view_layer.layer_collection.children[child_coll].exclude is True:
+                    continue
                 if child_coll.name in all_ready_set:
                     continue
+
                 set_coll_obj(child_coll)
                 all_ready_set.append(child_coll.name)
 
