@@ -1,0 +1,12 @@
+name = "Place Helper"
+id = "PlaceHelper"
+maintainer = "AIGODLIKE社区,Atticus"
+version = "1.2.7"
+tagline = "Easily place objects in Blender"
+blender_version_min = "4.1.1"
+blender_version_max = "4.2.1"
+type = "add-on"
+schema_version = "1.0.0"
+tags = ["Model"]
+license = ["SPDX:GPL-3.0-or-later"]
+website = "https://github.com/AIGODLIKE/PlaceHelper"
