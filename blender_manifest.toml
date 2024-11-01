@@ -1,7 +1,7 @@
 name = "Place Helper"
 id = "PlaceHelper"
 maintainer = "AIGODLIKE社区,Atticus"
-version = "1.2.7"
+version = "1.2.8"
 tagline = "Easily place objects in Blender"
 blender_version_min = "4.1.1"
 blender_version_max = "4.2.1"
