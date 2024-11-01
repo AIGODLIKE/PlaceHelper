@@ -376,26 +376,26 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         offset = get_addon_pref().place_tool.bbox.offset
         if self.invert_axis: offset = -offset
 
-        empty = bpy.data.objects.new('Empty', None)
-        empty.name = 'TMP_PARENT'
-        empty.empty_display_type = 'PLAIN_AXES'
-        empty.empty_display_size = 0
-        empty.location = self.bottom
-        z = getattr(empty.location, self.axis.lower())
-        setattr(empty.location, self.axis.lower(), z - offset)
+        empty_obj = bpy.data.objects.new('Empty', None)
+        empty_obj.name = 'TMP_PARENT'
+        empty_obj.empty_display_type = 'PLAIN_AXES'
+        empty_obj.empty_display_size = 0
+        empty_obj.location = self.bottom
+        z = getattr(empty_obj.location, self.axis.lower())
+        setattr(empty_obj.location, self.axis.lower(), z - offset)
 
         rot_obj = bpy.context.object
-        empty.rotation_euler = rot_obj.rotation_euler
+        empty_obj.rotation_euler = rot_obj.rotation_euler
 
         # self.clear_rotate(empty)
 
-        def create_tmp_parent(obj):
+        def add_tmp_parent_constraints(obj, target):
             con = obj.constraints.new('CHILD_OF')
             con.name = 'TMP_PARENT'
             con.use_rotation_x = True
             con.use_rotation_y = True
             con.use_rotation_z = True
-            con.target = empty
+            con.target = target
             obj.select_set(False)
 
         for obj in self.selected_objs:
@@ -403,14 +403,14 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 obj.select_set(False)
                 continue
             # loop over the constraints in each object
-            create_tmp_parent(obj)
+            add_tmp_parent_constraints(obj, empty_obj)
         # if obj is not mesh
         if rot_obj not in self.selected_objs:
-            create_tmp_parent(rot_obj)
+            add_tmp_parent_constraints(rot_obj, empty_obj)
             rot_obj.select_set(True)
 
-        self.tmp_parent = empty
-        bpy.context.collection.objects.link(empty)
+        self.tmp_parent = empty_obj
+        bpy.context.collection.objects.link(empty_obj)
         bpy.context.view_layer.objects.active = rot_obj
         # empty.select_set(True)
 
@@ -452,8 +452,27 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             return {"FINISHED"}
 
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            self.tmp_parent.rotation_euler[2] += math.radians(30) if event.type == 'WHEELUPMOUSE' else math.radians(-30)
-            self.tmp_parent_rot_z = self.tmp_parent.rotation_euler[2]
+            delta_angle = math.radians(30) if event.type == 'WHEELUPMOUSE' else math.radians(-30)
+            # get temp parent local z axis and rotate temp parent z axis
+            q = self.tmp_parent.matrix_world.to_quaternion()
+            v = -1 if self.invert_axis else 1
+            match self.axis:
+                case 'X':
+                    axis = q @ Vector((v, 0, 0))
+                case 'Y':
+                    axis = q @ Vector((0, v, 0))
+                case 'Z':
+                    axis = q @ Vector((0, 0, v))
+                case _:
+                    axis = q @ Vector((0, 0, v))
+
+            pivot = self.tmp_parent.location
+            rot_matrix = (
+                    Matrix.Translation(pivot) @
+                    Matrix.Rotation(delta_angle, 4, axis) @
+                    Matrix.Translation(-pivot)
+            )
+            self.tmp_parent.matrix_world = rot_matrix @ self.tmp_parent.matrix_world
 
         return {"RUNNING_MODAL"}
 
