@@ -1,19 +1,15 @@
 import math
-import bpy
-
-from mathutils import Vector, Matrix, Euler
-from bpy.props import StringProperty, BoolProperty, EnumProperty, IntProperty
-
 from contextlib import contextmanager
 
-from ..util.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
-from ..util.raycast import ray_cast
-from ..util.get_gz_matrix import local_matrix
-
-from ..get_addon_pref import get_addon_pref
-from .draw_bbox import draw_bbox_callback
+import bpy
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+from mathutils import Vector, Matrix
 
 from ._runtime import SCENE_OBJS, ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
+from .draw_bbox import draw_bbox_callback
+from ..get_addon_pref import get_addon_pref
+from ..util.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
+from ..util.raycast import ray_cast
 
 # 工具属性设置
 place_tool_props = lambda: bpy.context.scene.place_tool
@@ -55,7 +51,7 @@ def mouse_offset(op, event, scale=0.01, scale_shift=0.0025):
     op.mouseDX -= event.mouse_x
     op.mouseDY -= event.mouse_y
     scale_factor = scale_shift if event.shift else scale
-    yield (op.mouseDX * scale_factor, op.mouseDY * scale_factor)
+    yield op.mouseDX * scale_factor, op.mouseDY * scale_factor
     op.mouseDX = event.mouse_x
     op.mouseDY = event.mouse_y
 
@@ -565,6 +561,11 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
 
         with mouse_offset(self, event) as (offset_x, offset_y):
             offset = offset_x
+
+        if event.ctrl:
+            offset *= 0.01
+        elif event.alt:
+            offset *= 4
 
         rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
         _axis = {'X': 0, 'Y': 1, 'Z': 2}[self.axis]
