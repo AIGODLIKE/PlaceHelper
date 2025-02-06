@@ -10,7 +10,7 @@ data = {
     "Draw Active Collision": "绘制激活项目碰撞",
     "Draw Active Object Collision lines, Performance will decrease": "绘制激活项目碰撞线，性能会下降",
     "Scale\nShift: Duplicate\nAlt: Set Axis": "缩放\nShift: 复制\nAlt: 设置轴",
-    "Rotate\\nShift: Duplicate\\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
+    "Rotate\nShift: Duplicate\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
     "Please select the active object": "请选择一个物体为激活项",
     "Use Color When Moving": "运行时变色",
     "Gizmo Handle All Event": "Gizmo 接收所有按键",

@@ -1,30 +1,26 @@
 # this file is used to draw bbox on blender‘s 3d View
+from contextlib import contextmanager
+from math import sin, cos, pi
+
 import blf
 import gpu
-
-from gpu_extras.presets import draw_circle_2d
-from gpu_extras.batch import batch_for_shader
-from mathutils import Vector, Matrix
 from bpy_extras.view3d_utils import location_3d_to_region_2d as loc3d_2_r2d
-
-from math import sin, cos, pi
-from contextlib import contextmanager
-
-from ..util.obj_bbox import AlignObject
-from ..get_addon_pref import get_addon_pref
+from gpu_extras.batch import batch_for_shader
+from gpu_extras.presets import draw_circle_2d
+from mathutils import Vector, Matrix
 
 from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
+from ..get_addon_pref import get_addon_pref
+from ..util.obj_bbox import AlignObject
 
 C_OBJECT_TYPE = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
 
-def get_shader(type = '3d'):
+def get_shader(type="3d"):
     shader_3d = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_2d = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_debug = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_tex = gpu.shader.from_builtin('IMAGE')
-
-
 
     if type == '3d':
         return shader_3d
@@ -41,11 +37,11 @@ def draw_bbox_callback(self, context):
     if not context.object:
         return
 
-    overlap_obj_A = OVERLAP_OBJ.get('obj')
+    overlap_obj_a = OVERLAP_OBJ.get('obj')
 
     pref_bbox = get_addon_pref().place_tool.bbox
     width = pref_bbox.width
-    color = pref_bbox.color_alert if overlap_obj_A and (pref_bbox.coll_alert) else pref_bbox.color
+    color = pref_bbox.color_alert if overlap_obj_a and pref_bbox.coll_alert else pref_bbox.color
 
     region = context.region
     r3d = context.space_data.region_3d
@@ -60,8 +56,8 @@ def draw_bbox_callback(self, context):
                 shader_2d.uniform_float("color", color)
                 # 碰撞盒
                 bbox_pts = get_obj_bbox_draw_pts(obj_A)
-                if overlap_obj_A:
-                    bbox_pts.extend(get_obj_bbox_draw_pts(overlap_obj_A))
+                if overlap_obj_a:
+                    bbox_pts.extend(get_obj_bbox_draw_pts(overlap_obj_a))
                 self.bbox_pts_2d = [loc3d_2_r2d(region, r3d, pt) for pt in bbox_pts]
                 # 圆环和朝向
                 bottom_pt = obj_A.get_axis_center(self.axis, self.invert_axis, is_local=True)
