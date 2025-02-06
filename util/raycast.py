@@ -1,10 +1,10 @@
-import bpy
-
-from bpy_extras.view3d_utils import region_2d_to_vector_3d as r2d_2_vec3d
-from bpy_extras.view3d_utils import region_2d_to_origin_3d as r2d_2_origin3d
-from bpy_extras.view3d_utils import region_2d_to_location_3d as r2d_2_loc3d
-
 from contextlib import contextmanager
+
+import bpy
+from bpy_extras.view3d_utils import region_2d_to_location_3d as r2d_2_loc3d
+from bpy_extras.view3d_utils import region_2d_to_origin_3d as r2d_2_origin3d
+from bpy_extras.view3d_utils import region_2d_to_vector_3d as r2d_2_vec3d
+
 
 def mouse_ray(context, event):
     """获取鼠标射线"""
@@ -14,6 +14,7 @@ def mouse_ray(context, event):
     ray_origin = r2d_2_origin3d(region, rv3d, coord)
     ray_direction = r2d_2_vec3d(region, rv3d, coord)
     return ray_origin, ray_direction
+
 
 def ray_cast(context, event, start_point=None):
     mouse_pos = event.mouse_region_x, event.mouse_region_y
@@ -32,6 +33,7 @@ def ray_cast(context, event, start_point=None):
     result, location, normal, index, target_obj, matrix = scene.ray_cast(viewlayer, start_point,
                                                                          view_vector)
     return result, target_obj, view_point, world_loc, normal, location, matrix
+
 
 @contextmanager
 def exclude_ray_cast(obj_list: list[bpy.types.Object]):

@@ -1,24 +1,21 @@
-import bpy
-import bgl
-import bmesh
-import numpy as np
-import gpu
-
-from bpy.types import Gizmo
-from mathutils import Vector
-from bpy_extras import view3d_utils
-
 from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 
+import bmesh
+import bpy
+import gpu
+import numpy as np
+from bpy.types import Gizmo
+
 SHAPES = {}
+
 
 @contextmanager
 def wrap_gpu_state():
     gpu.state.blend_set('ALPHA')
     yield
     gpu.state.blend_set('NONE')
+
 
 def load_shape_geo_obj(obj_name='gz_shape_ROTATE'):
     """ 加载一个几何形状的模型，用于绘制几何形状的控件 """
@@ -131,6 +128,7 @@ class PH_GT_custom_rotate_z_3d(Gizmo):
     def setup(self):
         self.ensure_gizmo()
 
+
 class PH_GT_custom_move_plane_3d(Gizmo):
     def ensure_gizmo(self):
         if not hasattr(self, "custom_shape"):
@@ -151,6 +149,7 @@ class PH_GT_custom_move_plane_3d(Gizmo):
     def setup(self):
         self.use_draw_offset_scale = True
         self.ensure_gizmo()
+
 
 classes = (
     PH_GT_custom_move_3d,
