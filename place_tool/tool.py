@@ -1,10 +1,8 @@
-import bpy
-import os
 from pathlib import Path
 
+import bpy
+from bpy.props import BoolProperty, EnumProperty
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty, PointerProperty
-from bpy.app.translations import pgettext_iface as tips_
 
 from .gzg import update_gzg_pref
 
@@ -45,6 +43,8 @@ class PlaceToolProps(PropertyGroup):
     build_active_inst: BoolProperty(name='Active Instance Bounding Box', default=True)
     build_other_inst: BoolProperty(name='Consider Scene Geo Nodes Instance', default=False)
 
+    use_local_rotate: BoolProperty(name='Use Local Rotate', default=False)
+
 
 class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.place_tool"
@@ -82,6 +82,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         if prop.orient == "NORMAL":
             layout.prop(prop, "axis")
             layout.prop(prop, "invert_axis")
+        layout.prop(prop, "use_local_rotate")
         layout.prop(prop, "duplicate")
 
         layout.popover(panel="PH_PT_PlaceTool", text='', icon='PREFERENCES')

@@ -1,11 +1,8 @@
-import bpy
-import os
 from pathlib import Path
 
+import bpy
+from bpy.props import EnumProperty
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
-
-from bpy.utils.toolsystem import ToolDef
 
 
 class MoveToolProps(PropertyGroup):
@@ -33,6 +30,7 @@ class PH_TL_TransformPro(bpy.types.WorkSpaceTool):
         prop = bpy.context.scene.move_view_tool
         layout.prop(prop, "duplicate")
 
+
 class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
     bl_idname = "ph.transform_pro_edit"
     bl_space_type = 'VIEW_3D'
@@ -46,6 +44,7 @@ class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
         prop = bpy.context.scene.move_view_tool
         layout.prop(prop, "duplicate")
 
+
 def register():
     bpy.utils.register_class(MoveToolProps)
     bpy.types.Scene.move_view_tool = bpy.props.PointerProperty(type=MoveToolProps)
@@ -58,5 +57,5 @@ def unregister():
     bpy.utils.unregister_tool(PH_TL_TransformPro)
     bpy.utils.unregister_tool(PH_TL_TransformPro_edit)
 
-    del  bpy.types.Scene.place_tool
+    del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(MoveToolProps)

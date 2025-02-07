@@ -25,24 +25,32 @@ class DynamicPlaceProps(PropertyGroup):
     # bake
     bake_animation: BoolProperty(name='Bake Animation', default=False)
 
-    active: EnumProperty(name='Active', items=[
-        ('CONVEX_HULL', 'Convex Hull', '','MESH_ICOSPHERE',0),
-        ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE',1),
-        ('BOX', 'Box', '', 'MESH_CUBE',2),
-        ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER',3),
-        ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE',4),
-        ('CONE', 'Cone', '', 'MESH_CONE',5),
-        ('MESH', 'Mesh', '', 'MESH_DATA',6),
-    ], default='CONVEX_HULL')
-    passive: EnumProperty(name='Passive', items=[
-        ('CONVEX_HULL', 'Convex Hull', '', 'MESH_ICOSPHERE', 0),
-        ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE', 1),
-        ('BOX', 'Box', '', 'MESH_CUBE', 2),
-        ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER', 3),
-        ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE', 4),
-        ('CONE', 'Cone', '', 'MESH_CONE', 5),
-        ('MESH', 'Mesh', '', 'MESH_DATA', 6),
-    ], default='MESH')
+    active: EnumProperty(
+        name='Active',
+        items=[
+            ('CONVEX_HULL', 'Convex Hull', '', 'MESH_ICOSPHERE', 0),
+            ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE', 1),
+            ('BOX', 'Box', '', 'MESH_CUBE', 2),
+            ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER', 3),
+            ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE', 4),
+            ('CONE', 'Cone', '', 'MESH_CONE', 5),
+            ('MESH', 'Mesh', '', 'MESH_DATA', 6),
+        ],
+        default='CONVEX_HULL'
+    )
+    passive: EnumProperty(
+        name='Passive',
+        items=[
+            ('CONVEX_HULL', 'Convex Hull', '', 'MESH_ICOSPHERE', 0),
+            ('SPHERE', 'Sphere', '', 'MESH_UVSPHERE', 1),
+            ('BOX', 'Box', '', 'MESH_CUBE', 2),
+            ('CYLINDER', 'Cylinder', '', 'MESH_CYLINDER', 3),
+            ('CAPSULE', 'Capsule', '', 'MESH_CAPSULE', 4),
+            ('CONE', 'Cone', '', 'MESH_CONE', 5),
+            ('MESH', 'Mesh', '', 'MESH_DATA', 6),
+        ],
+        default='MESH'
+    )
 
     collision_margin: FloatProperty(name='Margin',
                                     min=0, max=1, default=0)
@@ -63,6 +71,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_widget = "PH_GZG_dynamic_place"
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"
+
     # bl_keymap = (
     #     ("view3d.select_box",
     #      {"type": "LEFTMOUSE", "value": "CLICK"},

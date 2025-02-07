@@ -20,5 +20,7 @@ data = {
     "Use basic mesh bounding box, faster": "使用基础网格碰撞盒，速度快一些",
     "Scene Objects": "场景物体",
     "Adsorption Angle": "捕捉角度",
-    "Set Place Axis": "设置放置轴"
+    "Set Place Axis": "设置放置轴",
+    "Bake Animation": "烘焙动画",
+    "Use Local Rotate": "使用局部旋转"
 }

@@ -452,13 +452,13 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def rotate_matrix(self, context, event):
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            # TODO(Pref)
-            value = 15
+            pref = get_addon_pref()
+            angle = pref.event_normal_adsorption_angle
             if event.ctrl:
-                value = 1
+                angle = pref.event_ctrl_adsorption_angle
             elif event.alt:
-                value = 45
-            delta_angle = math.radians(value) if event.type == 'WHEELUPMOUSE' else math.radians(-value)
+                angle = pref.event_alt_adsorption_angle
+            delta_angle = math.radians(angle) if event.type == 'WHEELUPMOUSE' else math.radians(-angle)
             self.rotation_radians += delta_angle
 
     def handle_multi_obj(self, context, event):

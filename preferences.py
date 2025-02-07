@@ -49,6 +49,10 @@ class Preferences(AddonPreferences):
     use_event_handle_all: BoolProperty(name='Gizmo Handle All Event', default=False)
     debug: BoolProperty(name='Debug', default=False)
 
+    event_normal_adsorption_angle: IntProperty(name='General', default=15, min=1, max=180, subtype="ANGLE")
+    event_ctrl_adsorption_angle: IntProperty(name='Ctrl', default=1, min=1, max=180, subtype="ANGLE")
+    event_alt_adsorption_angle: IntProperty(name='Alt', default=45, min=1, max=180, subtype="ANGLE")
+
     def draw(self, context):
         layout = self.layout
 
@@ -71,6 +75,13 @@ class Preferences(AddonPreferences):
         col.prop(self, 'use_event_handle_all')
         # layout.prop(self, 'debug')
 
+    def draw_event_adsorption_angle(self, context, layout):
+        column = layout.column(align=True)
+        column.label(text='Adsorption Angle')
+        column.prop(self, "event_ctrl_adsorption_angle")
+        column.prop(self, "event_normal_adsorption_angle")
+        column.prop(self, "event_alt_adsorption_angle")
+
     def draw_dynamic_place_tool(self, context, layout):
         col = layout.box().column()
         col.use_property_split = True
@@ -81,6 +92,8 @@ class Preferences(AddonPreferences):
         col.prop(tool, 'use_color')
         col.prop(tool, 'active_color')
         col.prop(tool, 'passive_color')
+
+        self.draw_event_adsorption_angle(context, col.box())
 
     def draw_place_tool(self, context, layout):
         _layout = layout.column()
@@ -110,6 +123,7 @@ class Preferences(AddonPreferences):
         box.prop(self.place_tool.gz, 'scale_basis', slider=True)
         box.prop(self.place_tool.gz, 'color')
         box.prop(self.place_tool.gz, 'color_highlight')
+        self.draw_event_adsorption_angle(context, col.box())
 
 
 class PH_OT_run_doc(bpy.types.Operator):
