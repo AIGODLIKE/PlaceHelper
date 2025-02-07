@@ -4,7 +4,7 @@ import os
 import importlib
 
 
-class TranslationHelper():
+class TranslationHelper:
     def __init__(self, name: str, data: dict, lang='zh_CN'):
         self.name = name
         self.translations_dict = dict()
