@@ -414,7 +414,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         # empty.select_set(True)
 
     def clear_bottom_parent(self):
-        if not self.tmp_parent: return
+        if not self.tmp_parent:
+            return
 
         # apply constraints
         def apply_const(obj):
@@ -439,14 +440,14 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def modal(self, context, event):
         self.rotate_matrix(context, event)
-        if event.type == 'MOUSEMOVE':
+        if event.type in {"MOUSEMOVE", "WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
             self.handle_multi_obj(context, event)
-        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+        if event.type == "LEFTMOUSE" and event.value == "RELEASE":
             self.tg_obj = None
             self.clear_bottom_parent()
             self.remove_handles()
             return {"FINISHED"}
-        context.view_layer.update()
+        self.tmp_parent.matrix_world = self.tmp_parent.matrix_world.copy()
         return {"RUNNING_MODAL"}
 
     def rotate_matrix(self, context, event):
