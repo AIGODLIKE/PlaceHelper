@@ -549,12 +549,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         origin_rot = self.ori_matrix_world.to_quaternion().to_matrix()  # 原始旋转
 
         rot = mouse_rot.to_3x3() @ z_rot
-        if self.use_local_rotate:
-            # TODO(位置及旋转都会被影响)
-            # print("use_local_rotate", self.use_local_rotate, origin_rot)
-            obj.rotation_euler = (origin_rot).to_euler()
-        else:
-            obj.rotation_euler = (rot).to_euler()
+        # if self.use_local_rotate:
+        #     # TODO(位置及旋转都会被影响)
+        #     # print("use_local_rotate", self.use_local_rotate, origin_rot)
+        #     obj.rotation_euler = (origin_rot).to_euler()
+        # else:
+        obj.rotation_euler = rot.to_euler()
 
         context.view_layer.update()
 
