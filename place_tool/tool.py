@@ -82,7 +82,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         if prop.orient == "NORMAL":
             layout.prop(prop, "axis")
             layout.prop(prop, "invert_axis")
-        layout.prop(prop, "use_local_rotate")
+        # layout.prop(prop, "use_local_rotate")
         layout.prop(prop, "duplicate")
 
         layout.popover(panel="PH_PT_PlaceTool", text='', icon='PREFERENCES')

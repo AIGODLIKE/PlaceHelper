@@ -129,7 +129,7 @@ class BVH_Helper:
         SCENE_OBJS.clear()
 
 
-class ModalBase():
+class ModalBase:
     bl_options = {'REGISTER', 'UNDO'}
 
     _handle = None  # 绘制
@@ -165,10 +165,11 @@ class ModalBase():
         return check(bpy.context, exclude_obj_list) and place_tool_props().coll_stop  # 先后顺序
 
     def invoke(self, context, event):
-        prop = bpy.context.scene.place_tool
+        prop = context.scene.place_tool
 
         self.axis = prop.axis
         self.invert_axis = prop.invert_axis
+        self.use_local_rotate = prop.use_local_rotate
 
         self.clear_target()
 
@@ -338,6 +339,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
+    use_local_rotate: BoolProperty(default=False)
 
     def __init__(self):
         self.rotation_radians = 0
@@ -347,6 +349,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         self.axis = prop.axis
         self.invert_axis = prop.invert_axis
+        self.use_local_rotate = prop.use_local_rotate
 
         self.clear_target()
 
@@ -510,12 +513,13 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.rotate_clear = obj.matrix_local.to_quaternion()
 
         for a in ['x', 'y', 'z']:
-            if a == self.axis.lower(): continue
+            if a == self.axis.lower():
+                continue
 
-            # if self.invert_axis:
-            #     if a == 'z':  # seem that the z with invert axis will mix x and y
-            #         setattr(self.rotate_clear, 'x', math.radians(180))
-            #         setattr(self.rotate_clear, 'y', math.radians(0))
+            if self.invert_axis:
+                if a == 'z':  # seem that the z with invert axis will mix x and y
+                    setattr(self.rotate_clear, 'x', math.radians(180))
+                    setattr(self.rotate_clear, 'y', math.radians(0))
 
             # clear
             setattr(self.rotate_clear, a, 0)
@@ -526,24 +530,33 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         except:
             offset_q = Vector((0, 0, 1)).rotation_difference(z)
 
-        xf_rot = offset_q.to_matrix()
+        z_rot = offset_q.to_matrix()  # Z轴旋转
 
         # get temp parent local z axis and rotate temp parent z axis
-        q = xf_rot.to_quaternion()
+        zq = z_rot.to_quaternion()
         v = -1 if self.invert_axis else 1
         match self.axis:
             case 'X':
-                axis = q @ Vector((v, 0, 0))
+                axis = zq @ Vector((v, 0, 0))
             case 'Y':
-                axis = q @ Vector((0, v, 0))
+                axis = zq @ Vector((0, v, 0))
             case 'Z':
-                axis = q @ Vector((0, 0, v))
+                axis = zq @ Vector((0, 0, v))
             case _:
-                axis = q @ Vector((0, 0, v))
+                axis = zq @ Vector((0, 0, v))
 
-        rot = Matrix.Rotation(self.rotation_radians, 4, axis)
+        mouse_rot = Matrix.Rotation(self.rotation_radians, 4, axis)  # 鼠标旋转
 
-        obj.rotation_euler = (rot.to_3x3() @ xf_rot).to_euler()
+        origin_rot = self.ori_matrix_world.to_quaternion().to_matrix()  # 原始旋转
+
+        rot = mouse_rot.to_3x3() @ z_rot
+        if self.use_local_rotate:
+            # TODO(位置及旋转都会被影响)
+            # print("use_local_rotate", self.use_local_rotate, origin_rot)
+            obj.rotation_euler = (origin_rot).to_euler()
+        else:
+            obj.rotation_euler = (rot).to_euler()
+
         context.view_layer.update()
 
 
