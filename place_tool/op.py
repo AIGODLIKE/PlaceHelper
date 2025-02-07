@@ -169,7 +169,6 @@ class ModalBase:
 
         self.axis = prop.axis
         self.invert_axis = prop.invert_axis
-        self.use_local_rotate = prop.use_local_rotate
 
         self.clear_target()
 
