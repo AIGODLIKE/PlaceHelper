@@ -1,3 +1,5 @@
+from . import custom_gizmos, place_tool, transform_tool, dynamic_place_tool, preferences, localdb
+
 bl_info = {
     "name": "Place Helper 放置助手",
     "author": "AIGODLIKE社区,Atticus,小萌新",
@@ -10,10 +12,6 @@ bl_info = {
     "description": "",
     "location": "Tool Shelf",
 }
-
-__ADDON_NAME__ = __name__
-
-from . import custom_gizmos, place_tool, transform_tool, dynamic_place_tool, preferences, localdb
 
 
 def register():

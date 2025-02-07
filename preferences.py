@@ -1,15 +1,9 @@
 import bpy
-from bpy.types import AddonPreferences, PropertyGroup
-from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty, EnumProperty, FloatVectorProperty, \
+from bpy.props import IntProperty, BoolProperty, FloatProperty, EnumProperty, FloatVectorProperty, \
     PointerProperty
+from bpy.types import AddonPreferences, PropertyGroup
 
-from . import __ADDON_NAME__
 from .place_tool.gzg import update_gzg_pref
-
-
-def get_addon_pref():
-    """Get the addon preferences"""
-    return bpy.context.preferences.addons[__ADDON_NAME__].preferences
 
 
 class PlaceToolBBoxProps(PropertyGroup):
@@ -44,7 +38,7 @@ class DynamicPlaceToolProps(PropertyGroup):
 
 
 class Preferences(AddonPreferences):
-    bl_idname = __ADDON_NAME__
+    bl_idname = __package__
 
     tool_type: EnumProperty(name='Tool', items=[('PLACE_TOOL', 'Place', ''), ('TRANSFORM_TOOL', 'Transform', ''),
                                                 ('DYNAMIC_PLACE_TOOL', 'Dynamic Place', '')], default='PLACE_TOOL')
@@ -144,7 +138,7 @@ class PH_OT_run_doc(bpy.types.Operator):
 
         # create new server
         exec_py = sys.executable
-        exec_dir = os.path.join(os.path.dirname(__file__),'docs')
+        exec_dir = os.path.join(os.path.dirname(__file__), 'docs')
         cmd = f'{exec_py} -m http.server --directory "{exec_dir}" {self.port}'
         subprocess.Popen(cmd, shell=True)
         bpy.ops.wm.url_open(url=f'http://localhost:{self.port}')
