@@ -452,13 +452,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def rotate_matrix(self, context, event):
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            value = 10
-            if event.shift:
-                value = 30
-            elif event.ctrl:
-                value = 5
+            # TODO(Pref)
+            value = 15
+            if event.ctrl:
+                value = 1
             elif event.alt:
-                value = 50
+                value = 45
             delta_angle = math.radians(value) if event.type == 'WHEELUPMOUSE' else math.radians(-value)
             self.rotation_radians += delta_angle
 
