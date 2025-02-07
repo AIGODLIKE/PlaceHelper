@@ -339,6 +339,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
 
+    def __init__(self):
+        self.rotation_radians = 0
+
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
 
@@ -435,42 +438,28 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         bpy.context.view_layer.objects.active = self.old_obj
 
     def modal(self, context, event):
+        self.rotate_matrix(context, event)
         if event.type == 'MOUSEMOVE':
-            # if len(self.selected_objs) == 1:
-            #     self.handle_obj(context, event)
-            # else:
             self.handle_multi_obj(context, event)
-
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.tg_obj = None
             self.clear_bottom_parent()
             self.remove_handles()
             return {"FINISHED"}
-
-        if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            delta_angle = math.radians(30) if event.type == 'WHEELUPMOUSE' else math.radians(-30)
-            # get temp parent local z axis and rotate temp parent z axis
-            q = self.tmp_parent.matrix_world.to_quaternion()
-            v = -1 if self.invert_axis else 1
-            match self.axis:
-                case 'X':
-                    axis = q @ Vector((v, 0, 0))
-                case 'Y':
-                    axis = q @ Vector((0, v, 0))
-                case 'Z':
-                    axis = q @ Vector((0, 0, v))
-                case _:
-                    axis = q @ Vector((0, 0, v))
-
-            pivot = self.tmp_parent.location
-            rot_matrix = (
-                    Matrix.Translation(pivot) @
-                    Matrix.Rotation(delta_angle, 4, axis) @
-                    Matrix.Translation(-pivot)
-            )
-            self.tmp_parent.matrix_world = rot_matrix @ self.tmp_parent.matrix_world
-
+        context.view_layer.update()
         return {"RUNNING_MODAL"}
+
+    def rotate_matrix(self, context, event):
+        if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
+            value = 10
+            if event.shift:
+                value = 30
+            elif event.ctrl:
+                value = 5
+            elif event.alt:
+                value = 50
+            delta_angle = math.radians(value) if event.type == 'WHEELUPMOUSE' else math.radians(-value)
+            self.rotation_radians += delta_angle
 
     def handle_multi_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -492,12 +481,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
                 self.tmp_parent.location = world_loc
-                # print(self.tmp_parent.location)
+                context.view_layer.update()
                 if place_tool_props().orient == 'NORMAL':
-                    # self.tmp_parent.rotation_euler = z.rotation_difference(self.normal).to_euler()
-                    self.clear_rotate(self.tmp_parent)
-                    if hasattr(self, 'tmp_parent_rot_z'):
-                        self.tmp_parent.rotation_euler[2] = self.tmp_parent_rot_z
+                    context.view_layer.update()
+                    self.clear_rotate(context, self.tmp_parent)
 
                 if hasattr(self, 'objs_A') and context.object in self.selected_objs:
                     self.objs_A.bvh_tree_update()
@@ -508,8 +495,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                     ALIGN_OBJS['center'] = offset_mx @ self.top  # 使用默认center容易闪烁，故改用top
                     ALIGN_OBJS['bottom'] = self.tmp_parent.location
                     ALIGN_OBJS['size'] = self.objs_A.size
+                context.view_layer.update()
 
-    def clear_rotate(self, obj):
+    def clear_rotate(self, context, obj):
         """清除除了local z以外轴向的旋转"""
         v = -1 if self.invert_axis else 1
         if self.axis == 'Z':
@@ -538,9 +526,25 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         except:
             offset_q = Vector((0, 0, 1)).rotation_difference(z)
 
-        obj.rotation_euler = (offset_q.to_matrix() @ self.rotate_clear).to_euler()
+        xf_rot = offset_q.to_matrix()
 
-        # obj.rotation_euler = offset_q.to_euler()
+        # get temp parent local z axis and rotate temp parent z axis
+        q = xf_rot.to_quaternion()
+        v = -1 if self.invert_axis else 1
+        match self.axis:
+            case 'X':
+                axis = q @ Vector((v, 0, 0))
+            case 'Y':
+                axis = q @ Vector((0, v, 0))
+            case 'Z':
+                axis = q @ Vector((0, 0, v))
+            case _:
+                axis = q @ Vector((0, 0, v))
+
+        rot = Matrix.Rotation(self.rotation_radians, 4, axis)
+
+        obj.rotation_euler = (rot.to_3x3() @ xf_rot).to_euler()
+        context.view_layer.update()
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
