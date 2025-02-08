@@ -1,11 +1,11 @@
-import bpy
-import math
-from mathutils import Vector, Color, Euler, Matrix
 from itertools import product
 
-from ..util.gz import GizmoInfo
-from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
+import bpy
+from mathutils import Vector, Matrix
+
 from ..util.get_gz_matrix import get_matrix, view_matrix
+from ..util.get_position import get_objs_bbox_center
+from ..util.gz import GizmoInfo
 
 GZ_CENTER = Vector((0, 0, 0))
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
@@ -180,8 +180,9 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
             self.correct_gz_loc(context)
             self.update_gz_type(context)
 
-    def draw_prepare(self,context):
+    def draw_prepare(self, context):
         self.refresh(context)
+
 
 classes = (
     PH_GZG_dynamic_place,
@@ -207,3 +208,4 @@ def unregister():
 def update_gzg_pref(self, context):
     unregister()
     register()
+    bpy.ops.wm.tool_set_by_id(name="ph.dynamic_place_tool")
