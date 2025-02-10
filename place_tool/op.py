@@ -345,16 +345,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
-    use_local_rotate: BoolProperty(default=False)
-    rotation_radians = 0
 
     def invoke(self, context, event):
-        self.rotation_radians = 0
         prop = bpy.context.scene.place_tool
 
         self.axis = prop.axis
         self.invert_axis = prop.invert_axis
-        self.use_local_rotate = prop.use_local_rotate
 
         self.clear_target()
 
@@ -464,7 +460,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             elif event.alt:
                 angle = pref.event_alt_adsorption_angle
             delta_angle = math.radians(angle) if event.type == 'WHEELUPMOUSE' else math.radians(-angle)
-            self.rotation_radians += delta_angle
+            self.tg_obj.place_tool_rotation += delta_angle
 
     def handle_multi_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -547,17 +543,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             case _:
                 axis = zq @ Vector((0, 0, v))
 
-        mouse_rot = Matrix.Rotation(self.rotation_radians, 4, axis)  # 鼠标旋转
-
-        origin_rot = self.ori_matrix_world.to_quaternion().to_matrix()  # 原始旋转
-
+        mouse_rot = Matrix.Rotation(self.tg_obj.place_tool_rotation, 4, axis)  # 鼠标旋转
         rot = mouse_rot.to_3x3() @ z_rot
-        if self.use_local_rotate:
-            # TODO(位置及旋转都会被影响)
-            # print("use_local_rotate", self.use_local_rotate, origin_rot)
-            obj.rotation_euler = (origin_rot).to_euler()
-        else:
-            obj.rotation_euler = rot.to_euler()
+        
+        obj.rotation_euler = rot.to_euler()
 
         context.view_layer.update()
 

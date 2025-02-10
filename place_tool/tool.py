@@ -43,8 +43,6 @@ class PlaceToolProps(PropertyGroup):
     build_active_inst: BoolProperty(name='Active Instance Bounding Box', default=True)
     build_other_inst: BoolProperty(name='Consider Scene Geo Nodes Instance', default=False)
 
-    use_local_rotate: BoolProperty(name='Use Local Rotate', default=False)
-
 
 class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.place_tool"
@@ -82,7 +80,6 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         if prop.orient == "NORMAL":
             layout.prop(prop, "axis")
             layout.prop(prop, "invert_axis")
-        layout.prop(prop, "use_local_rotate")
         layout.prop(prop, "duplicate")
 
         layout.popover(panel="PH_PT_PlaceTool", text='', icon='PREFERENCES')
@@ -181,13 +178,14 @@ class PH_OT_set_place_axis(bpy.types.Operator):
 def register():
     bpy.utils.register_class(PlaceToolProps)
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
-
-    bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
+    bpy.types.Object.place_tool_rotation = bpy.props.FloatProperty(default=0, subtype="ANGLE")
 
     bpy.utils.register_class(PH_PT_wrap_view3d_select)
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
     bpy.utils.register_class(PH_OT_set_place_axis)
     bpy.utils.register_class(PT_OT_show_place_axis)
+
+    bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
 
 
 def unregister():
@@ -200,3 +198,4 @@ def unregister():
     bpy.utils.unregister_class(PlaceToolProps)
 
     del bpy.types.Scene.place_tool
+    del bpy.types.Object.place_tool_rotation

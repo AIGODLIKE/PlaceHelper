@@ -29,7 +29,8 @@ def ray_cast(context, event, start_point=None):
     # The 3D location in this direction
     world_loc = r2d_2_loc3d(region, region3D, mouse_pos, view_vector)
     # first hit to get target obj
-    if not start_point: start_point = view_point
+    if not start_point:
+        start_point = view_point
     result, location, normal, index, target_obj, matrix = scene.ray_cast(viewlayer, start_point,
                                                                          view_vector)
     return result, target_obj, view_point, world_loc, normal, location, matrix

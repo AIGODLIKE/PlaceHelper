@@ -112,13 +112,13 @@ def draw_bbox_callback(self, context):
 
 @contextmanager
 def wrap_bgl_restore(width):
+    ori_blend = gpu.state.blend_get()
     try:
         # bgl.glEnable(bgl.GL_BLEND)
         # bgl.glEnable(bgl.GL_LINE_SMOOTH)
         # bgl.glEnable(bgl.GL_DEPTH_TEST)
         # bgl.glLineWidth(width)
         # bgl.glPointSize(8)
-        ori_blend = gpu.state.blend_get()
         gpu.state.blend_set('ALPHA')
         gpu.state.line_width_set(width)
         gpu.state.point_size_set(8)
