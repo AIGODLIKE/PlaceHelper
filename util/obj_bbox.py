@@ -301,7 +301,7 @@ class AlignObject:
             return self.mx @ pt
 
 
-class AlignObjects():
+class AlignObjects:
     def __init__(self, obj_list: list[AlignObject]):
         self.obj_list = obj_list
         self._bbox_pts = self.get_bbox_pts()

@@ -192,18 +192,12 @@ classes = (
 
 def register():
     for cls in classes:
-        try:
-            bpy.utils.register_class(cls)
-        except:
-            pass
+        bpy.utils.register_class(cls)
 
 
 def unregister():
     for cls in classes:
-        try:
-            bpy.utils.unregister_class(cls)
-        except:
-            pass
+        bpy.utils.unregister_class(cls)
 
 
 def update_gzg_pref(self, context):

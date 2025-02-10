@@ -18,42 +18,49 @@ place_tool_props = lambda: bpy.context.scene.place_tool
 @contextmanager
 def exclude_ray_cast(obj_list: list[bpy.types.Object]):
     """光线投射时排除物体"""
-    ori_child_vis = {}
-    for obj in obj_list:
-        for child in obj.children_recursive:
-            if child in obj_list: continue
-            ori_child_vis[child] = child.hide_get()
-            child.hide_set(True)
-        obj.hide_set(True)
-    yield  # 执行上下文管理器中的代码（光线投射）
-    for obj in obj_list:
-        obj.hide_set(False)
-        obj.select_set(True)
+    try:
+        ori_child_vis = {}
+        for obj in obj_list:
+            for child in obj.children_recursive:
+                if child in obj_list:
+                    continue
+                ori_child_vis[child] = child.hide_get()
+                child.hide_set(True)
+            obj.hide_set(True)
+        yield  # 执行上下文管理器中的代码（光线投射）
+    finally:
+        for obj in obj_list:
+            obj.hide_set(False)
+            obj.select_set(True)
 
-    for child, ori_vis in ori_child_vis.items():
-        child.hide_set(ori_vis)
+        for child, ori_vis in ori_child_vis.items():
+            child.hide_set(ori_vis)
 
 
 @contextmanager
 def store_objs_mx(obj_list: list[bpy.types.Object], restore: bool) -> dict:
     """保存物体的原始矩阵，并将物体的矩阵恢复到原始矩阵"""
-    mx_dict = {}
-    for obj in obj_list:
-        mx_dict[obj] = obj.matrix_world.copy()
-    yield mx_dict  # 执行上下文管理器中的代码
-    if restore:
-        for obj, mx in mx_dict.items():
-            obj.matrix_world = mx
+    try:
+        mx_dict = {}
+        for obj in obj_list:
+            mx_dict[obj] = obj.matrix_world.copy()
+        yield mx_dict  # 执行上下文管理器中的代码
+    finally:
+        if restore:
+            for obj, mx in mx_dict.items():
+                obj.matrix_world = mx
 
 
 @contextmanager
 def mouse_offset(op, event, scale=0.01, scale_shift=0.0025):
-    op.mouseDX -= event.mouse_x
-    op.mouseDY -= event.mouse_y
-    scale_factor = scale_shift if event.shift else scale
-    yield op.mouseDX * scale_factor, op.mouseDY * scale_factor
-    op.mouseDX = event.mouse_x
-    op.mouseDY = event.mouse_y
+    try:
+        op.mouseDX -= event.mouse_x
+        op.mouseDY -= event.mouse_y
+        scale_factor = scale_shift if event.shift else scale
+        yield op.mouseDX * scale_factor, op.mouseDY * scale_factor
+    finally:
+        op.mouseDX = event.mouse_x
+        op.mouseDY = event.mouse_y
 
 
 class BVH_Helper:
@@ -339,11 +346,10 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
     use_local_rotate: BoolProperty(default=False)
-
-    def __init__(self):
-        self.rotation_radians = 0
+    rotation_radians = 0
 
     def invoke(self, context, event):
+        self.rotation_radians = 0
         prop = bpy.context.scene.place_tool
 
         self.axis = prop.axis

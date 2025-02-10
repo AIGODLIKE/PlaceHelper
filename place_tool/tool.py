@@ -88,35 +88,14 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
         layout.popover(panel="PH_PT_PlaceTool", text='', icon='PREFERENCES')
 
 
-class PH_TL_ScatterTool(bpy.types.WorkSpaceTool):
-    bl_idname = "ph.scatter_tool"
-    bl_space_type = 'VIEW_3D'
-    bl_context_mode = 'OBJECT'
-    bl_label = "Scatter"
-    bl_icon = Path(__file__).parent.parent.joinpath("icons", "place_tool").as_posix()
-    # bl_widget = "PH_GZG_place_tool"
-    bl_keymap = (
-        ("view3d.select",
-         {"type": "LEFTMOUSE", "value": "CLICK"},
-         {"properties": [("deselect_all", True)]},
-         ),
-
-        ("ph.scatter_single",
-         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": False},
-         {"properties": []}),
-    )
-
-    def draw_settings(context, layout, tool):
-        pass
-
-
 class PH_PT_wrap_view3d_select(bpy.types.Operator):
     bl_idname = 'ph.wrap_view3d_select'
     bl_label = 'Select'
 
     def execute(self, context):
         bpy.ops.view3d.select('INVOKE_DEFAULT', deselect_all=True)
-        if not context.object: return {'FINISHED'}
+        if not context.object:
+            return {'FINISHED'}
 
         from ..util.obj_bbox import AlignObject
         from ._runtime import ALIGN_OBJ
@@ -204,7 +183,6 @@ def register():
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
 
     bpy.utils.register_tool(PH_TL_PlaceTool, separator=True)
-    # bpy.utils.register_tool(PH_TL_ScatterTool, separator=False)
 
     bpy.utils.register_class(PH_PT_wrap_view3d_select)
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
@@ -214,13 +192,11 @@ def register():
 
 def unregister():
     bpy.utils.unregister_tool(PH_TL_PlaceTool)
-    # bpy.utils.unregister_tool(PH_TL_ScatterTool)
 
     bpy.utils.unregister_class(PH_PT_PlaceToolPanel)
     bpy.utils.unregister_class(PH_PT_wrap_view3d_select)
     bpy.utils.unregister_class(PH_OT_set_place_axis)
     bpy.utils.unregister_class(PT_OT_show_place_axis)
-    # del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(PlaceToolProps)
 
     del bpy.types.Scene.place_tool

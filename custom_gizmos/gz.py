@@ -12,9 +12,11 @@ SHAPES = {}
 
 @contextmanager
 def wrap_gpu_state():
-    gpu.state.blend_set('ALPHA')
-    yield
-    gpu.state.blend_set('NONE')
+    try:
+        gpu.state.blend_set('ALPHA')
+        yield
+    finally:
+        gpu.state.blend_set('NONE')
 
 
 def load_shape_geo_obj(obj_name='gz_shape_ROTATE'):
