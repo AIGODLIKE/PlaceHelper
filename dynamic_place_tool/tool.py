@@ -1,10 +1,6 @@
 import bpy
-import os
-from pathlib import Path
-
+from bpy.props import BoolProperty, IntProperty, FloatProperty, EnumProperty
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
-from bpy.app.translations import pgettext_iface as tips_
 
 from .gzg import update_gzg_pref
 
@@ -176,3 +172,5 @@ def unregister():
     bpy.utils.unregister_class(DynamicPlaceProps)
     bpy.utils.unregister_class(PH_PT_DynamicPlaceTool)
     bpy.utils.unregister_class(PH_OT_set_dynamic_place_mode)
+
+    del bpy.types.Scene.dynamic_place_tool

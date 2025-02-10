@@ -222,3 +222,5 @@ def unregister():
     bpy.utils.unregister_class(PT_OT_show_place_axis)
     # del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(PlaceToolProps)
+
+    del bpy.types.Scene.place_tool
