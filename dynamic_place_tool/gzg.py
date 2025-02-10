@@ -176,7 +176,6 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
             self.cursor_gz.matrix_basis = mx
 
     def refresh(self, context):
-        print("refresh")
         if context.object:
             self.correct_gz_loc(context)
             self.update_gz_type(context)
