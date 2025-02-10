@@ -460,7 +460,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             elif event.alt:
                 angle = pref.event_alt_adsorption_angle
             delta_angle = math.radians(angle) if event.type == 'WHEELUPMOUSE' else math.radians(-angle)
-            self.tg_obj.place_tool_rotation += delta_angle
+            self.rotate += delta_angle
 
     def handle_multi_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -543,12 +543,23 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             case _:
                 axis = zq @ Vector((0, 0, v))
 
-        mouse_rot = Matrix.Rotation(self.tg_obj.place_tool_rotation, 4, axis)  # 鼠标旋转
+        mouse_rot = Matrix.Rotation(self.rotate, 4, axis)  # 鼠标旋转
         rot = mouse_rot.to_3x3() @ z_rot
-        
+
         obj.rotation_euler = rot.to_euler()
 
         context.view_layer.update()
+
+    def get_rotate(self) -> float:
+        if getattr(self, "old_obj", False):
+            return self.old_obj.place_tool_rotation
+        return 0
+
+    def set_rotate(self, value) -> None:
+        if getattr(self, "old_obj", False):
+            self.old_obj.place_tool_rotation = value
+
+    rotate = property(fget=get_rotate, fset=set_rotate)
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
