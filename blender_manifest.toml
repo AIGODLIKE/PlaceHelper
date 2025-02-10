@@ -6,6 +6,6 @@ tagline = "Easily place objects in Blender"
 blender_version_min = "4.2.0"
 type = "add-on"
 schema_version = "1.0.0"
-tags = ["Model"]
+tags = ["3D View", "Modeling", ]
 license = ["SPDX:GPL-3.0-or-later"]
 website = "https://github.com/AIGODLIKE/PlaceHelper"
