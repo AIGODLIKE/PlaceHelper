@@ -3,8 +3,8 @@ from . import custom_gizmos, place_tool, transform_tool, dynamic_place_tool, pre
 bl_info = {
     "name": "Place Helper 放置助手",
     "author": "AIGODLIKE社区,Atticus,小萌新",
-    "blender": (4, 1, 1),
-    "version": (1, 2, 9),
+    "blender": (4, 2, 0),
+    "version": (1, 3, 0),
     "category": "辣椒出品",
     "support": "COMMUNITY",
     "doc_url": "",
