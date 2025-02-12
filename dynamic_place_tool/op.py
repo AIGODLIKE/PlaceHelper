@@ -1,25 +1,18 @@
-import math
 import bpy
-import bmesh
-
-import blf
-import gpu
-import bgl
-
-from gpu_extras.presets import draw_circle_2d
-from gpu_extras.batch import batch_for_shader
-from mathutils import Vector, Matrix
-
 from contextlib import contextmanager
 
-from mathutils import Vector, Matrix, Euler
-from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
+import bmesh
+import bpy
+import gpu
+from bpy.props import BoolProperty, EnumProperty
 from bpy_extras import view3d_utils
 from bpy_extras.view3d_utils import location_3d_to_region_2d
+from gpu_extras.batch import batch_for_shader
+from mathutils import Vector
 
-from ..util.get_position import get_objs_bbox_center, get_objs_axis_aligned_bbox
-from ..util.get_gz_matrix import get_matrix
 from ..get_addon_pref import get_addon_pref
+from ..util.get_gz_matrix import get_matrix
+from ..util.get_position import get_objs_bbox_center
 
 
 def get_shader(type='3d'):
@@ -63,8 +56,6 @@ def turn_collection_hierarchy_into_path(obj):
     parent_names = []
     parent_names.append(parent_collection.name)
     get_parent_collection_names(parent_collection, parent_names)
-    # parent_names.reverse()
-    # print(parent_names)
     if len(parent_names) == 1 and parent_names[0] != "Scene Collection":
         parent_names.insert(0, "Scene Collection")
 
@@ -74,24 +65,10 @@ def turn_collection_hierarchy_into_path(obj):
 @contextmanager
 def wrap_bgl_restore(width):
     try:
-        # bgl.glEnable(bgl.GL_BLEND)
-        # bgl.glEnable(bgl.GL_LINE_SMOOTH)
-        # bgl.glEnable(bgl.GL_DEPTH_TEST)
-        # bgl.glLineWidth(width)
-        # bgl.glPointSize(8)
-        # gpu.state.blend_set('ALPHA_PREMULTIPLIED')
         gpu.state.line_width_set(width)
         gpu.state.point_size_set(8)
-
         yield  # do the work
     finally:
-        # restore opengl defaults
-        # bgl.glDisable(bgl.GL_BLEND)
-        # bgl.glDisable(bgl.GL_LINE_SMOOTH)
-        # bgl.glEnable(bgl.GL_DEPTH_TEST)
-        # bgl.glLineWidth(1)
-        # bgl.glPointSize(5)
-        # gpu.state.blend_set('NONE')
         gpu.state.line_width_set(1)
         gpu.state.point_size_set(5)
 

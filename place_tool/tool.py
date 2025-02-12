@@ -54,7 +54,7 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
     bl_keymap = (
         ("ph.wrap_view3d_select",
          {"type": "LEFTMOUSE", "value": "CLICK"},
-         {"properties": []},  # [("deselect_all", True)]
+         {"properties": []},
          ),
 
         ("ph.move_object",
@@ -67,10 +67,6 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
 
         ("ph.show_place_axis",
          {"type": 'LEFTMOUSE', "value": 'CLICK', "alt": True},
-         {"properties": []}),
-
-        ("test.test_place",
-         {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "ctrl": True},
          {"properties": []}),
     )
 
@@ -105,9 +101,6 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
                 ALIGN_OBJ['active'] = AlignObject(context.object,
                                                   'ACCURATE',
                                                   True)
-            # context.scene.place_tool.active_bbox_calc_mode,
-            # context.scene.place_tool.build_active_inst)
-
         return {'FINISHED'}
 
 
@@ -180,8 +173,8 @@ def register():
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
     bpy.types.Object.place_tool_rotation = bpy.props.FloatProperty(default=0, subtype="ANGLE")
 
-    bpy.utils.register_class(PH_PT_wrap_view3d_select)
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
+    bpy.utils.register_class(PH_PT_wrap_view3d_select)
     bpy.utils.register_class(PH_OT_set_place_axis)
     bpy.utils.register_class(PT_OT_show_place_axis)
 

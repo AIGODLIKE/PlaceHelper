@@ -17,7 +17,7 @@ def wrap_gpu_state():
 
 
 class PH_GT_custom_scale_3d(Gizmo):
-    bl_idname = "TEST_GE_custom_scale_3d"
+    bl_idname = "PH_GT_custom_scale_3d"
 
     def ensure_gizmo(self):
         if not hasattr(self, "custom_shape"):
