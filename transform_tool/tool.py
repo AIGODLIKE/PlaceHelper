@@ -57,5 +57,6 @@ def unregister():
     bpy.utils.unregister_tool(PH_TL_TransformPro)
     bpy.utils.unregister_tool(PH_TL_TransformPro_edit)
 
-    del bpy.types.Scene.place_tool
     bpy.utils.unregister_class(MoveToolProps)
+
+    del bpy.types.Scene.move_view_tool

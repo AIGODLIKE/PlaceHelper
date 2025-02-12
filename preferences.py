@@ -61,7 +61,6 @@ class Preferences(AddonPreferences):
         col = row_all.column(align=True)
         col.prop(self, 'tool_type', expand=True)
         col.separator()
-        # col.operator('ph.run_doc')
 
         col = row_all.column()
 
@@ -126,46 +125,12 @@ class Preferences(AddonPreferences):
         self.draw_event_adsorption_angle(context, col.box())
 
 
-class PH_OT_run_doc(bpy.types.Operator):
-    bl_idname = 'ph.run_doc'
-    bl_label = 'Documentation'
-
-    port: IntProperty(name='Port', default=1145)
-
-    def execute(self, context):
-        import os
-        import sys
-        import subprocess
-
-        # close the server if it's already running
-        cmd = f'netstat -ano | findstr {self.port}'
-        res = subprocess.run(cmd, shell=True, capture_output=True)
-        if res.returncode == 0:
-            res = res.stdout.decode().split('\n')
-            result = []
-            for line in res:
-                temp = [i for i in line.split(' ') if i != '']
-                if len(temp) > 4:
-                    result.append(temp[4])
-            for pid in result:
-                subprocess.run(f'taskkill /PID {pid} /F', shell=True)
-
-        # create new server
-        exec_py = sys.executable
-        exec_dir = os.path.join(os.path.dirname(__file__), 'docs')
-        cmd = f'{exec_py} -m http.server --directory "{exec_dir}" {self.port}'
-        subprocess.Popen(cmd, shell=True)
-        bpy.ops.wm.url_open(url=f'http://localhost:{self.port}')
-        return {'FINISHED'}
-
-
 def register():
     bpy.utils.register_class(PlaceToolBBoxProps)
     bpy.utils.register_class(PlaceToolGizmoProps)
     bpy.utils.register_class(PlaceToolProps)
     bpy.utils.register_class(DynamicPlaceToolProps)
     bpy.utils.register_class(Preferences)
-    bpy.utils.register_class(PH_OT_run_doc)
 
 
 def unregister():
@@ -174,4 +139,3 @@ def unregister():
     bpy.utils.unregister_class(PlaceToolProps)
     bpy.utils.unregister_class(DynamicPlaceToolProps)
     bpy.utils.unregister_class(Preferences)
-    bpy.utils.unregister_class(PH_OT_run_doc)

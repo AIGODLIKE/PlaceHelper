@@ -14,7 +14,7 @@ from itertools import product
 
 
 class PH_GZG_place_tool(bpy.types.GizmoGroup):
-    bl_label = "Test Widget"
+    bl_label = "Place Tool Widget"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
     bl_options = {'3D'}
@@ -106,7 +106,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         gzObject = GizmoInfo(scale_basis=get_addon_pref().place_tool.gz.scale_basis,
                              color=get_addon_pref().place_tool.gz.color,
                              color_highlight=get_addon_pref().place_tool.gz.color_highlight, )
-        self.scale_gz = gzObject.set_up(self, 'TEST_GE_custom_scale_3d')
+        self.scale_gz = gzObject.set_up(self, 'PH_GT_custom_scale_3d')
         prop = self.scale_gz.target_set_operator("ph.scale_object", index=0)
 
     def correct_gz_loc(self, context):

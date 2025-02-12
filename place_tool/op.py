@@ -18,42 +18,49 @@ place_tool_props = lambda: bpy.context.scene.place_tool
 @contextmanager
 def exclude_ray_cast(obj_list: list[bpy.types.Object]):
     """光线投射时排除物体"""
-    ori_child_vis = {}
-    for obj in obj_list:
-        for child in obj.children_recursive:
-            if child in obj_list: continue
-            ori_child_vis[child] = child.hide_get()
-            child.hide_set(True)
-        obj.hide_set(True)
-    yield  # 执行上下文管理器中的代码（光线投射）
-    for obj in obj_list:
-        obj.hide_set(False)
-        obj.select_set(True)
+    try:
+        ori_child_vis = {}
+        for obj in obj_list:
+            for child in obj.children_recursive:
+                if child in obj_list:
+                    continue
+                ori_child_vis[child] = child.hide_get()
+                child.hide_set(True)
+            obj.hide_set(True)
+        yield  # 执行上下文管理器中的代码（光线投射）
+    finally:
+        for obj in obj_list:
+            obj.hide_set(False)
+            obj.select_set(True)
 
-    for child, ori_vis in ori_child_vis.items():
-        child.hide_set(ori_vis)
+        for child, ori_vis in ori_child_vis.items():
+            child.hide_set(ori_vis)
 
 
 @contextmanager
 def store_objs_mx(obj_list: list[bpy.types.Object], restore: bool) -> dict:
     """保存物体的原始矩阵，并将物体的矩阵恢复到原始矩阵"""
-    mx_dict = {}
-    for obj in obj_list:
-        mx_dict[obj] = obj.matrix_world.copy()
-    yield mx_dict  # 执行上下文管理器中的代码
-    if restore:
-        for obj, mx in mx_dict.items():
-            obj.matrix_world = mx
+    try:
+        mx_dict = {}
+        for obj in obj_list:
+            mx_dict[obj] = obj.matrix_world.copy()
+        yield mx_dict  # 执行上下文管理器中的代码
+    finally:
+        if restore:
+            for obj, mx in mx_dict.items():
+                obj.matrix_world = mx
 
 
 @contextmanager
 def mouse_offset(op, event, scale=0.01, scale_shift=0.0025):
-    op.mouseDX -= event.mouse_x
-    op.mouseDY -= event.mouse_y
-    scale_factor = scale_shift if event.shift else scale
-    yield op.mouseDX * scale_factor, op.mouseDY * scale_factor
-    op.mouseDX = event.mouse_x
-    op.mouseDY = event.mouse_y
+    try:
+        op.mouseDX -= event.mouse_x
+        op.mouseDY -= event.mouse_y
+        scale_factor = scale_shift if event.shift else scale
+        yield op.mouseDX * scale_factor, op.mouseDY * scale_factor
+    finally:
+        op.mouseDX = event.mouse_x
+        op.mouseDY = event.mouse_y
 
 
 class BVH_Helper:
@@ -338,17 +345,12 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
-    use_local_rotate: BoolProperty(default=False)
-
-    def __init__(self):
-        self.rotation_radians = 0
 
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
 
         self.axis = prop.axis
         self.invert_axis = prop.invert_axis
-        self.use_local_rotate = prop.use_local_rotate
 
         self.clear_target()
 
@@ -359,12 +361,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         self.init_mouse(event)
         self.init_context_obj(context)
 
-        # if context.object and len(context.selected_objects) > 1:
         self.store_muil_obj_info(context)
 
         self.create_bottom_parent()
-        # else:
-        #     self.selected_objs = [context.object]
         # 预构建
         self.bvh_helper.build_viewlayer_objs()
         self.append_handles()
@@ -461,7 +460,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             elif event.alt:
                 angle = pref.event_alt_adsorption_angle
             delta_angle = math.radians(angle) if event.type == 'WHEELUPMOUSE' else math.radians(-angle)
-            self.rotation_radians += delta_angle
+            self.rotate += delta_angle
 
     def handle_multi_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -544,19 +543,23 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             case _:
                 axis = zq @ Vector((0, 0, v))
 
-        mouse_rot = Matrix.Rotation(self.rotation_radians, 4, axis)  # 鼠标旋转
-
-        origin_rot = self.ori_matrix_world.to_quaternion().to_matrix()  # 原始旋转
-
+        mouse_rot = Matrix.Rotation(self.rotate, 4, axis)  # 鼠标旋转
         rot = mouse_rot.to_3x3() @ z_rot
-        # if self.use_local_rotate:
-        #     # TODO(位置及旋转都会被影响)
-        #     # print("use_local_rotate", self.use_local_rotate, origin_rot)
-        #     obj.rotation_euler = (origin_rot).to_euler()
-        # else:
+
         obj.rotation_euler = rot.to_euler()
 
         context.view_layer.update()
+
+    def get_rotate(self) -> float:
+        if getattr(self, "old_obj", False):
+            return self.old_obj.place_tool_rotation
+        return 0
+
+    def set_rotate(self, value) -> None:
+        if getattr(self, "old_obj", False):
+            self.old_obj.place_tool_rotation = value
+
+    rotate = property(fget=get_rotate, fset=set_rotate)
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):

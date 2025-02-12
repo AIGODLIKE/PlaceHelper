@@ -1,10 +1,6 @@
 import bpy
-import os
-from pathlib import Path
-
+from bpy.props import BoolProperty, IntProperty, FloatProperty, EnumProperty
 from bpy.types import PropertyGroup
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
-from bpy.app.translations import pgettext_iface as tips_
 
 from .gzg import update_gzg_pref
 
@@ -72,26 +68,6 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"
 
-    # bl_keymap = (
-    #     ("view3d.select_box",
-    #      {"type": "LEFTMOUSE", "value": "CLICK"},
-    #      {"properties": [("deselect_all", True)]},
-    #      ),
-    #
-    #     ("ph.move_object",
-    #      {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": False},
-    #      {"properties": []}),
-    #
-    #     ("ph.move_object",
-    #      {"type": 'LEFTMOUSE', "value": 'CLICK_DRAG', "shift": True},
-    #      {"properties": []}),
-    #
-    #     ("ph.show_place_axis",
-    #      {"type": 'LEFTMOUSE',"value":'CLICK', "alt": True},
-    #      {"properties": []})
-    #
-    #      )
-
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
@@ -102,9 +78,6 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
             layout.prop(prop, "gravity_strength")
         layout.prop(prop, "bake_animation")
         layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
-
-        # prop = tool.operator_properties('test.dynamic_place')
-        # layout.prop(prop, "invert")
 
 
 class PH_PT_DynamicPlaceTool(bpy.types.Panel):
@@ -156,9 +129,6 @@ class PH_OT_set_dynamic_place_mode(bpy.types.Operator):
             layout.popover(panel="PH_PT_DynamicPlaceToolPanel", text='', icon='PREFERENCES')
 
         context.window_manager.popup_menu(draw, title='Dynamic Place', icon='PREFERENCES')
-
-        # update_gzg_pref(None, context)
-
         return {'FINISHED'}
 
 
@@ -176,3 +146,5 @@ def unregister():
     bpy.utils.unregister_class(DynamicPlaceProps)
     bpy.utils.unregister_class(PH_PT_DynamicPlaceTool)
     bpy.utils.unregister_class(PH_OT_set_dynamic_place_mode)
+
+    del bpy.types.Scene.dynamic_place_tool

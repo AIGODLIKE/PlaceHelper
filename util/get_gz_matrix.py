@@ -1,8 +1,10 @@
-import bpy
+from math import radians, sqrt
+
 import bmesh
+import bpy
 import numpy
 from mathutils import Matrix, Quaternion, Vector
-from math import radians, sqrt
+
 from .get_gz_position import get_bmesh_active
 
 # blender 坐标系
@@ -112,9 +114,6 @@ def custom_matrix(reverse_zD=False):
         zD = rot @ Quaternion((0.0, 1.0, 0), radians(-180))
 
     return x, y, z, xD, yD, zD
-
-
-from .get_gz_position import get_active_face_position
 
 
 def normal_mesh_matrix(reverse_zD=False):
@@ -344,18 +343,12 @@ def normal_mesh_matrix(reverse_zD=False):
     imat = obmat.inverted()
     mat = imat.transposed()
 
-    # mat = ob.matrix_world.copy()
-    vec = Vector()
     normal = Vector()
     plane = Vector()
 
     tpp = context.scene.tool_settings.transform_pivot_point
 
     em = bmesh.from_edit_mesh(ob.data)
-
-    # em.verts.ensure_lookup_table() # ?
-    # em.edges.ensure_lookup_table()
-    # em.faces.ensure_lookup_table()
 
     result = 'ORIENTATION_VERT'
 
@@ -388,7 +381,6 @@ def normal_mesh_matrix(reverse_zD=False):
             result = 'ORIENTATION_FACE'
 
         elif len(v) == 3:  # TODO
-            e = None
             no_test = Vector()
 
             normal_tri_v3(normal, v[0].co, v[1].co, v[2].co)
@@ -409,7 +401,6 @@ def normal_mesh_matrix(reverse_zD=False):
 
                     j += 1 """
 
-            # if e :
             plane = vert_tri_calc_tangent_edge(v)
 
             result = 'ORIENTATION_FACE'

@@ -29,7 +29,8 @@ def ray_cast(context, event, start_point=None):
     # The 3D location in this direction
     world_loc = r2d_2_loc3d(region, region3D, mouse_pos, view_vector)
     # first hit to get target obj
-    if not start_point: start_point = view_point
+    if not start_point:
+        start_point = view_point
     result, location, normal, index, target_obj, matrix = scene.ray_cast(viewlayer, start_point,
                                                                          view_vector)
     return result, target_obj, view_point, world_loc, normal, location, matrix
@@ -38,9 +39,11 @@ def ray_cast(context, event, start_point=None):
 @contextmanager
 def exclude_ray_cast(obj_list: list[bpy.types.Object]):
     """光线投射时排除物体"""
-    for obj in obj_list:
-        obj.hide_set(True)
-    yield  # 执行上下文管理器中的代码（光线投射）
-    for obj in obj_list:
-        obj.hide_set(False)
-        obj.select_set(True)
+    try:
+        for obj in obj_list:
+            obj.hide_set(True)
+        yield  # 执行上下文管理器中的代码（光线投射）
+    finally:
+        for obj in obj_list:
+            obj.hide_set(False)
+            obj.select_set(True)
