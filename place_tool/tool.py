@@ -143,6 +143,7 @@ class PT_OT_show_place_axis(bpy.types.Operator):
         prop.setting_axis = True if not prop.setting_axis else False
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)
+        bpy.ops.wm.redraw_timer(type="DRAW")
         return {'FINISHED'}
 
 

@@ -31,12 +31,7 @@ class PH_OT_translate(bpy.types.Operator):
     pp = None
 
     def get_orient_matrix(self, context):
-        os = context.window.scene.transform_orientation_slots[0].type
-
         mat = self.matrix_basis.copy().to_3x3()
-
-        if os == "NORMAL" and context.mode == "EDIT_MESH":
-            ...
 
         if self.axis == "X":
             mat = mat @ Quaternion((0.0, 1.0, 0.0), radians(90)).to_matrix().to_3x3()

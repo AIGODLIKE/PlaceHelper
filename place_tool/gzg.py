@@ -181,7 +181,6 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
 classes = (
     PH_GZG_place_tool,
-
 )
 
 

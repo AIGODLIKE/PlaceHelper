@@ -345,6 +345,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
+    z_mode: BoolProperty(name="Z Adjustment", default=False)
 
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
@@ -441,14 +442,20 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def modal(self, context, event):
         self.rotate_matrix(context, event)
+        if event.type == "D" and event.value == "RELEASE":
+            self.z_mode = not self.z_mode
+
+        self.update_state_text(context)
         if event.type in {"MOUSEMOVE", "WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
             self.handle_multi_obj(context, event)
         if event.type == "LEFTMOUSE" and event.value == "RELEASE":
             self.tg_obj = None
             self.clear_bottom_parent()
             self.remove_handles()
+            context.workspace.status_text_set(None)
             return {"FINISHED"}
         self.tmp_parent.matrix_world = self.tmp_parent.matrix_world.copy()
+
         return {"RUNNING_MODAL"}
 
     def rotate_matrix(self, context, event):
@@ -481,6 +488,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 world_loc = location
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
+                print(world_loc)
                 self.tmp_parent.location = world_loc
                 context.view_layer.update()
                 if place_tool_props().orient == 'NORMAL':
@@ -560,6 +568,14 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             self.old_obj.place_tool_rotation = value
 
     rotate = property(fget=get_rotate, fset=set_rotate)
+
+    def update_state_text(self, context):
+        from bpy.app.translations import pgettext_iface
+        text = [
+            pgettext_iface("Press D to switch Z-axis adjustment mode"),
+            pgettext_iface("Z-axis adjustment:") + pgettext_iface("Enabled" if self.z_mode else "Disable")
+        ]
+        context.workspace.status_text_set("  ".join(text))
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
