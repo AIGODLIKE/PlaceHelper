@@ -1,11 +1,10 @@
 import bpy
+from mathutils import Vector, Matrix
 
-from mathutils import Vector, Matrix, Quaternion, Euler
-from .op import C_OBJECT_TYPE_HAS_BBOX
-
-from ..util.gz import GizmoInfo
-from ..util.get_gz_matrix import get_matrix, view_matrix
-from ..util.get_gz_position import get_position
+from ..utils import get_pref
+from ..utils.get_gz_matrix import get_matrix, view_matrix
+from ..utils.get_gz_position import get_position
+from ..utils.gz import GizmoInfo
 
 
 def get_color(axis):
@@ -78,6 +77,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         self.add_move_gz_plane(context, 'Z')
 
     def add_move_gz_plane(self, context, axis):
+        pref = get_pref()
         color, color_highlight = get_color(axis)
 
         gzObject = GizmoInfo(scale_basis=0.4,
@@ -106,12 +106,14 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         loc = get_position()
         gz.matrix_basis = mx
         gz.matrix_offset = mx_offset
+        gz.alpha = pref.gizmo_alpha
 
         gz.matrix_basis.translation = loc
         self._move_gz_plane[gz] = axis
 
     def add_move_gz(self, context, axis):
         color, color_highlight = get_color(axis)
+        pref = get_pref()
 
         if axis == 'VIEW':
             color = (0.8, 0.8, 0.8)
@@ -146,6 +148,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
 
         loc = get_position()
         gz.matrix_basis.translation = loc
+        gz.alpha = pref.gizmo_alpha
 
         self._move_gz[gz] = axis
 

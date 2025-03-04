@@ -10,8 +10,8 @@ from gpu_extras.presets import draw_circle_2d
 from mathutils import Vector, Matrix
 
 from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
-from ..get_addon_pref import get_addon_pref
-from ..util.obj_bbox import AlignObject
+from ..utils import get_pref
+from ..utils.obj_bbox import AlignObject
 
 C_OBJECT_TYPE = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
 
@@ -39,7 +39,7 @@ def draw_bbox_callback(self, context):
 
     overlap_obj_a = OVERLAP_OBJ.get('obj')
 
-    pref_bbox = get_addon_pref().place_tool.bbox
+    pref_bbox = get_pref().place_tool.bbox
     width = pref_bbox.width
     color = pref_bbox.color_alert if overlap_obj_a and pref_bbox.coll_alert else pref_bbox.color
 
@@ -127,7 +127,7 @@ def wrap_bgl_restore(width):
 
 def draw_debug(obj_A, context):
     # debug points
-    if not get_addon_pref().debug: return
+    if not get_pref().debug: return
 
     region = context.region
     r3d = context.space_data.region_3d

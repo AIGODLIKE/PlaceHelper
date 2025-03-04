@@ -7,9 +7,9 @@ from mathutils import Vector, Matrix
 
 from ._runtime import SCENE_OBJS, ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
 from .draw_bbox import draw_bbox_callback
-from ..get_addon_pref import get_addon_pref
-from ..util.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
-from ..util.raycast import ray_cast
+from ..utils import get_pref
+from ..utils.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
+from ..utils.raycast import ray_cast
 
 # 工具属性设置
 place_tool_props = lambda: bpy.context.scene.place_tool
@@ -373,7 +373,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def create_bottom_parent(self):
-        offset = get_addon_pref().place_tool.bbox.offset
+        offset = get_pref().place_tool.bbox.offset
         if self.invert_axis: offset = -offset
 
         empty_obj = bpy.data.objects.new('Empty', None)
@@ -453,7 +453,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     def rotate_matrix(self, context, event):
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            pref = get_addon_pref()
+            pref = get_pref()
             angle = pref.event_normal_adsorption_angle
             if event.ctrl:
                 angle = pref.event_ctrl_adsorption_angle

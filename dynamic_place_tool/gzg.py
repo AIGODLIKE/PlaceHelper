@@ -3,9 +3,10 @@ from itertools import product
 import bpy
 from mathutils import Vector, Matrix
 
-from ..util.get_gz_matrix import get_matrix, view_matrix
-from ..util.get_position import get_objs_bbox_center
-from ..util.gz import GizmoInfo
+from ..utils.get_gz_matrix import get_matrix, view_matrix
+from ..utils.get_position import get_objs_bbox_center
+from ..utils.gz import GizmoInfo
+from ..utils import get_pref
 
 GZ_CENTER = Vector((0, 0, 0))
 C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
@@ -87,6 +88,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
         prop = gz.target_set_operator("ph.gravity_place", index=0)
         prop.axis = 'Z'
 
+        gz.alpha = get_pref().gizmo_alpha
         self.cursor_gz = gz
 
     def add_move_gz(self, context, axis, invert_axis=False):
@@ -122,6 +124,8 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
             gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
             gz.draw_style = 'NORMAL'
 
+        gz.alpha = get_pref().gizmo_alpha
+
         op = 'ph.scale_force' if context.scene.dynamic_place_tool.mode == 'FORCE' else 'ph.gravity_place'
         prop = gz.target_set_operator(op, index=0)
         prop.axis = axis
@@ -138,7 +142,6 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
             mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
             q = mZW
             gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
-
         self._move_gz[gz] = (axis, invert_axis)
 
     def correct_gz_loc(self, context):
@@ -165,7 +168,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
                 mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
                 q = mZW
                 gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
-
+            gz.alpha = get_pref().gizmo_alpha
             gz.matrix_basis.translation = self.center
 
         if self.cursor_gz:
@@ -174,6 +177,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
 
             mx = Matrix.LocRotScale(self.center, Vector((0, 0, 1)).rotation_difference(vec), Vector((1, 1, 1)))
             self.cursor_gz.matrix_basis = mx
+            self.cursor_gz.alpha = get_pref().gizmo_alpha
 
     def refresh(self, context):
         if context.object:

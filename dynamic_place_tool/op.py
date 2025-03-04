@@ -1,4 +1,3 @@
-import bpy
 from contextlib import contextmanager
 
 import bmesh
@@ -10,24 +9,23 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-from ..get_addon_pref import get_addon_pref
-from ..util.get_gz_matrix import get_matrix
-from ..util.get_position import get_objs_bbox_center
+from ..utils import get_pref
+from ..utils.get_gz_matrix import get_matrix
+from ..utils.get_position import get_objs_bbox_center
 
 
-def get_shader(type='3d'):
-    shader_3d = gpu.shader.from_builtin('UNIFORM_COLOR')
-    shader_2d = gpu.shader.from_builtin('UNIFORM_COLOR')
+def get_shader(shader_type='3d'):
+    shader_3d = shader_2d = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_debug = gpu.shader.from_builtin('UNIFORM_COLOR')
     shader_tex = gpu.shader.from_builtin('IMAGE')
 
-    if type == '3d':
+    if shader_type == '3d':
         return shader_3d
-    elif type == '2d':
+    elif shader_type == '2d':
         return shader_2d
-    elif type == 'debug':
+    elif shader_type == 'debug':
         return shader_debug
-    elif type == 'tex':
+    elif shader_type == 'tex':
         return shader_tex
 
 
@@ -167,7 +165,7 @@ class DynamicBase:
 
         draw_pts = fix_draw_pts(context, self.draw_pts)
 
-        pref_bbox = get_addon_pref().place_tool.bbox
+        pref_bbox = get_pref().place_tool.bbox
         width = pref_bbox.width
         color = pref_bbox.color
 
@@ -240,9 +238,9 @@ class DynamicBase:
         # collision_shape
         passive = context.scene.dynamic_place_tool.passive
         margin = context.scene.dynamic_place_tool.collision_margin
-        passive_color = get_addon_pref().dynamic_place_tool.passive_color
+        passive_color = get_pref().dynamic_place_tool.passive_color
         passive_color = tuple(passive_color)
-        use_color = get_addon_pref().dynamic_place_tool.use_color
+        use_color = get_pref().dynamic_place_tool.use_color
 
         def set_coll_obj(collection):
             for obj in collection.objects:
@@ -316,9 +314,9 @@ class DynamicBase:
 
     def init_space_view(self, objs, context):
         self.obj_colors.clear()
-        active_color = get_addon_pref().dynamic_place_tool.active_color
+        active_color = get_pref().dynamic_place_tool.active_color
         active_color = tuple(active_color)
-        use_color = get_addon_pref().dynamic_place_tool.use_color
+        use_color = get_pref().dynamic_place_tool.use_color
 
         # tmp color
         for obj in objs:

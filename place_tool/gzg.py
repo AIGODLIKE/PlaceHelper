@@ -1,16 +1,14 @@
-import bpy
-import math
-from mathutils import Vector, Color, Euler, Matrix
+from itertools import product
 
-from ..util.gz import GizmoInfo, C_OBJECT_TYPE_HAS_BBOX
-from ..util.get_position import get_objs_bbox_center, get_objs_bbox_top
-from ..util.get_gz_matrix import local_matrix
-from ..util.obj_bbox import AlignObject
+import bpy
+from mathutils import Vector, Matrix
 
 from ._runtime import ALIGN_OBJ, ALIGN_OBJS
-from ..get_addon_pref import get_addon_pref
-
-from itertools import product
+from ..utils import get_pref
+from ..utils.get_gz_matrix import local_matrix
+from ..utils.get_position import get_objs_bbox_top
+from ..utils.gz import GizmoInfo, C_OBJECT_TYPE_HAS_BBOX
+from ..utils.obj_bbox import AlignObject
 
 
 class PH_GZG_place_tool(bpy.types.GizmoGroup):
@@ -48,8 +46,8 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
     def add_set_axis_gz(self, context):
         if len(self.set_axis_gzs) != 0: return
 
-        gzObject = GizmoInfo(scale_basis=get_addon_pref().place_tool.gz.scale_basis,
-                             color=get_addon_pref().place_tool.bbox.color[:3])
+        gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
+                             color=get_pref().place_tool.bbox.color[:3])
 
         x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
 
@@ -76,6 +74,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
             mx = Matrix.LocRotScale(pos, q, scale)
             gz.matrix_basis = mx
+            gz.alpha = get_pref().gizmo_alpha
             return gz
 
         prop = context.scene.place_tool
@@ -88,25 +87,28 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             if axis == exist_axis and invert == exist_invert:
                 continue
             gz = add_axis_gz(axis, invert)
+            gz.alpha = get_pref().gizmo_alpha
             set_axis_gzs.append(gz)
 
         self.set_axis_gzs = set_axis_gzs
 
     def add_rotate_gz(self, context):
-        gzObject = GizmoInfo(scale_basis=get_addon_pref().place_tool.gz.scale_basis,
-                             color=get_addon_pref().place_tool.gz.color,
-                             color_highlight=get_addon_pref().place_tool.gz.color_highlight, )
+        gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
+                             color=get_pref().place_tool.gz.color,
+                             color_highlight=get_pref().place_tool.gz.color_highlight, )
 
         self.rotate_gz = gzObject.set_up(self, 'PH_GT_custom_rotate_z_3d')
+        self.rotate_gz.alpha = get_pref().gizmo_alpha
         prop = self.rotate_gz.target_set_operator(
             "ph.rotate_object", index=0)
         prop.axis = 'Z'
 
     def add_scale_gz(self, context):
-        gzObject = GizmoInfo(scale_basis=get_addon_pref().place_tool.gz.scale_basis,
-                             color=get_addon_pref().place_tool.gz.color,
-                             color_highlight=get_addon_pref().place_tool.gz.color_highlight, )
+        gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
+                             color=get_pref().place_tool.gz.color,
+                             color_highlight=get_pref().place_tool.gz.color_highlight, )
         self.scale_gz = gzObject.set_up(self, 'PH_GT_custom_scale_3d')
+        self.scale_gz.alpha = get_pref().gizmo_alpha
         prop = self.scale_gz.target_set_operator("ph.scale_object", index=0)
 
     def correct_gz_loc(self, context):
@@ -159,9 +161,8 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         elif not obj_A or obj_A.obj != context.object:
             if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
                 ALIGN_OBJ['active'] = AlignObject(context.object,
-                                                  'ACCURATE',True)
-                                                  # context.scene.place_tool.build_active_inst)
-
+                                                  'ACCURATE', True)
+                # context.scene.place_tool.build_active_inst)
 
     def refresh(self, context):
         if context.object:

@@ -90,7 +90,7 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
         if not context.object:
             return {'FINISHED'}
 
-        from ..util.obj_bbox import AlignObject
+        from ..utils.obj_bbox import AlignObject
         from ._runtime import ALIGN_OBJ
 
         if context.object.type in {'MESH', 'CURVE', 'SURFACE', 'FONT'}:
