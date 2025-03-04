@@ -41,3 +41,8 @@ Physics only effects to same level objects, if you put a object to the active ob
 
 ![GIF2024-8-2717-58-17-ezgif com-optimize](https://github.com/user-attachments/assets/0d8067de-e316-4c87-bfb1-f033d8346ae8)
 
+### Link
+
+[EN | iluvblender：Blender Extensions: Place Helper in action](https://youtu.be/UV12smGIO1Y?si=b3GQcJmgkTObtPJA)
+
+[CN | LJ:PlaceHelper给3D软件的革命性改进](https://www.bilibili.com/video/BV18DPbeKE8y)
