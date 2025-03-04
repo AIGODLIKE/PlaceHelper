@@ -60,12 +60,12 @@ class PH_OT_translate(bpy.types.Operator):
             ...
         else:
             if os == "NORMAL":
-                trans_args["orient_axis"] = self.axis
+                if self.axis in ("X", "Y", "Z"):
+                    trans_args["orient_axis"] = self.axis
                 trans_args["orient_type"] = "NORMAL"
                 # trans_args["orient_matrix"] = matrix_orient
                 # trans_args["center_override"] = self.pp
                 # trans_args["orient_matrix_type"] = "NORMAL"
-                print("NORMAL")
 
         if copy is None:
             bpy.ops.transform.transform('INVOKE_DEFAULT', **trans_args)
