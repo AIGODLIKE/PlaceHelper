@@ -1,7 +1,7 @@
 name = "Place Helper"
 id = "PlaceHelper"
 maintainer = "AIGODLIKE社区,Atticus,小萌新"
-version = "1.3.2"
+version = "1.3.3"
 tagline = "Easily place objects in Blender"
 blender_version_min = "4.2.0"
 type = "add-on"
