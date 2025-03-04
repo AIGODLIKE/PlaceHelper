@@ -89,15 +89,13 @@ class PH_OT_translate(bpy.types.Operator):
         if self.pp is None:
             self.pp = self.matrix_basis.translation
 
-        if self.axis == "X":
-            axis_set = (True, False, False)
-        elif self.axis == "Y":
-            axis_set = (False, True, False)
-        elif self.axis == "Z":
-            axis_set = (False, False, True)
-        else:
-            axis_set = (False, False, False)
-
+        constraint_axis_dict = {
+            "X": (True, False, False),
+            "Y": (False, True, False),
+            "Z": (False, False, True),
+            "VIEW": (False, False, False),
+        }
+        axis_set = constraint_axis_dict[self.axis]
         if self.invert_constraint and axis_set != (True, True, True):
             axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])
 
@@ -107,19 +105,10 @@ class PH_OT_translate(bpy.types.Operator):
 
         elif context.mode == "EDIT_MESH":
             if event.shift:
-                args = {
-                    "constraint_axis": axis_set, "release_confirm": True
-                }
+                args = {"constraint_axis": axis_set, "release_confirm": True}
                 if os == "NORMAL":
                     args["orient_type"] = "NORMAL"
 
-                    constraint_axis_dict = {
-                        "X": (True, False, False),
-                        "Y": (True, False, False),
-                        "Z": (True, False, False),
-                    }
-                    if self.axis in constraint_axis_dict:
-                        args["constraint_axis"] = constraint_axis_dict[self.axis]
                 bpy.ops.mesh.extrude_context_move(
                     "INVOKE_DEFAULT",
                     MESH_OT_extrude_context={"use_normal_flip": False, "mirror": False},
