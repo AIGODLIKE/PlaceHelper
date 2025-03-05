@@ -44,7 +44,6 @@ class PH_OT_translate(bpy.types.Operator):
         tpp = context.scene.tool_settings.transform_pivot_point
         os = context.window.scene.transform_orientation_slots[0].type
 
-        print("translate", tpp, os, flush=True)
         trans_args = {
             "mode": "TRANSLATION",
             "release_confirm": True,
@@ -73,12 +72,10 @@ class PH_OT_translate(bpy.types.Operator):
 
     def modal(self, context, event):
         os = context.window.scene.transform_orientation_slots[0].type
-        print("modal", event.value, event.type)
-
         if event.value == "RELEASE" and event.type == "LEFTMOUSE":
-            """选择网格"""
-            ...
-            # extend = False, deselect = False, toggle = False, deselect_all = False, select_passthrough = False, center = False, enumerate = False
+            """
+            PASS select operator
+            选择网格"""
             bpy.ops.view3d.select("INVOKE_DEFAULT", extend=event.shift, enumerate=event.alt)
             return {"FINISHED"}
         elif event.type == "MOUSEMOVE":

@@ -442,8 +442,6 @@ def normal_mesh_matrix(reverse_zD=False):
             perpVec = plane.cross(avrNormal).normalized()
             normal = plane.cross(perpVec).normalized()
             normal.negate()
-
-
     else:
         normal = mat @ normal
         plane = mat @ plane
