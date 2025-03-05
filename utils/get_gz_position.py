@@ -1,6 +1,7 @@
-import bpy
 import bmesh
+import bpy
 from mathutils import Vector
+
 from .get_position import get_objs_bbox_center
 
 
@@ -20,6 +21,8 @@ def get_bmesh_active(bm):
 
         if svf.issubset(sv):
             return active_current
+        elif sv:
+            return sv[0]
 
 
 def get_active_face_position(obj):
