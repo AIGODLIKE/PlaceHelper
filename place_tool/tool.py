@@ -140,10 +140,11 @@ class PT_OT_show_place_axis(bpy.types.Operator):
 
     def invoke(self, context, event):
         prop = context.scene.place_tool
-        prop.setting_axis = True if not prop.setting_axis else False
+        prop.setting_axis = not prop.setting_axis
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)
-        bpy.ops.wm.redraw_timer(type="DRAW")
+        context.area.tag_redraw()
+        bpy.ops.wm.redraw_timer(type="DRAW_WIN")
         return {'FINISHED'}
 
 
@@ -173,6 +174,7 @@ def register():
     bpy.utils.register_class(PlaceToolProps)
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
     bpy.types.Object.place_tool_rotation = bpy.props.FloatProperty(default=0, subtype="ANGLE")
+    bpy.types.Object.place_tool_z_offset = bpy.props.FloatProperty(default=0)
 
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
     bpy.utils.register_class(PH_PT_wrap_view3d_select)
@@ -193,3 +195,4 @@ def unregister():
 
     del bpy.types.Scene.place_tool
     del bpy.types.Object.place_tool_rotation
+    del bpy.types.Object.place_tool_z_offset

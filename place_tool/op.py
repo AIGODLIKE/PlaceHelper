@@ -4,7 +4,6 @@ from contextlib import contextmanager
 import bpy
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from mathutils import Vector, Matrix
-
 from ._runtime import SCENE_OBJS, ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
 from .draw_bbox import draw_bbox_callback
 from ..utils import get_pref
@@ -371,6 +370,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         # 初始化颜色
         self.bvh_helper.is_overlap(context, self.selected_objs)
 
+        self.last_mouse = Vector((event.mouse_x, event.mouse_y))
+        self.z_offset_data = None
         return {'RUNNING_MODAL'}
 
     def create_bottom_parent(self):
@@ -387,8 +388,6 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         rot_obj = bpy.context.object
         empty_obj.rotation_euler = rot_obj.rotation_euler
-
-        # self.clear_rotate(empty)
 
         def add_tmp_parent_constraints(obj, target):
             con = obj.constraints.new('CHILD_OF')
@@ -441,24 +440,47 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         bpy.context.view_layer.objects.active = self.old_obj
 
     def modal(self, context, event):
-        self.rotate_matrix(context, event)
+        self.update_rotate(event)
+        if self.z_mode:
+            self.update_z_offset(event)
+
         if event.type == "D" and event.value == "RELEASE":
             self.z_mode = not self.z_mode
+        if event.type == "R" and event.value == "RELEASE":
+            self.old_obj.place_tool_rotation = 0
+        if event.type == "Z" and event.value == "RELEASE":
+            self.old_obj.place_tool_z_offset = 0
 
-        self.update_state_text(context)
-        if event.type in {"MOUSEMOVE", "WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
+        if event.type in {"MOUSEMOVE", "WHEELUPMOUSE", "WHEELDOWNMOUSE", "R", "Z", "D"}:
             self.handle_multi_obj(context, event)
         if event.type == "LEFTMOUSE" and event.value == "RELEASE":
             self.tg_obj = None
             self.clear_bottom_parent()
             self.remove_handles()
             context.workspace.status_text_set(None)
+            context.area.header_text_set(None)
             return {"FINISHED"}
         self.tmp_parent.matrix_world = self.tmp_parent.matrix_world.copy()
 
+        self.last_mouse = Vector((event.mouse_x, event.mouse_y))
+        self.update_state_text(context)
+        self.update_header_text(context)
         return {"RUNNING_MODAL"}
 
-    def rotate_matrix(self, context, event):
+    def update_z_offset(self, event):
+        last = self.last_mouse[0]
+        now = event.mouse_x
+        diff = last - now
+
+        factor = 0.1
+        if event.ctrl:
+            factor = 0.01
+        elif event.alt:
+            factor = 0.5
+
+        self.z_offset += diff * factor
+
+    def update_rotate(self, event):
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
             pref = get_pref()
             angle = pref.event_normal_adsorption_angle
@@ -476,25 +498,35 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             z = Vector((0, 0, 1))
 
             self.normal = z
-            result, target_obj, view_point, world_loc, normal, location, matrix = ray_cast(context, event)
+            result, target_obj, view_point, world_loc, normal, location, matrix = data = ray_cast(context, event)
 
             # ray cast calc
             self.tg_obj = None
 
             if result:
+                if self.z_mode:  # z 模式不能移动物体
+                    if self.z_offset_data is None:
+                        self.z_offset_data = data
+                    else:
+                        result, target_obj, view_point, world_loc, normal, location, matrix = self.z_offset_data
+                else:
+                    if self.z_offset_data is not None:
+                        self.z_offset_data = None
+
                 self.tg_obj = target_obj
                 self.normal = normal.normalized()
 
                 world_loc = location
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
-                print(world_loc)
+                print("world_loc = ", world_loc.__repr__())
+                z_offset = Vector((0, 0, self.z_offset))
                 self.tmp_parent.location = world_loc
                 context.view_layer.update()
                 if place_tool_props().orient == 'NORMAL':
                     context.view_layer.update()
                     self.clear_rotate(context, self.tmp_parent)
-
+                self.tmp_parent.matrix_world = self.tmp_parent.matrix_world @ Matrix.Translation(z_offset)
                 if hasattr(self, 'objs_A') and context.object in self.selected_objs:
                     self.objs_A.bvh_tree_update()
 
@@ -569,13 +601,39 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     rotate = property(fget=get_rotate, fset=set_rotate)
 
+    def get_z_offset(self) -> float:
+        if getattr(self, "old_obj", False):
+            return self.old_obj.place_tool_z_offset
+        return 0
+
+    def set_z_offset(self, value) -> None:
+        if getattr(self, "old_obj", False):
+            self.old_obj.place_tool_z_offset = value
+
+    z_offset = property(fget=get_z_offset, fset=set_z_offset)
+
     def update_state_text(self, context):
+        """
+        TODO show icon
+        Currently, no method for drawing icons has been found
+        """
         from bpy.app.translations import pgettext_iface
         text = [
             pgettext_iface("Press D to switch Z-axis adjustment mode"),
-            pgettext_iface("Z-axis adjustment:") + pgettext_iface("Enabled" if self.z_mode else "Disable")
+            pgettext_iface("Z-axis adjustment:") + pgettext_iface("Enabled" if self.z_mode else "Disable"),
+            pgettext_iface("R: Press Reset Rotation"),
+            pgettext_iface("Z: Press Reset Z Offset"),
         ]
         context.workspace.status_text_set("  ".join(text))
+
+    def update_header_text(self, context):
+        from bpy.app.translations import pgettext_iface
+
+        text = [
+            pgettext_iface("Rotate:") + "{:.2f}".format(math.degrees(self.old_obj.place_tool_rotation)),
+            pgettext_iface("Z Offset:") + "{:.2f}".format(self.old_obj.place_tool_z_offset),
+        ]
+        context.area.header_text_set("  ".join(text))
 
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):

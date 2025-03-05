@@ -32,9 +32,11 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             return True
 
     def setup(self, context):
+        print("setup")
         self.add_rotate_gz(context)
         self.add_scale_gz(context)
         self.correct_gz_loc(context)
+        self.refresh(context)
 
     def remove_set_axis_gz(self):
         if len(self.set_axis_gzs) == 0:
@@ -44,7 +46,8 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         self.set_axis_gzs.clear()
 
     def add_set_axis_gz(self, context):
-        if len(self.set_axis_gzs) != 0: return
+        if len(self.set_axis_gzs) != 0:
+            return
 
         gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
                              color=get_pref().place_tool.bbox.color[:3])
@@ -165,6 +168,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
                 # context.scene.place_tool.build_active_inst)
 
     def refresh(self, context):
+        print("refresh")
         if context.object:
             self.correct_gz_loc(context)
 
@@ -201,5 +205,6 @@ def unregister():
 
 
 def update_gzg_pref(self, context):
+    print("update_gzg_pref")
     unregister()
     register()
