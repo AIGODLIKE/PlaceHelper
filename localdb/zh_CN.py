@@ -28,5 +28,6 @@ data = {
     "R: Press Reset Rotation": "R: 按下重置旋转",
     "Z: Press Reset Z Offset": "Z: 按下重置Z偏移",
     "Rotate:": "旋转:",
-    "Z Offset:": "Z 偏移:"
+    "Z Offset:": "Z 偏移:",
+    "Not in User Keymap Found %s": "在用户快捷键中未找到 %s"
 }
