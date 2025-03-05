@@ -29,5 +29,6 @@ data = {
     "Z: Press Reset Z Offset": "Z: 按下重置Z偏移",
     "Rotate:": "旋转:",
     "Z Offset:": "Z 偏移:",
-    "Not in User Keymap Found %s": "在用户快捷键中未找到 %s"
+    "Not in User Keymap Found %s": "在用户快捷键中未找到 %s",
+    "Show Place Axis": "显示放置轴"
 }
