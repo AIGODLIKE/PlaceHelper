@@ -520,7 +520,6 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
                 world_loc = location
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
-                print("world_loc = ", world_loc.__repr__())
                 z_offset = Vector((0, 0, self.z_offset))
                 self.tmp_parent.location = world_loc
                 context.view_layer.update()

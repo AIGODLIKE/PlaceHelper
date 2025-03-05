@@ -15,7 +15,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
     bl_label = "Place Tool Widget"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
-    bl_options = {'3D'}
+    bl_options = {'3D', "PERSISTENT"}
 
     set_axis_gzs = []
 
@@ -32,10 +32,11 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             return True
 
     def setup(self, context):
-        print("setup")
         self.add_rotate_gz(context)
         self.add_scale_gz(context)
         self.correct_gz_loc(context)
+        self.add_set_axis_gz(context)
+
         self.refresh(context)
 
     def remove_set_axis_gz(self):
@@ -168,18 +169,19 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
                 # context.scene.place_tool.build_active_inst)
 
     def refresh(self, context):
-        print("refresh")
         if context.object:
             self.correct_gz_loc(context)
 
         prop = context.scene.place_tool
 
-        if prop.setting_axis:
-            self.add_set_axis_gz(context)
-        else:
-            self.remove_set_axis_gz()
+        for gz in self.set_axis_gzs:
+            gz.hide = not prop.setting_axis
+        self.scale_gz.hide = self.rotate_gz.hide = prop.setting_axis
 
     def draw_prepare(self, context):
+        self.refresh(context)
+
+    def invoke_prepare(self, context, gizmo):
         self.refresh(context)
 
 
@@ -190,18 +192,12 @@ classes = (
 
 def register():
     for cls in classes:
-        try:
-            bpy.utils.register_class(cls)
-        except:
-            pass
+        bpy.utils.register_class(cls)
 
 
 def unregister():
     for cls in classes:
-        try:
-            bpy.utils.unregister_class(cls)
-        except:
-            pass
+        bpy.utils.unregister_class(cls)
 
 
 def update_gzg_pref(self, context):
