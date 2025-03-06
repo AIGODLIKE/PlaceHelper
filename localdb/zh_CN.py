@@ -19,7 +19,7 @@ data = {
     "Use visual obj bounding box, slower": "使用可视化物体碰撞盒，速度慢一些",
     "Use basic mesh bounding box, faster": "使用基础网格碰撞盒，速度快一些",
     "Scene Objects": "场景物体",
-    "Adsorption Angle": "捕捉角度",
+    "Adsorption Angle": "吸附角度",
     "Set Place Axis": "设置放置轴",
     "Bake Animation": "烘焙动画",
     "Use Local Rotate": "使用局部旋转",
@@ -30,5 +30,7 @@ data = {
     "Rotate:": "旋转:",
     "Z Offset:": "Z 偏移:",
     "Not in User Keymap Found %s": "在用户快捷键中未找到 %s",
-    "Show Place Axis": "显示放置轴"
+    "Show Place Axis": "显示放置轴",
+    "Press D adjustment Z-offset": "按 D 调整Z偏移",
+    "Adsorption Z Offset": "吸附Z偏移"
 }

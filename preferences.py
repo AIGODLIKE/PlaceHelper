@@ -53,6 +53,10 @@ class Preferences(AddonPreferences):
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
     event_alt_adsorption_angle: IntProperty(name="Alt", default=45, min=1, max=180, subtype="ANGLE")
 
+    event_normal_adsorption_z_offset: FloatProperty(name="General", default=0.5, min=0.01, max=180)
+    event_ctrl_adsorption_z_offset: FloatProperty(name="Ctrl", default=0.1, min=0.1, max=180)
+    event_alt_adsorption_z_offset: FloatProperty(name="Alt", default=1, min=0.1, max=180)
+
     gizmo_alpha: FloatProperty(name="Gizmo Alpha", default=0.5, min=0.1, max=1)
 
     def draw(self, context):
@@ -84,6 +88,13 @@ class Preferences(AddonPreferences):
         column.prop(self, "event_ctrl_adsorption_angle")
         column.prop(self, "event_normal_adsorption_angle")
         column.prop(self, "event_alt_adsorption_angle")
+
+    def draw_event_adsorption_z_offset(self, context, layout):
+        column = layout.column(align=True)
+        column.label(text="Adsorption Z Offset")
+        column.prop(self, "event_normal_adsorption_z_offset")
+        column.prop(self, "event_ctrl_adsorption_z_offset")
+        column.prop(self, "event_alt_adsorption_z_offset")
 
     def draw_dynamic_place_tool(self, context, layout):
         col = layout.box().column()
@@ -127,6 +138,7 @@ class Preferences(AddonPreferences):
         box.prop(self.place_tool.gz, "color")
         box.prop(self.place_tool.gz, "color_highlight")
         self.draw_event_adsorption_angle(context, col.box())
+        self.draw_event_adsorption_z_offset(context, col.box())
 
         self.draw_place_tool_keymap(context, col)
 

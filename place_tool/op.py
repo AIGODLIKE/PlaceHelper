@@ -333,7 +333,65 @@ class ModalBase:
             self.copy_obj(context)
 
 
-class PH_OT_move_object(ModalBase, bpy.types.Operator):
+class MoveEvent:
+
+    def get_rotate(self) -> float:
+        if getattr(self, "old_obj", False):
+            return self.old_obj.place_tool_rotation
+        return 0
+
+    def set_rotate(self, value) -> None:
+        if getattr(self, "old_obj", False):
+            self.old_obj.place_tool_rotation = value
+
+    rotate = property(fget=get_rotate, fset=set_rotate)
+
+    def get_z_offset(self) -> float:
+        if getattr(self, "old_obj", False):
+            return self.old_obj.place_tool_z_offset
+        return 0
+
+    def set_z_offset(self, value) -> None:
+        if getattr(self, "old_obj", False):
+            self.old_obj.place_tool_z_offset = value
+
+    z_offset = property(fget=get_z_offset, fset=set_z_offset)
+
+    def update_event(self, event: bpy.types.Event):
+        if event.type == "D":
+            self.z_mode = event.value != "RELEASE"
+
+        if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
+            pref = get_pref()
+
+            if self.z_mode:
+                value = pref.event_normal_adsorption_z_offset
+                if event.ctrl:
+                    value = pref.event_ctrl_adsorption_z_offset
+                elif event.alt:
+                    value = pref.event_alt_adsorption_z_offset
+            else:
+                value = pref.event_normal_adsorption_angle
+                if event.ctrl:
+                    value = pref.event_ctrl_adsorption_angle
+                elif event.alt:
+                    value = pref.event_alt_adsorption_angle
+
+            value = value if event.type == 'WHEELUPMOUSE' else -value
+
+            if self.z_mode:
+                self.update_z_offset(value)
+            else:
+                self.update_rotate(value)
+
+    def update_z_offset(self, value):
+        self.z_offset += value * 0.1
+
+    def update_rotate(self, value):
+        self.rotate += math.radians(value)
+
+
+class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
     """Move"""
     bl_idname = "ph.move_object"
     bl_label = "Move"
@@ -345,7 +403,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
     axis: EnumProperty(name='Axis', items=[('X', 'X', 'X'), ('Y', 'Y', 'Y'), ('Z', 'Z', 'Z')], default='Z')
     invert_axis: BoolProperty(name='Invert Axis', default=False)
-    z_mode: BoolProperty(name="Z Adjustment", default=False)
+    z_mode = None
 
     def invoke(self, context, event):
         prop = bpy.context.scene.place_tool
@@ -371,8 +429,7 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         # 初始化颜色
         self.bvh_helper.is_overlap(context, self.selected_objs)
 
-        self.last_mouse = Vector((event.mouse_x, event.mouse_y))
-        self.z_offset_data = None
+        self.z_mode = False
         return {'RUNNING_MODAL'}
 
     def create_bottom_parent(self):
@@ -441,12 +498,8 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         bpy.context.view_layer.objects.active = self.old_obj
 
     def modal(self, context, event):
-        self.update_rotate(event)
-        if self.z_mode:
-            self.update_z_offset(event)
+        self.update_event(event)
 
-        if event.type == "D" and event.value == "RELEASE":
-            self.z_mode = not self.z_mode
         if event.type == "R" and event.value == "RELEASE":
             self.old_obj.place_tool_rotation = 0
         if event.type == "Z" and event.value == "RELEASE":
@@ -463,34 +516,9 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             return {"FINISHED"}
         self.tmp_parent.matrix_world = self.tmp_parent.matrix_world.copy()
 
-        self.last_mouse = Vector((event.mouse_x, event.mouse_y))
         self.update_state_text(context)
         self.update_header_text(context)
         return {"RUNNING_MODAL"}
-
-    def update_z_offset(self, event):
-        last = self.last_mouse[0]
-        now = event.mouse_x
-        diff = last - now
-
-        factor = 0.1
-        if event.ctrl:
-            factor = 0.01
-        elif event.alt:
-            factor = 0.5
-
-        self.z_offset += diff * factor
-
-    def update_rotate(self, event):
-        if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
-            pref = get_pref()
-            angle = pref.event_normal_adsorption_angle
-            if event.ctrl:
-                angle = pref.event_ctrl_adsorption_angle
-            elif event.alt:
-                angle = pref.event_alt_adsorption_angle
-            delta_angle = math.radians(angle) if event.type == 'WHEELUPMOUSE' else math.radians(-angle)
-            self.rotate += delta_angle
 
     def handle_multi_obj(self, context, event):
         self.bvh_helper.is_overlap(context)
@@ -505,15 +533,6 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
             self.tg_obj = None
 
             if result:
-                if self.z_mode:  # z 模式不能移动物体
-                    if self.z_offset_data is None:
-                        self.z_offset_data = data
-                    else:
-                        result, target_obj, view_point, world_loc, normal, location, matrix = self.z_offset_data
-                else:
-                    if self.z_offset_data is not None:
-                        self.z_offset_data = None
-
                 self.tg_obj = target_obj
                 self.normal = normal.normalized()
 
@@ -590,28 +609,6 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
 
         context.view_layer.update()
 
-    def get_rotate(self) -> float:
-        if getattr(self, "old_obj", False):
-            return self.old_obj.place_tool_rotation
-        return 0
-
-    def set_rotate(self, value) -> None:
-        if getattr(self, "old_obj", False):
-            self.old_obj.place_tool_rotation = value
-
-    rotate = property(fget=get_rotate, fset=set_rotate)
-
-    def get_z_offset(self) -> float:
-        if getattr(self, "old_obj", False):
-            return self.old_obj.place_tool_z_offset
-        return 0
-
-    def set_z_offset(self, value) -> None:
-        if getattr(self, "old_obj", False):
-            self.old_obj.place_tool_z_offset = value
-
-    z_offset = property(fget=get_z_offset, fset=set_z_offset)
-
     def update_state_text(self, context):
         """
         TODO show icon
@@ -619,12 +616,11 @@ class PH_OT_move_object(ModalBase, bpy.types.Operator):
         """
         from bpy.app.translations import pgettext_iface
         text = [
-            pgettext_iface("Press D to switch Z-axis adjustment mode"),
-            pgettext_iface("Z-axis adjustment:") + pgettext_iface("Enabled" if self.z_mode else "Disable"),
+            pgettext_iface("Press D adjustment Z-offset"),
             pgettext_iface("R: Press Reset Rotation"),
             pgettext_iface("Z: Press Reset Z Offset"),
         ]
-        context.workspace.status_text_set("  ".join(text))
+        context.workspace.status_text_set("    ".join(text))
 
     def update_header_text(self, context):
         from bpy.app.translations import pgettext_iface
