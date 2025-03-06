@@ -31,12 +31,7 @@ class PH_OT_translate(bpy.types.Operator):
     pp = None
 
     def get_orient_matrix(self, context):
-        os = context.window.scene.transform_orientation_slots[0].type
-
         mat = self.matrix_basis.copy().to_3x3()
-
-        if os == "NORMAL" and context.mode == "EDIT_MESH":
-            ...
 
         if self.axis == "X":
             mat = mat @ Quaternion((0.0, 1.0, 0.0), radians(90)).to_matrix().to_3x3()
@@ -49,7 +44,6 @@ class PH_OT_translate(bpy.types.Operator):
         tpp = context.scene.tool_settings.transform_pivot_point
         os = context.window.scene.transform_orientation_slots[0].type
 
-        print("translate", tpp, os, flush=True)
         trans_args = {
             "mode": "TRANSLATION",
             "release_confirm": True,
@@ -68,7 +62,7 @@ class PH_OT_translate(bpy.types.Operator):
                 # trans_args["orient_matrix_type"] = "NORMAL"
 
         if copy is None:
-            bpy.ops.transform.transform('INVOKE_DEFAULT', **trans_args)
+            bpy.ops.transform.transform("INVOKE_DEFAULT", **trans_args)
         else:
             trans_args.pop("mode")
             bpy.ops.object.duplicate_move("INVOKE_DEFAULT",
@@ -77,45 +71,46 @@ class PH_OT_translate(bpy.types.Operator):
                                           TRANSFORM_OT_translate=trans_args)
 
     def modal(self, context, event):
-        if event.value == "RELEASE" or event.type in {"RET"}:
+        os = context.window.scene.transform_orientation_slots[0].type
+        if event.value == "RELEASE" and event.type == "LEFTMOUSE":
+            """
+            PASS select operator
+            选择网格"""
+            bpy.ops.view3d.select("INVOKE_DEFAULT", extend=event.shift, enumerate=event.alt)
             return {"FINISHED"}
-        elif event.type in {"ESC", "RIGHTMOUSE"}:
-            return {"CANCELLED"}
-        return {"RUNNING_MODAL"}
+        elif event.type == "MOUSEMOVE":
+            constraint_axis_dict = {
+                "X": (True, False, False),
+                "Y": (False, True, False),
+                "Z": (False, False, True),
+                "VIEW": (False, False, False),
+            }
+            axis_set = constraint_axis_dict[self.axis]
+            if self.invert_constraint and axis_set != (True, True, True):
+                axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])
+            if context.mode == "OBJECT":
+                self.translate(self, context, axis_set, self.get_orient_matrix(context),
+                               copy=None if not event.shift else context.scene.move_view_tool.duplicate)
+            elif context.mode == "EDIT_MESH":
+                if event.shift:
+                    args = {"constraint_axis": axis_set, "release_confirm": True}
+                    if os == "NORMAL":
+                        args["orient_type"] = "NORMAL"
+
+                    bpy.ops.mesh.extrude_context_move(
+                        "INVOKE_DEFAULT",
+                        MESH_OT_extrude_context={"use_normal_flip": False, "mirror": False},
+                        TRANSFORM_OT_translate=args,
+                    )
+                else:
+                    self.translate(self, context, axis_set, self.get_orient_matrix(context), copy=None)
+        return {"CANCELLED", "PASS_THROUGH"}
 
     def invoke(self, context, event):
-        os = context.window.scene.transform_orientation_slots[0].type
-
         if self.pp is None:
             self.pp = self.matrix_basis.translation
 
-        constraint_axis_dict = {
-            "X": (True, False, False),
-            "Y": (False, True, False),
-            "Z": (False, False, True),
-            "VIEW": (False, False, False),
-        }
-        axis_set = constraint_axis_dict[self.axis]
-        if self.invert_constraint and axis_set != (True, True, True):
-            axis_set = (not axis_set[0], not axis_set[1], not axis_set[2])
-
-        if context.mode == "OBJECT":
-            self.translate(self, context, axis_set, self.get_orient_matrix(context),
-                           copy=None if not event.shift else context.scene.move_view_tool.duplicate)
-
-        elif context.mode == "EDIT_MESH":
-            if event.shift:
-                args = {"constraint_axis": axis_set, "release_confirm": True}
-                if os == "NORMAL":
-                    args["orient_type"] = "NORMAL"
-
-                bpy.ops.mesh.extrude_context_move(
-                    "INVOKE_DEFAULT",
-                    MESH_OT_extrude_context={"use_normal_flip": False, "mirror": False},
-                    TRANSFORM_OT_translate=args,
-                )
-            else:
-                self.translate(self, context, axis_set, self.get_orient_matrix(context), copy=None)
+        context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
 
 

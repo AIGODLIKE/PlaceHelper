@@ -22,5 +22,13 @@ data = {
     "Adsorption Angle": "捕捉角度",
     "Set Place Axis": "设置放置轴",
     "Bake Animation": "烘焙动画",
-    "Use Local Rotate": "使用局部旋转"
+    "Use Local Rotate": "使用局部旋转",
+    "Press D to switch Z-axis adjustment mode": "按下 D 切换Z轴调整模式",
+    "Z-axis adjustment:": "Z轴调整:",
+    "R: Press Reset Rotation": "R: 按下重置旋转",
+    "Z: Press Reset Z Offset": "Z: 按下重置Z偏移",
+    "Rotate:": "旋转:",
+    "Z Offset:": "Z 偏移:",
+    "Not in User Keymap Found %s": "在用户快捷键中未找到 %s",
+    "Show Place Axis": "显示放置轴"
 }

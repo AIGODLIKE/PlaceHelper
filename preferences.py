@@ -128,6 +128,28 @@ class Preferences(AddonPreferences):
         box.prop(self.place_tool.gz, "color_highlight")
         self.draw_event_adsorption_angle(context, col.box())
 
+        self.draw_place_tool_keymap(context, col)
+
+    def draw_place_tool_keymap(self, context, layout):
+        column = layout.box().column(align=True)
+
+        column.label(text="Keymaps")
+
+        kc = context.window_manager.keyconfigs.user
+
+        key = "3D View Tool: Object, Place Tool"
+        if key in kc.keymaps:
+            import rna_keymap_ui
+            km = kc.keymaps[key]
+            for kmi in km.keymap_items:
+                col = column.column(align=True)
+                if kmi.is_user_modified:
+                    col.context_pointer_set("keymap", km)
+                rna_keymap_ui.draw_kmi(["ADDON", "USER", "DEFAULT"], kc, km, kmi, col, 0)
+
+        else:
+            column.label(text=bpy.app.translations.pgettext_iface("Not in User Keymap Found %s") % key)
+
 
 def register():
     bpy.utils.register_class(PlaceToolBBoxProps)

@@ -216,6 +216,9 @@ def normal_mesh_matrix(reverse_zD=False):
     def vert_tri_find_unique_edge(verts):
         difs = Vector()
 
+        if len(verts) < 4:
+            return 0
+
         i_next = 0
         while i_next < 3:
             if i_next == 0:
@@ -425,21 +428,20 @@ def normal_mesh_matrix(reverse_zD=False):
     plane.negate()  # not needed but this matches 2.68 and older behavior
 
     if result == 'ORIENTATION_EDGE':
+        if el is not None:
+            # TODO 需要重构算法,有点太复杂了
+            if isinstance(el, bmesh.types.BMEdge):
+                v1, v2 = [v for v in el.verts]
+            else:
+                v1 = el
+                v2 = [v for v in em.verts if v.select and v != v1][0]
 
-        if isinstance(el, bmesh.types.BMEdge):
-            v1, v2 = [v for v in el.verts]
-        else:
-            v1 = el
-            v2 = [v for v in em.verts if v.select and v != v1][0]
-
-        avrNormal = ((v1.normal + v2.normal) * 0.5)
-        plane = obmat @ Vector(v1.co) - obmat @ Vector(v2.co)
-        avrNormal = mat @ avrNormal
-        perpVec = plane.cross(avrNormal).normalized()
-        normal = plane.cross(perpVec).normalized()
-        normal.negate()
-
-
+            avrNormal = ((v1.normal + v2.normal) * 0.5)
+            plane = obmat @ Vector(v1.co) - obmat @ Vector(v2.co)
+            avrNormal = mat @ avrNormal
+            perpVec = plane.cross(avrNormal).normalized()
+            normal = plane.cross(perpVec).normalized()
+            normal.negate()
     else:
         normal = mat @ normal
         plane = mat @ plane
