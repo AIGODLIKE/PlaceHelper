@@ -92,8 +92,8 @@ class Preferences(AddonPreferences):
     def draw_event_adsorption_z_offset(self, context, layout):
         column = layout.column(align=True)
         column.label(text="Adsorption Z Offset")
-        column.prop(self, "event_normal_adsorption_z_offset")
         column.prop(self, "event_ctrl_adsorption_z_offset")
+        column.prop(self, "event_normal_adsorption_z_offset")
         column.prop(self, "event_alt_adsorption_z_offset")
 
     def draw_dynamic_place_tool(self, context, layout):
