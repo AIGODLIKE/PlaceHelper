@@ -53,9 +53,9 @@ class Preferences(AddonPreferences):
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
     event_alt_adsorption_angle: IntProperty(name="Alt", default=45, min=1, max=180, subtype="ANGLE")
 
-    event_normal_adsorption_z_offset: FloatProperty(name="General", default=0.5, min=0.01, max=180)
+    event_normal_adsorption_z_offset: FloatProperty(name="General", default=1, min=0.01, max=180)
     event_ctrl_adsorption_z_offset: FloatProperty(name="Ctrl", default=0.1, min=0.1, max=180)
-    event_alt_adsorption_z_offset: FloatProperty(name="Alt", default=1, min=0.1, max=180)
+    event_alt_adsorption_z_offset: FloatProperty(name="Alt", default=5, min=0.1, max=180)
 
     gizmo_alpha: FloatProperty(name="Gizmo Alpha", default=0.5, min=0.1, max=1)
 
