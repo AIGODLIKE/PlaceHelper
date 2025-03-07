@@ -38,7 +38,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
     bl_label = "Test Widget"
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
-    bl_options = {"3D"}
+    bl_options = {"3D", "PERSISTENT"}
 
     _move_gz = {}
     _move_gz_plane = {}
@@ -69,7 +69,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         self.add_move_gz(context, "X")
         self.add_move_gz(context, "Y")
         self.add_move_gz(context, "Z")
-        # self.add_move_gz(context, "VIEW")
+        self.add_move_gz(context, "VIEW")
 
         self.add_move_gz_plane(context, "X")
         self.add_move_gz_plane(context, "Y")
@@ -79,7 +79,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         pref = get_pref()
         color, color_highlight = get_color(axis)
 
-        gzObject = GizmoInfo(scale_basis=0.4,
+        gzObject = GizmoInfo(scale_basis=.28,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False,
@@ -91,7 +91,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         prop.invert_constraint = True
 
         mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-        off = 2
+        off = 0.1
         if axis == "X":
             mx = mXW
             mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
@@ -115,9 +115,9 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         pref = get_pref()
 
         if axis == "VIEW":
-            color = (0.8, 0.8, 0.8)
+            color = color_highlight = (.9, .9, .9)
 
-        gzObject = GizmoInfo(scale_basis=1 if axis != "VIEW" else 0.3,
+        gzObject = GizmoInfo(scale_basis=pref.transform_gizmo_circle_size if axis == "VIEW" else 1,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False,
@@ -125,7 +125,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
 
         if axis == "VIEW":
             gz = gzObject.set_up(self, "GIZMO_GT_dial_3d")
-            gz.line_width = 3
+            gz.line_width = 2
         else:
             gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
 
@@ -145,8 +145,6 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
             q = mZW
             gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
 
-        loc = get_position()
-        gz.matrix_basis.translation = loc
         gz.alpha = pref.gizmo_alpha
 
         self._move_gz[gz] = axis
@@ -154,6 +152,8 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
     def correct_gz_loc(self, context):
         mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
         loc = get_position()
+
+        pref = get_pref()
 
         def get_mx(axis):
             if axis == "X":

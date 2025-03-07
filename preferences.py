@@ -3,7 +3,8 @@ from bpy.props import IntProperty, BoolProperty, FloatProperty, EnumProperty, Fl
     PointerProperty
 from bpy.types import AddonPreferences, PropertyGroup
 
-from .place_tool.gzg import update_gzg_pref
+from .place_tool.gzg import update_gzg_pref as update_place
+from .transform_tool.gzg import update_gzg_pref as update_transform
 
 
 class PlaceToolBBoxProps(PropertyGroup):
@@ -17,8 +18,9 @@ class PlaceToolBBoxProps(PropertyGroup):
 
 
 class PlaceToolGizmoProps(PropertyGroup):
-    scale_basis: FloatProperty(name="Scale", default=0.5, min=0.1, max=2, update=update_gzg_pref)
-    color: FloatVectorProperty(name="Color", subtype="COLOR", size=3, default=(0.48, 0.4, 1), update=update_gzg_pref)
+    scale_basis: FloatProperty(name="Scale", default=0.5, min=0.1, max=2, update=update_place)
+    color: FloatVectorProperty(name="Color", subtype="COLOR", size=3, default=(0.48, 0.4, 1), update=update_place)
+
 
 class PlaceToolProps(PropertyGroup):
     bbox: PointerProperty(type=PlaceToolBBoxProps)
@@ -46,7 +48,9 @@ class Preferences(AddonPreferences):
     use_event_handle_all: BoolProperty(name="Gizmo Handle All Event", default=False)
     debug: BoolProperty(name="Debug", default=False)
 
-    transform_gizmo_circle_size: IntProperty(name="Transform Gizmo circle size")
+    transform_gizmo_circle_size: FloatProperty(name="Transform Gizmo circle size", default=0.2, update=update_transform,
+                                               min=0.1,
+                                               max=10)
 
     event_normal_adsorption_angle: IntProperty(name="General", default=15, min=1, max=180, subtype="ANGLE")
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
@@ -72,7 +76,7 @@ class Preferences(AddonPreferences):
         if self.tool_type == "PLACE_TOOL":
             self.draw_place_tool(context, col)
         elif self.tool_type == "TRANSFORM_TOOL":
-            pass
+            self.draw_transform_tool(context, col)
         elif self.tool_type == "DYNAMIC_PLACE_TOOL":
             self.draw_dynamic_place_tool(context, col)
         col.separator()
@@ -159,6 +163,11 @@ class Preferences(AddonPreferences):
 
         else:
             column.label(text=bpy.app.translations.pgettext_iface("Not in User Keymap Found %s") % key)
+
+    def draw_transform_tool(self, context, layout):
+        column = layout.box().column(align=True)
+        column.label(text="Transform Tool")
+        column.prop(self, "transform_gizmo_circle_size")
 
 
 def register():
