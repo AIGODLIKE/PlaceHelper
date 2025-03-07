@@ -97,7 +97,6 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
         axis_x = ui.axis_x[:3]
         axis_y = ui.axis_y[:3]
         axis_z = ui.axis_z[:3]
-        color_highlight = (1, 1, 1)
 
         if axis == 'X':
             color = axis_x
@@ -110,7 +109,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
 
         gzObject = GizmoInfo(scale_basis=1 if axis != 'VIEW' else 0.3,
                              color=color,
-                             color_highlight=color_highlight,
+                             color_highlight=color,
                              use_draw_modal=False)
 
         if context.scene.dynamic_place_tool.mode == 'FORCE':

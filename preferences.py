@@ -19,9 +19,6 @@ class PlaceToolBBoxProps(PropertyGroup):
 class PlaceToolGizmoProps(PropertyGroup):
     scale_basis: FloatProperty(name="Scale", default=0.5, min=0.1, max=2, update=update_gzg_pref)
     color: FloatVectorProperty(name="Color", subtype="COLOR", size=3, default=(0.48, 0.4, 1), update=update_gzg_pref)
-    color_highlight: FloatVectorProperty(name="Highlight", subtype="COLOR", size=3, default=(1, 1, 1),
-                                         update=update_gzg_pref)
-
 
 class PlaceToolProps(PropertyGroup):
     bbox: PointerProperty(type=PlaceToolBBoxProps)
@@ -48,6 +45,8 @@ class Preferences(AddonPreferences):
     #
     use_event_handle_all: BoolProperty(name="Gizmo Handle All Event", default=False)
     debug: BoolProperty(name="Debug", default=False)
+
+    transform_gizmo_circle_size: IntProperty(name="Transform Gizmo circle size")
 
     event_normal_adsorption_angle: IntProperty(name="General", default=15, min=1, max=180, subtype="ANGLE")
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
@@ -136,7 +135,6 @@ class Preferences(AddonPreferences):
         box = col.box().column()
         box.prop(self.place_tool.gz, "scale_basis", slider=True)
         box.prop(self.place_tool.gz, "color")
-        box.prop(self.place_tool.gz, "color_highlight")
         self.draw_event_adsorption_angle(context, col.box())
         self.draw_event_adsorption_z_offset(context, col.box())
 

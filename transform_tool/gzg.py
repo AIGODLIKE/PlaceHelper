@@ -13,23 +13,22 @@ def get_color(axis):
     axis_x = ui.axis_x[:3]
     axis_y = ui.axis_y[:3]
     axis_z = ui.axis_z[:3]
-    color_highlight = (1, 1, 1)
 
-    if axis == 'X':
+    if axis == "X":
         color = axis_x
-    elif axis == 'Y':
+    elif axis == "Y":
         color = axis_y
     else:
         color = axis_z
 
-    return color, color_highlight
+    return color, color
 
 
 def get_mx(axis):
     mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-    if axis == 'X':
+    if axis == "X":
         return mXW
-    elif axis == 'Y':
+    elif axis == "Y":
         return mY_d
     else:
         return mZW
@@ -37,9 +36,9 @@ def get_mx(axis):
 
 class PH_GZG_transform_pro(bpy.types.GizmoGroup):
     bl_label = "Test Widget"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'WINDOW'
-    bl_options = {'3D'}
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "WINDOW"
+    bl_options = {"3D"}
 
     _move_gz = {}
     _move_gz_plane = {}
@@ -53,11 +52,11 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         elif len(context.selected_objects) == 0:
             return
 
-        elif obj.mode not in {'OBJECT', 'EDIT'}:
+        elif obj.mode not in {"OBJECT", "EDIT"}:
             return
         elif context.workspace.tools.from_space_view3d_mode(context.mode, create=False).idname not in {
-            'ph.transform_pro',
-            'ph.transform_pro_edit'
+            "ph.transform_pro",
+            "ph.transform_pro_edit"
         }:
             return
 
@@ -67,14 +66,14 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         self._move_gz.clear()
         self._move_gz_plane.clear()
 
-        self.add_move_gz(context, 'X')
-        self.add_move_gz(context, 'Y')
-        self.add_move_gz(context, 'Z')
-        self.add_move_gz(context, 'VIEW')
+        self.add_move_gz(context, "X")
+        self.add_move_gz(context, "Y")
+        self.add_move_gz(context, "Z")
+        # self.add_move_gz(context, "VIEW")
 
-        self.add_move_gz_plane(context, 'X')
-        self.add_move_gz_plane(context, 'Y')
-        self.add_move_gz_plane(context, 'Z')
+        self.add_move_gz_plane(context, "X")
+        self.add_move_gz_plane(context, "Y")
+        self.add_move_gz_plane(context, "Z")
 
     def add_move_gz_plane(self, context, axis):
         pref = get_pref()
@@ -85,7 +84,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
                              color_highlight=color_highlight,
                              use_draw_modal=False,
                              use_event_handle_all=False)
-        gz = gzObject.set_up(self, 'PH_GT_custom_move_plane_3d')
+        gz = gzObject.set_up(self, "PH_GT_custom_move_plane_3d")
         gz.align_view = True
         prop = gz.target_set_operator("ph.translate", index=0)
         prop.axis = axis
@@ -93,10 +92,10 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
 
         mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
         off = 2
-        if axis == 'X':
+        if axis == "X":
             mx = mXW
             mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-        elif axis == 'Y':
+        elif axis == "Y":
             mx = mYW
             mx_offset = Matrix.Translation(Vector((off, -off, 0.0)))
         else:
@@ -115,31 +114,31 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         color, color_highlight = get_color(axis)
         pref = get_pref()
 
-        if axis == 'VIEW':
+        if axis == "VIEW":
             color = (0.8, 0.8, 0.8)
 
-        gzObject = GizmoInfo(scale_basis=1 if axis != 'VIEW' else 0.3,
+        gzObject = GizmoInfo(scale_basis=1 if axis != "VIEW" else 0.3,
                              color=color,
                              color_highlight=color_highlight,
                              use_draw_modal=False,
                              use_event_handle_all=False)
 
-        if axis == 'VIEW':
-            gz = gzObject.set_up(self, 'GIZMO_GT_dial_3d')
+        if axis == "VIEW":
+            gz = gzObject.set_up(self, "GIZMO_GT_dial_3d")
             gz.line_width = 3
         else:
-            gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
+            gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
 
         prop = gz.target_set_operator("ph.translate", index=0)
         prop.invert_constraint = False
         prop.axis = axis
 
         mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-        if axis == 'X':
+        if axis == "X":
             gz.matrix_basis = mXW
-        elif axis == 'Y':
+        elif axis == "Y":
             gz.matrix_basis = mY_d
-        elif axis == 'Z':
+        elif axis == "Z":
             gz.matrix_basis = mZW
         else:
             mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
@@ -157,15 +156,15 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         loc = get_position()
 
         def get_mx(axis):
-            if axis == 'X':
+            if axis == "X":
                 return mXW
-            elif axis == 'Y':
+            elif axis == "Y":
                 return mYW
             else:
                 return mZW
 
         for gz, axis in self._move_gz.items():
-            if axis == 'VIEW':
+            if axis == "VIEW":
                 res = view_matrix()
                 q = res[2]
                 gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
@@ -176,9 +175,9 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         for gz, axis in self._move_gz_plane.items():
             gz.matrix_basis = get_mx(axis)
             off = 2
-            if axis == 'X':
+            if axis == "X":
                 mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-            elif axis == 'Y':
+            elif axis == "Y":
                 mx_offset = Matrix.Translation(Vector((off, -off, 0.0)))
             else:
                 mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))

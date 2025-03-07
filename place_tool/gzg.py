@@ -97,9 +97,10 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         self.set_axis_gzs = set_axis_gzs
 
     def add_rotate_gz(self, context):
+        color = get_pref().place_tool.gz.color
         gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
-                             color=get_pref().place_tool.gz.color,
-                             color_highlight=get_pref().place_tool.gz.color_highlight, )
+                             color=color,
+                             color_highlight=color, )
 
         self.rotate_gz = gzObject.set_up(self, "PH_GT_custom_rotate_z_3d")
         self.rotate_gz.alpha = get_pref().gizmo_alpha
@@ -108,9 +109,10 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         prop.axis = "Z"
 
     def add_scale_gz(self, context):
+        color = get_pref().place_tool.gz.color
         gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
-                             color=get_pref().place_tool.gz.color,
-                             color_highlight=get_pref().place_tool.gz.color_highlight, )
+                             color=color,
+                             color_highlight=color, )
         self.scale_gz = gzObject.set_up(self, "PH_GT_custom_scale_3d")
         self.scale_gz.alpha = get_pref().gizmo_alpha
         prop = self.scale_gz.target_set_operator("ph.scale_object", index=0)
