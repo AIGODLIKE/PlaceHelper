@@ -34,5 +34,6 @@ data = {
     "Press D adjustment Z-offset": "按 D 调整Z偏移",
     "Adsorption Z Offset": "吸附Z偏移",
     "Transform Tool": "变换工具",
-    "Transform Gizmo circle size": "变换 Gizmo 圆大小"
+    "Transform Gizmo circle size": "变换 Gizmo 圆大小",
+    "Press Right or ESC to cancel setting the axis": "按 右键或ESC 取消设置轴"
 }

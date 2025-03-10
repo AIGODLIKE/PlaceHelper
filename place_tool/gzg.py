@@ -17,7 +17,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
     bl_region_type = "WINDOW"
     bl_options = {"3D", "PERSISTENT"}
 
-    set_axis_gzs = []
+    set_axis_gzs = {}
 
     @classmethod
     def poll(cls, context):
@@ -53,31 +53,11 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         gzObject = GizmoInfo(scale_basis=get_pref().place_tool.gz.scale_basis,
                              color=get_pref().place_tool.bbox.color[:3])
 
-        x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
-
         def add_axis_gz(axis, invert):
             gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
             prop = gz.target_set_operator("ph.set_place_axis")
             prop.axis = axis
             prop.invert_axis = invert
-            obj_A = ALIGN_OBJ.get("active")
-
-            if obj_A:
-                pos = obj_A.get_bbox_center(is_local=False)
-            else:
-                pos = context.object.matrix_world.translation
-
-            if axis == "X":
-                q = x if not invert else xD
-            elif axis == "Y":
-                q = y if not invert else yD
-            elif axis == "Z":
-                q = z if not invert else zD
-
-            scale = Vector((2, 2, 2))
-
-            mx = Matrix.LocRotScale(pos, q, scale)
-            gz.matrix_basis = mx
             gz.alpha = get_pref().gizmo_alpha
             return gz
 
@@ -86,15 +66,17 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         exist_invert = prop.invert_axis
 
         # not add the axis and invert direction that already exist
-        set_axis_gzs = []
+        set_axis_gzs = {}
         for axis, invert in product(["X", "Y", "Z"], [False, True]):
-            if axis == exist_axis and invert == exist_invert:
-                continue
             gz = add_axis_gz(axis, invert)
             gz.alpha = get_pref().gizmo_alpha
-            set_axis_gzs.append(gz)
+            gz.color_highlight = gz.color
+            if axis == exist_axis and invert == exist_invert:
+                gz.color_highlight = gz.color = list(i * 1.3 for i in gz.color)
+            set_axis_gzs[(axis, invert)] = gz
 
         self.set_axis_gzs = set_axis_gzs
+        self.update_set_axis_gizmo_matrix()
 
     def add_rotate_gz(self, context):
         color = get_pref().place_tool.gz.color
@@ -157,10 +139,6 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
                 self.rotate_gz.matrix_basis.translation = Vector((top.x, top.y, z))
                 self.scale_gz.matrix_basis.translation = Vector((top.x, top.y, z))
-
-                # self.rotate_gz.matrix_basis = Matrix(Vector((top.x, top.y, z)))
-                # self.scale_gz.matrix_basis = Matrix(Vector((top.x, top.y, z)))
-
             except (ZeroDivisionError, AttributeError):
                 pass
 
@@ -168,23 +146,45 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT"}:
                 ALIGN_OBJ["active"] = AlignObject(context.object,
                                                   "ACCURATE", True)
-                # context.scene.place_tool.build_active_inst)
 
     def refresh(self, context):
-        if context.object:
-            self.correct_gz_loc(context)
-
         prop = context.scene.place_tool
 
-        for gz in self.set_axis_gzs:
+        for gz in self.set_axis_gzs.values():
             gz.hide = not prop.setting_axis
+        self.update_set_axis_gizmo_matrix()
         self.scale_gz.hide = self.rotate_gz.hide = prop.setting_axis
+
+        if context.object:
+            self.correct_gz_loc(context)
 
     def draw_prepare(self, context):
         self.refresh(context)
 
     def invoke_prepare(self, context, gizmo):
         self.refresh(context)
+
+    def update_set_axis_gizmo_matrix(self):
+        obj_A = ALIGN_OBJ.get("active")
+        if obj_A:
+            pos = obj_A.get_bbox_center(is_local=False)
+        else:
+            pos = context.object.matrix_world.translation
+
+        x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
+
+        for (axis, invert), gz in self.set_axis_gzs.items():
+            if axis == "X":
+                q = x if not invert else xD
+            elif axis == "Y":
+                q = y if not invert else yD
+            elif axis == "Z":
+                q = z if not invert else zD
+
+            scale = Vector((2, 2, 2))
+
+            mx = Matrix.LocRotScale(pos, q, scale)
+            gz.matrix_basis = mx
 
 
 classes = (

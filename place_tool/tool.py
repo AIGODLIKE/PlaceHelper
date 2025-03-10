@@ -139,12 +139,41 @@ class PT_OT_show_place_axis(bpy.types.Operator):
     bl_description = "Show Place Axis"
 
     def invoke(self, context, event):
-        prop = context.scene.place_tool
-        prop.setting_axis = not prop.setting_axis
+        self.update_gizmo(context)
+        context.window_manager.modal_handler_add(self)
+
+        text = bpy.app.translations.pgettext_iface("Press Right or ESC to cancel setting the axis")
+        context.workspace.status_text_set(text)
+        context.area.header_text_set(text)
+        return {"RUNNING_MODAL"}
+
+    @staticmethod
+    def update_gizmo(context, switch_show=True):
+        if switch_show:
+            prop = context.scene.place_tool
+            prop.setting_axis = not prop.setting_axis
+
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)
         context.area.tag_redraw()
-        return {"FINISHED"}
+
+    @staticmethod
+    def clear_text(context):
+        context.workspace.status_text_set(None)
+        context.area.header_text_set(None)
+
+    def modal(self, context, event):
+        if not context.scene.place_tool.setting_axis:
+            self.update_gizmo(context, False)
+            self.clear_text(context)
+            return {"FINISHED"}
+
+        elif event.type in ("RIGHTMOUSE", "ESC"):
+            self.update_gizmo(context, True)
+            self.clear_text(context)
+            return {"CANCELLED"}
+
+        return {"PASS_THROUGH"}
 
 
 class PH_OT_set_place_axis(bpy.types.Operator):
