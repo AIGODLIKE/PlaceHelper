@@ -146,14 +146,6 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT", "LIGHT"}:
                 ALIGN_OBJ["active"] = AlignObject(context.object,
                                                   "ACCURATE", True)
-        # elif context.object:
-        #     # 统一gizmo朝上
-        #     self.rotate_gz.matrix_basis = Matrix()
-        #     self.scale_gz.matrix_basis = Matrix()
-        #
-        #     loc = context.object.matrix_world.translation
-        #     self.rotate_gz.matrix_basis.translation = loc
-        #     self.scale_gz.matrix_basis.translation = loc
 
     def refresh(self, context):
         prop = context.scene.place_tool
@@ -161,7 +153,9 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         for gz in self.set_axis_gzs.values():
             gz.hide = not prop.setting_axis
         self.update_set_axis_gizmo_matrix(context)
-        self.scale_gz.hide = self.rotate_gz.hide = prop.setting_axis
+
+        self.scale_gz.hide = prop.setting_axis
+        self.rotate_gz.hide = prop.setting_axis or [obj.type for obj in context.selected_objects] == ["LIGHT", ]
 
         if context.object:
             self.correct_gz_loc(context)

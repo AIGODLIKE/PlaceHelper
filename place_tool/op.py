@@ -655,19 +655,24 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
             offset *= 0.01
         elif event.alt:
             offset *= 4
-
-        rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
         _axis = {'X': 0, 'Y': 1, 'Z': 2}[self.axis]
 
-        rot = context.object.rotation_euler.to_matrix().to_euler(rotate_mode)
-        axis = self.axis.lower()
-        setattr(rot, axis, getattr(rot, axis) + offset)
+        # rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
+        # rot = context.object.rotation_euler.to_matrix().to_euler(rotate_mode)
+        # axis = self.axis.lower()
+        # setattr(rot, axis, getattr(rot, axis) + offset)
 
         obj_A = ALIGN_OBJ['active']
         pivot = obj_A.get_bbox_center(is_local=False)
         # get rotate axis
 
-        if obj_A.size[_axis] != 0:
+        call = obj_A.size[_axis] != 0
+        # if call is False and context.object.type == "LIGHT":
+        #     obj_A = ALIGN_OBJ["active"] = AlignObject(context.object,
+        #                                               "ACCURATE", True)
+        #     pivot = obj_A.get_bbox_center(is_local=False)
+        #     z = pivot - obj_A.get_axis_center(self.axis, self.invert_axis, is_local=False)
+        if call:
             z = pivot - obj_A.get_axis_center(self.axis, self.invert_axis, is_local=False)
         else:
             if self.axis == 'Z':
@@ -688,13 +693,15 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
             v2 = pt2 - pt  # 垂直于x轴的向量
             z = -v1.cross(v2)  # 垂直于x轴的向量
 
+        rot = Matrix.Rotation(-offset, 4, z)
+        print("rot_matrix", call, rot)
+
         rot_matrix = (
                 Matrix.Translation(pivot) @
                 Matrix.Diagonal(Vector((1,) * 3)).to_4x4() @
-                Matrix.Rotation(-offset, 4, z) @
+                rot @
                 Matrix.Translation(-pivot)
         )
-
         with store_objs_mx([context.object], self.stop_moving()):
             context.object.matrix_world = rot_matrix @ context.object.matrix_world
             context.object.rotation_euler = [round(r, self.precision) for r in context.object.rotation_euler]
