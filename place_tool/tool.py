@@ -93,7 +93,7 @@ class PH_PT_wrap_view3d_select(bpy.types.Operator):
         from ..utils.obj_bbox import AlignObject
         from ._runtime import ALIGN_OBJ
 
-        if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT"}:
+        if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT", "LIGHT"}:
             a_obj = ALIGN_OBJ.get("active", None)
             if a_obj and a_obj.obj is context.object:
                 pass

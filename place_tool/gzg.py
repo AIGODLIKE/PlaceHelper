@@ -76,7 +76,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
             set_axis_gzs[(axis, invert)] = gz
 
         self.set_axis_gzs = set_axis_gzs
-        self.update_set_axis_gizmo_matrix()
+        self.update_set_axis_gizmo_matrix(context)
 
     def add_rotate_gz(self, context):
         color = get_pref().place_tool.gz.color
@@ -123,15 +123,15 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
                 self.rotate_gz.matrix_basis = mx
                 self.scale_gz.matrix_basis = mx
-            except ReferenceError:
+            except ReferenceError as e:
+                print(e.args)
                 pass
-
 
         elif obj_A and len(context.selected_objects) > 1:
             try:
                 top = ALIGN_OBJS["top"]
                 z = get_objs_bbox_top(
-                    [obj for obj in context.selected_objects if obj.type == "MESH"])
+                    [obj for obj in context.selected_objects if obj.type in {"MESH", "LIGHT"}])
 
                 # 统一gizmo朝上
                 self.rotate_gz.matrix_basis = Matrix()
@@ -143,16 +143,24 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
                 pass
 
         elif not obj_A or obj_A.obj != context.object:
-            if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT"}:
+            if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT", "LIGHT"}:
                 ALIGN_OBJ["active"] = AlignObject(context.object,
                                                   "ACCURATE", True)
+        # elif context.object:
+        #     # 统一gizmo朝上
+        #     self.rotate_gz.matrix_basis = Matrix()
+        #     self.scale_gz.matrix_basis = Matrix()
+        #
+        #     loc = context.object.matrix_world.translation
+        #     self.rotate_gz.matrix_basis.translation = loc
+        #     self.scale_gz.matrix_basis.translation = loc
 
     def refresh(self, context):
         prop = context.scene.place_tool
 
         for gz in self.set_axis_gzs.values():
             gz.hide = not prop.setting_axis
-        self.update_set_axis_gizmo_matrix()
+        self.update_set_axis_gizmo_matrix(context)
         self.scale_gz.hide = self.rotate_gz.hide = prop.setting_axis
 
         if context.object:
@@ -164,7 +172,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
     def invoke_prepare(self, context, gizmo):
         self.refresh(context)
 
-    def update_set_axis_gizmo_matrix(self):
+    def update_set_axis_gizmo_matrix(self, context):
         obj_A = ALIGN_OBJ.get("active")
         if obj_A:
             try:

@@ -1,10 +1,10 @@
 import bpy
+import numpy as np
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
-import numpy as np
 
 # 以下物体检测bbox
-C_OBJECT_TYPE_HAS_BBOX = {'MESH', 'CURVE', 'FONT', 'LATTICE'}
+C_OBJECT_TYPE_HAS_BBOX = {"MESH", "CURVE", "FONT", "LATTICE", "LIGHT"}
 # 创建bbox的面顶点顺序
 faces = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (4, 0, 3, 7)]
 
@@ -20,7 +20,7 @@ def DebugWrapper(func):
 
 class AlignObject:
 
-    def __init__(self, obj: bpy.types.Object, mode: str = 'ACCURATE', is_local: bool = False,
+    def __init__(self, obj: bpy.types.Object, mode: str = "ACCURATE", is_local: bool = False,
                  build_instance: bool = True):
         """
         :param obj:
@@ -28,7 +28,7 @@ class AlignObject:
         :param is_local: 返回数值为物体/世界坐标
         """
         self.obj = obj
-        self.mode = mode  # 'FAST' or 'ACCURATE' or 'DRAW'
+        self.mode = mode  # "FAST" or "ACCURATE" or "DRAW"
         self.is_local = is_local
         self.build_instance = build_instance
 
@@ -69,10 +69,10 @@ class AlignObject:
     # -------------------------------------------------------------------------
 
     def _calc_bbox(self):
-        # print('calc_bbox')
+        # print("calc_bbox")
 
         def default_bbox():
-            # print('default_bbox')
+            # print("default_bbox")
             bbox_points = [Vector(v) for v in self.obj.bound_box]
 
             self.max_x = max(bbox_points, key=lambda v: v.x).x
@@ -84,7 +84,7 @@ class AlignObject:
             self.min_z = min(bbox_points, key=lambda v: v.z).z
 
         def mesh_bbox(me):
-            vertices = np.empty(len(me.vertices) * 3, dtype='f')
+            vertices = np.empty(len(me.vertices) * 3, dtype="f")
             me.vertices.foreach_get("co", vertices)
             vertices = vertices.reshape(len(me.vertices), 3)
 
@@ -93,10 +93,10 @@ class AlignObject:
 
             return vertices, max_xyz_id, min_xyz_id
 
-        if self.obj.type != 'MESH':
+        if self.obj.type != "MESH":
             return default_bbox()
 
-        if self.mode != 'ACCURATE':
+        if self.mode != "ACCURATE":
             return default_bbox()
         # single mesh
         # ----------------
@@ -154,14 +154,14 @@ class AlignObject:
             ob_inst.object.to_mesh_clear()
 
         if not find:
-            print('did not find any instance')
+            print("did not find any instance")
             return default_bbox()
 
         # calc max and min
         if len(pts) == 0: return default_bbox()
         # print(pts)
 
-        # invert matrix_world back to object parent's matrix_world
+        # invert matrix_world back to object parent"s matrix_world
         pts = [self.mx.inverted() @ pt for pt in pts]
 
         # use numpy to calc max and min
@@ -197,22 +197,22 @@ class AlignObject:
     def axis_face_pts(self, axis, invert):
         """
         获取轴向的面点
-        :param axis: 'X', 'Y', 'Z'
+        :param axis: "X", "Y", "Z"
         :param invert: True or False
         :return:
         """
         pts = self._bbox_pts
-        if axis == 'X':
+        if axis == "X":
             if invert:
                 pts = pts[4:6] + pts[0:2]
             else:
                 pts = pts[0:2] + pts[4:6]
-        elif axis == 'Y':
+        elif axis == "Y":
             if invert:
                 pts = pts[2:4] + pts[6:8]
             else:
                 pts = pts[6:8] + pts[2:4]
-        elif axis == 'Z':
+        elif axis == "Z":
             if invert:
                 pts = pts[0:2] + pts[6:8]
             else:
@@ -225,13 +225,13 @@ class AlignObject:
 
     # Bounding box Max and min
 
-    def min(self, axis='Z') -> float:
-        _axis = '_' + axis.lower()
-        return getattr(self, 'min' + _axis)
+    def min(self, axis="Z") -> float:
+        _axis = "_" + axis.lower()
+        return getattr(self, "min" + _axis)
 
-    def max(self, axis='Z') -> float:
-        _axis = '_' + axis.lower()
-        return getattr(self, 'max' + _axis)
+    def max(self, axis="Z") -> float:
+        _axis = "_" + axis.lower()
+        return getattr(self, "max" + _axis)
 
     def get_bbox_pts(self, is_local: bool = False):
         """
@@ -253,14 +253,14 @@ class AlignObject:
             total = total + v
         return total / 8
 
-    def get_bbox_center_offset(self, axis='Z', invert_axis=False) -> Vector:
+    def get_bbox_center_offset(self, axis="Z", invert_axis=False) -> Vector:
         """获取物体碰撞盒中心点相对于物体位置的偏移"""
         offset = self.get_bbox_center(is_local=False) - self.mx.translation
-        if axis == 'X':
+        if axis == "X":
             offset.x = 0
-        elif axis == 'Y':
+        elif axis == "Y":
             offset.y = 0
-        elif axis == 'Z':
+        elif axis == "Z":
             offset.z = 0
 
         if invert_axis:
@@ -291,7 +291,7 @@ class AlignObject:
     def get_axis_center(self, axis: str, invert_axis: bool, is_local: bool) -> Vector:
         """获取物体碰撞盒顶部中心点"""
         pt = self.get_bbox_center(is_local=True)
-        _axis = {'X': 0, 'Y': 1, 'Z': 2}
+        _axis = {"X": 0, "Y": 1, "Z": 2}
         invert = 1 if invert_axis else -1
         pt[_axis[axis]] += self.size[_axis[axis]] / 2 * invert
 
