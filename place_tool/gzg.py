@@ -167,7 +167,11 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
     def update_set_axis_gizmo_matrix(self):
         obj_A = ALIGN_OBJ.get("active")
         if obj_A:
-            pos = obj_A.get_bbox_center(is_local=False)
+            try:
+                pos = obj_A.get_bbox_center(is_local=False)
+            except ReferenceError:
+                # undo self.obj been removed
+                return
         else:
             pos = context.object.matrix_world.translation
 
