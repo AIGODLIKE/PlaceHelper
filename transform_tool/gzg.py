@@ -1,3 +1,5 @@
+import math
+
 import bpy
 from mathutils import Vector, Matrix
 
@@ -164,14 +166,24 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
             else:
                 return mZW
 
+        view_vector = context.space_data.region_3d.view_matrix.inverted() @ Vector((0, 0, 1))
+        print(f"view = {view_vector.__repr__()}")
+        hide_info = {
+
+        }
+
+        alpha_angle = 30
+        hide_angle = 15
         for gz, axis in self._move_gz.items():
             if axis == "VIEW":
                 res = view_matrix()
                 q = res[2]
                 gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
             else:
-                gz.matrix_basis = get_mx(axis)
+                matrix = get_mx(axis)
+                gz.matrix_basis = matrix
 
+                # Offset
                 distance = context.space_data.region_3d.view_distance * pref.transform_gizmo_circle_size * pref.transform_gizmo_arrow_offset
                 off = Matrix.Translation(Vector((0, 0, distance)))
                 if axis == "X":
@@ -180,8 +192,27 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
                     gz.matrix_offset = off
                 elif axis == "Z":
                     gz.matrix_offset = off
+
+                # Angle Alpha
+                base_loc = matrix @ Vector()
+                view_v = base_loc - view_vector
+                view_v.normalize()
+                gizmo_vector = gz.matrix_world @ Vector((0, 0, 1))
+                gizmo_vector.normalize()
+                angle = math.degrees(gizmo_vector.angle(view_v))
+                if angle > 90:
+                    angle = 180 - angle
+                hide_info[axis] = angle
+
+                gz.hide = angle < hide_angle
+                if gz.hide is False and alpha_angle > angle:
+                    gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
+                else:
+                    gz.alpha = pref.gizmo_alpha
             gz.matrix_basis.translation = loc
 
+        alpha_angle = 15
+        hide_angle = 10
         for gz, axis in self._move_gz_plane.items():
             gz.matrix_basis = get_mx(axis)
             off = 2
@@ -194,6 +225,14 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
 
             gz.matrix_offset = mx_offset
             gz.matrix_basis.translation = loc
+
+            angle = 90 - hide_info[axis]
+
+            gz.hide = angle < hide_angle
+            if gz.hide is False and alpha_angle > angle:
+                gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
+            else:
+                gz.alpha = pref.gizmo_alpha
 
     def draw_prepare(self, context):
         self.refresh(context)
