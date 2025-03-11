@@ -128,6 +128,8 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
             gz.line_width = 2
         else:
             gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
+            gz.line_width = 2
+            gz.length = pref.transform_gizmo_arrow_length
 
         prop = gz.target_set_operator("ph.translate", index=0)
         prop.invert_constraint = False
@@ -144,7 +146,6 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
             mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
             q = mZW
             gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
-
         gz.alpha = pref.gizmo_alpha
 
         self._move_gz[gz] = axis
@@ -170,6 +171,15 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
                 gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
             else:
                 gz.matrix_basis = get_mx(axis)
+
+                distance = context.space_data.region_3d.view_distance * pref.transform_gizmo_circle_size * pref.transform_gizmo_arrow_offset
+                off = Matrix.Translation(Vector((0, 0, distance)))
+                if axis == "X":
+                    gz.matrix_offset = off
+                elif axis == "Y":
+                    gz.matrix_offset = off
+                elif axis == "Z":
+                    gz.matrix_offset = off
             gz.matrix_basis.translation = loc
 
         for gz, axis in self._move_gz_plane.items():

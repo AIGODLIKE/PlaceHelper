@@ -48,9 +48,27 @@ class Preferences(AddonPreferences):
     use_event_handle_all: BoolProperty(name="Gizmo Handle All Event", default=False)
     debug: BoolProperty(name="Debug", default=False)
 
-    transform_gizmo_circle_size: FloatProperty(name="Transform Gizmo circle size", default=0.2, update=update_transform,
+    transform_gizmo_circle_size: FloatProperty(name="Circle size", default=0.2, update=update_transform,
                                                min=0.1,
                                                max=10)
+    transform_gizmo_arrow_offset: FloatProperty(name="Arrow Offset", default=0.15,
+                                                update=update_transform,
+                                                min=0.1,
+                                                max=10
+                                                )
+    transform_gizmo_arrow_length: FloatProperty(name="Arrow Length", default=0.8,
+                                                update=update_transform,
+                                                min=0.1,
+                                                max=10
+                                                )
+    transform_gizmo_move_event_count: IntProperty(
+        name="Move Event Count",
+        description="Avoid moving during quick selections, "
+                    "if you don't follow, you can adjust the values to achieve the best results",
+        default=6,
+        min=1,
+        max=15
+    )
 
     event_normal_adsorption_angle: IntProperty(name="General", default=15, min=1, max=180, subtype="ANGLE")
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
@@ -168,6 +186,10 @@ class Preferences(AddonPreferences):
         column = layout.box().column(align=True)
         column.label(text="Transform Tool")
         column.prop(self, "transform_gizmo_circle_size")
+        column.prop(self, "transform_gizmo_arrow_offset")
+        column.prop(self, "transform_gizmo_arrow_length")
+        column.separator()
+        column.prop(self, "transform_gizmo_move_event_count")
 
 
 def register():

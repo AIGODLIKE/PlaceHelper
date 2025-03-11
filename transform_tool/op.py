@@ -4,6 +4,8 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatVectorProperty
 from mathutils import Quaternion
 
+from ..utils import get_pref
+
 C_OBJECT_TYPE_HAS_BBOX = {"MESH", "CURVE", "FONT", "LATTICE"}
 
 move_view_tool_props = lambda: bpy.context.scene.move_view_tool
@@ -68,6 +70,7 @@ class PH_OT_translate(bpy.types.Operator):
                                           TRANSFORM_OT_translate=trans_args)
 
     def modal(self, context, event):
+        pref = get_pref()
         os = context.window.scene.transform_orientation_slots[0].type
         if event.value == "RELEASE" and event.type == "LEFTMOUSE":
             """
@@ -77,7 +80,7 @@ class PH_OT_translate(bpy.types.Operator):
             return {"FINISHED"}
         elif event.type == "MOUSEMOVE":
             self.move_event_count += 1
-            if self.move_event_count > 10:
+            if self.move_event_count > pref.transform_gizmo_move_event_count:
                 constraint_axis_dict = {
                     "X": (True, False, False),
                     "Y": (False, True, False),

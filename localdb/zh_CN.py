@@ -35,5 +35,10 @@ data = {
     "Adsorption Z Offset": "吸附Z偏移",
     "Transform Tool": "变换工具",
     "Transform Gizmo circle size": "变换 Gizmo 圆大小",
-    "Press Right or ESC to cancel setting the axis": "按 右键或ESC 取消设置轴"
+    "Press Right or ESC to cancel setting the axis": "按 右键或ESC 取消设置轴",
+    "Circle size": "圆大小",
+    "Arrow Offset": "箭头偏移",
+    "Arrow Length": "箭头长度",
+    "Avoid moving during quick selections, if you don't follow, you can adjust the values to achieve the best results": "避免在快速选择时进行了移动操作,如果不跟手可以调整数值以达最佳",
+    "Move Event Count": "移动事件计数"
 }
