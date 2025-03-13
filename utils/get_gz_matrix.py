@@ -63,8 +63,11 @@ def gimbal_matrix(reverse_zD=False):
     return x, y, z, xD, yD, zD
 
 
-def view_matrix(reverse_zD=False):
-    view_inv = bpy.context.region_data.view_matrix.inverted()
+def view_matrix(context=None, reverse_zD=False):
+    if context:
+        view_inv = context.region_data.view_matrix.inverted()
+    else:
+        view_inv = bpy.context.region_data.view_matrix.inverted()
     rot = view_inv.decompose()[1]
 
     x = rot @ Quaternion((0.0, 1.0, 0.0), radians(90))
