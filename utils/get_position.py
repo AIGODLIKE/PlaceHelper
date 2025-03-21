@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Vector, Matrix
+from mathutils import Vector
 
 
 def get_objs_bbox_center(obj_list: list[bpy.types.Object]):
