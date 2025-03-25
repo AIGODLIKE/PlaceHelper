@@ -69,15 +69,13 @@ class PH_GZG_Dynamic_Place(bpy.types.GizmoGroup, CreateGizmo):
     def poll(cls, context):
         if context.mode != 'OBJECT':
             return
-        elif context.object is None:
-            return
         elif len(context.selected_objects) == 0:
             return
 
         elif context.workspace.tools.from_space_view3d_mode('OBJECT', create=False).idname != 'ph.dynamic_place':
             return
 
-        return context.object.type == 'MESH'
+        return True
 
     def setup(self, context):
         self.create_gizmos(context)
