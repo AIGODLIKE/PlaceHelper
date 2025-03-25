@@ -6,7 +6,6 @@ COLLECTION_NAME = "Particle System Collection"
 FRAME_START = 0
 FRAME_END = 5000
 
-
 def get_collection():
     index = bpy.data.collections.find(COLLECTION_NAME)
     if index == -1:
@@ -36,6 +35,7 @@ def set_props(prop, data):
 
 def create_particle_panel(context, obj, collection) -> bpy.types.Object:
     """创建一个粒子平面,用于在拖动时通过粒子与力场进行动态碰撞"""
+    print("create_particle_panel")
     matrix = obj.matrix_world.copy()
 
     bm = bmesh.new()
@@ -48,7 +48,7 @@ def create_particle_panel(context, obj, collection) -> bpy.types.Object:
     particle_obj.matrix_world = matrix
 
     context.view_layer.objects.active = particle_obj
-    bpy.ops.object.particle_system_add("INVOKE_DEFAULT", False, )  # 添加一个粒子系统
+    bpy.ops.object.particle_system_add("INVOKE_DEFAULT", False)  # 添加一个粒子系统
     particle = particle_obj.particle_systems.active.settings
 
     set_props(particle, {
@@ -75,6 +75,7 @@ def create_particle_panel(context, obj, collection) -> bpy.types.Object:
 
 
 def create_force_field_object(context, obj, collection) -> bpy.types.Object:
+    print("create_force_field_object")
     matrix = obj.matrix_world.copy()
 
     empty = bpy.data.objects.new(f"{obj.name}_empty_force_field", None)
@@ -84,28 +85,73 @@ def create_force_field_object(context, obj, collection) -> bpy.types.Object:
     context.view_layer.objects.active = empty
     bpy.ops.object.forcefield_toggle("INVOKE_DEFAULT", False, )
     empty.field.flow = 10
-    empty.field.strength = -100
+    empty.field.strength = -200
 
     empty.select_set(True)
     return empty
 
 
-def set_frame(context):
-    context.scene.frame_current = FRAME_START
-    context.scene.frame_start = FRAME_START
-    context.scene.frame_end = FRAME_END
-
-
 def check_apply(event) -> bool:
-    return "LEFTMOUSE" in (event.type, event.type_prev) and "RELEASE" in (event.value, event.value_prev)
+    values = (event.value, event.value_prev)
+    return event.type in ("MOUSEMOVE", "INBETWEEN_MOUSEMOVE") and event.type_prev == "LEFTMOUSE" and "RELEASE" in values
 
 
 def check_cancel(event) -> bool:
     types = (event.type, event.type_prev)
-    return ("ESC" in types or "RIGHTMOUSE" in types) and "RELEASE" in (event.value, event.value_prev)
+    values = (event.value, event.value_prev)
+    return event.type == "MOUSEMOVE" and event.type_prev in ("RIGHTMOUSE", "ESC") and "RELEASE" in values
 
 
-class Dynamic:
+class SingleForceFieldMode:
+    ...
+
+
+class MultiForceFieldMode:
+    ...
+
+
+class ToolOptions:
+    use_transform_data_origin = None
+    use_transform_pivot_point_align = None
+    use_transform_skip_children = None
+
+    def remember_tool(self, context):
+        tool = context.scene.tool_settings
+        self.use_transform_data_origin = tool.use_transform_data_origin
+        self.use_transform_pivot_point_align = tool.use_transform_pivot_point_align
+        self.use_transform_skip_children = tool.use_transform_skip_children
+        tool.use_transform_data_origin = False
+        tool.use_transform_pivot_point_align = False
+        tool.use_transform_skip_children = False
+
+    def restore_tool(self, context):
+        tool = context.scene.tool_settings
+        tool.use_transform_data_origin = self.use_transform_data_origin
+        tool.use_transform_pivot_point_align = self.use_transform_pivot_point_align
+        tool.use_transform_skip_children = self.use_transform_skip_children
+
+
+class FrameOptions:
+    frame_current = None
+    frame_start = None
+    frame_end = None
+
+    def remember_frame(self, context):
+        self.frame_current = context.scene.frame_current
+        self.frame_start = context.scene.frame_start
+        self.frame_end = context.scene.frame_end
+
+        context.scene.frame_current = FRAME_START
+        context.scene.frame_start = FRAME_START
+        context.scene.frame_end = FRAME_END
+
+    def restore_frame(self, context):
+        context.scene.frame_current = self.frame_current
+        context.scene.frame_start = self.frame_start
+        context.scene.frame_end = self.frame_end
+
+
+class Dynamic(ToolOptions, FrameOptions):
     axis: bpy.props.StringProperty()
 
     selected_objects = []
@@ -113,14 +159,12 @@ class Dynamic:
     dynamic_place_system = {}
     particle_system_collection = None
 
-    frame_current = None
-    frame_start = None
-    frame_end = None
-
     active_object = None
+    last_mouse = None
 
     def particle_force_field(self, context):
         """添加对应的粒子系统和力场"""
+        print("particle_force_field")
         self.selected_objects = []
         self.dynamic_place_system = {}
 
@@ -151,8 +195,9 @@ class Dynamic:
                 # print("particle_obj", obj.name, self.dynamic_place_system[obj.name])
                 obj.hide_set(True)
 
-    def collision(self, context):
+    def add_collision(self, context):
         """添加碰撞"""
+        print("collision")
         context.scene.objects.update()
         context.view_layer.objects.update()
 
@@ -172,20 +217,21 @@ class Dynamic:
                     else:
                         print("Emm", obj.name)
 
-    def remember_frame(self, context):
-        self.frame_current = context.scene.frame_current
-        self.frame_start = context.scene.frame_start
-        self.frame_end = context.scene.frame_end
-
-    def restore_frame(self, context):
-        context.scene.frame_current = self.frame_current
-        context.scene.frame_start = self.frame_start
-        context.scene.frame_end = self.frame_end
+    def restore_selected(self, context):
+        active_index = context.scene.objects.find(self.active_object)
+        if active_index != -1:
+            context.view_layer.objects.active = context.scene.objects[active_index]
+        for place in self.dynamic_place_system:
+            place_index = context.scene.objects.find(place)
+            if place_index != -1:
+                place = context.scene.objects[place_index]
+                place.select_set(True)
 
     def invoke(self, context, event):
+        context.scene.objects.update()
+        context.view_layer.objects.update()
 
         clear_collection()
-        bpy.ops.ed.undo_push(message="Push Undo")
         bpy.ops.ed.undo_push(message="Push Undo")
 
         # TODO()
@@ -194,9 +240,10 @@ class Dynamic:
         active = context.view_layer.objects.active
         self.active_object = active.name if active else None
         self.remember_frame(context)
-        set_frame(context)
-        self.collision(context)
+        self.remember_tool(context)
+        self.add_collision(context)
         self.particle_force_field(context)
+        self.last_mouse = Vector((event.mouse_x, event.mouse_y))
 
         context.view_layer.objects.active = None
         context.scene.update_tag()
@@ -206,19 +253,25 @@ class Dynamic:
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-
         print(self.bl_idname, self.axis)
         return {"FINISHED"}
 
     def exit(self, context):
+        print("exit")
+
+        context.scene.objects.update()
+        context.view_layer.objects.update()
+        if context.screen.is_animation_playing:
+            bpy.ops.screen.animation_play("INVOKE_DEFAULT", False)
         self.restore_frame(context)
         self.clear_collision(context)
         self.remove_particle()
+        self.restore_selected(context)
         clear_collection()
-        if context.screen.is_animation_playing:
-            bpy.ops.screen.animation_play("INVOKE_DEFAULT", False, )
+        print()
 
     def apply(self, context):
+        print("apply")
         """将粒子物体应用后的物体矩阵copy到原物体"""
         if context.screen.is_animation_playing:
             bpy.ops.screen.animation_play("INVOKE_DEFAULT", False, )
@@ -226,7 +279,7 @@ class Dynamic:
         context.scene.objects.update()
         context.view_layer.objects.update()
         # bpy.ops.wm.redraw_timer(type='ANIM_STEP')
-        # return
+
         for place_obj, value in self.dynamic_place_system.items():
             particle_obj = value["particle_obj"]
 
@@ -244,18 +297,22 @@ class Dynamic:
                     obj.select_set(False)
                 context.view_layer.objects.active = particle
                 particle.select_set(True)
-                bpy.ops.object.duplicates_make_real("INVOKE_DEFAULT", False)
-                active = context.selected_objects[0]
-                # print("selected_objects", active, res)
+                try:
+                    bpy.ops.object.duplicates_make_real("INVOKE_DEFAULT", False)
+                    active = context.selected_objects[0]
+                    # print("selected_objects", active, res)
 
-                matrix = active.matrix_world.copy()
-                place.matrix_world = matrix
-                place.update_tag()
-                # print(place.name, active.name, matrix.translation, place.matrix_world.translation)
-
-                # bpy.data.meshes.remove(active.data)
+                    matrix = active.matrix_world.copy()
+                    place.matrix_world = matrix
+                    place.update_tag()
+                    # print(place.name, active.name, matrix.translation, place.matrix_world.translation)
+                    print("active", active.name, active.data.name)
+                    bpy.data.objects.remove(active)
+                except Exception as e:
+                    print(e.args)
 
     def remove_particle(self):
+        print("remove_particle")
         for place_obj, value in self.dynamic_place_system.items():
             particle_obj = value["particle_obj"]
             force_obj = value["force_field_obj"]
@@ -274,6 +331,7 @@ class Dynamic:
                 bpy.data.collections.remove(bpy.data.collections[collection_index])
 
     def clear_collision(self, context):
+        print("clear_collision")
         for name in self.collision_objects:
             index = context.scene.objects.find(name)
             if index != -1:
@@ -284,6 +342,14 @@ class Dynamic:
 
         context.scene.objects.update()
         context.view_layer.objects.update()
+
+    def update_force_field(self, context, event):
+        """更新力场
+        根据每次对比上一次移动鼠标的位置
+        """
+        now_mouse = Vector((event.mouse_x, event.mouse_y))
+
+        self.last_mouse = now_mouse
 
 
 class DynamicMove(bpy.types.Operator, Dynamic):
@@ -296,12 +362,16 @@ class DynamicMove(bpy.types.Operator, Dynamic):
         return res
 
     def modal(self, context, event):
-        # print(event.type, event.type_prev)
+        print(event.type, event.type_prev)
+        self.update_force_field(context, event)
+
         if check_apply(event):
+            print("event check_apply", event.type, event.type_prev, event.value, event.value_prev, flush=True)
             self.apply(context)
             self.exit(context)
             return {"FINISHED"}
         elif check_cancel(event):
+            print("event check_cancel", event.type, event.type_prev, event.value, event.value_prev, flush=True)
             self.exit(context)
             return {"FINISHED"}
 
