@@ -7,6 +7,41 @@ from .place_tool.gzg import update_gzg_pref as update_place
 from .transform_tool.gzg import update_gzg_pref as update_transform
 
 
+class HUB:
+    hub_fps: bpy.props.IntProperty(max=120, min=1, default=30, name="FPS")
+    hub_scale: bpy.props.FloatProperty(max=2, min=0.5, default=1, name="Scale")
+    hub_line_width: bpy.props.FloatProperty(name="Line Width", default=2, max=20, min=0.1)
+    hub_vert_size: bpy.props.FloatProperty(name="Vert Size", default=5, max=20, min=0.1)
+
+    hub_text_color: bpy.props.FloatVectorProperty(
+        name="Text Color", subtype="COLOR", size=3, min=0, max=1, default=(1, 1, 1)
+    )
+    hub_3d_color: bpy.props.FloatVectorProperty(
+        name="Mesh Color", subtype="COLOR", size=3, min=0, max=1, default=(1, .7, .6)
+    )
+    hub_area_color: bpy.props.FloatVectorProperty(
+        name="Area Color", subtype="COLOR", size=4, min=0, max=1, default=(.05, .5, 1, .2)
+    )
+
+    def draw_hub(self, layout: bpy.types.UILayout):
+        from ..property.temp import TempDrawProperty
+
+        column = layout.box().column(align=True)
+        row = column.row(align=True)
+        row.label(text="Hub")
+        if TempDrawProperty.draw_switch_button("Hub", row, default_extend=True):
+            column.prop(self, "hub_fps")
+            column.prop(self, "hub_scale")
+            column.prop(self, "hub_line_width")
+            column.prop(self, "hub_vert_size")
+
+            column.separator()
+
+            column.prop(self, "hub_text_color")
+            column.prop(self, "hub_3d_color")
+            column.prop(self, "hub_area_color")
+
+
 class PlaceToolBBoxProps(PropertyGroup):
     offset: FloatProperty(name="Geometry Offset", default=0.00001, min=0.0, max=0.001, step=1, precision=5)
     # display
@@ -36,7 +71,7 @@ class DynamicPlaceToolProps(PropertyGroup):
                                        min=0)
 
 
-class Preferences(AddonPreferences):
+class Preferences(AddonPreferences, HUB):
     bl_idname = __package__
 
     tool_type: EnumProperty(name="Tool", items=[("PLACE_TOOL", "Place", ""), ("TRANSFORM_TOOL", "Transform", ""),
@@ -102,6 +137,7 @@ class Preferences(AddonPreferences):
         column.prop(self, "use_event_handle_all")
         column.prop(self, "gizmo_alpha")
         # layout.prop(self, "debug")
+        self.draw_hub(column)
 
     def draw_event_adsorption_angle(self, context, layout):
         column = layout.column(align=True)

@@ -1,10 +1,14 @@
 import bmesh
 import bpy
+from mathutils import Vector
+
+from ..hub import hub_matrix
 
 COLLECTION_NAME = "Particle System Collection"
 
 FRAME_START = 0
 FRAME_END = 5000
+
 
 def get_collection():
     index = bpy.data.collections.find(COLLECTION_NAME)
@@ -74,11 +78,8 @@ def create_particle_panel(context, obj, collection) -> bpy.types.Object:
     return particle_obj
 
 
-def create_force_field_object(context, obj, collection) -> bpy.types.Object:
-    print("create_force_field_object")
-    matrix = obj.matrix_world.copy()
-
-    empty = bpy.data.objects.new(f"{obj.name}_empty_force_field", None)
+def create_force_field_object(context, matrix, name, collection) -> bpy.types.Object:
+    empty = bpy.data.objects.new(name, None)
     collection.objects.link(empty)
     empty.matrix_world = matrix
 
@@ -88,6 +89,7 @@ def create_force_field_object(context, obj, collection) -> bpy.types.Object:
     empty.field.strength = -200
 
     empty.select_set(True)
+    empty.empty_display_size = .00001
     return empty
 
 
@@ -100,6 +102,13 @@ def check_cancel(event) -> bool:
     types = (event.type, event.type_prev)
     values = (event.value, event.value_prev)
     return event.type == "MOUSEMOVE" and event.type_prev in ("RIGHTMOUSE", "ESC") and "RELEASE" in values
+
+
+def inverse_proportional(x, k):
+    """计算反比例函数 y = k/x 的值"""
+    if x == 0:
+        raise ValueError("x 不能为0，分母不能为零！")
+    return k / x
 
 
 class SingleForceFieldMode:
@@ -115,8 +124,13 @@ class ToolOptions:
     use_transform_pivot_point_align = None
     use_transform_skip_children = None
 
+    show_object_origins = None
+    show_object_origins_all = None
+
     def remember_tool(self, context):
         tool = context.scene.tool_settings
+        space_data = context.space_data
+
         self.use_transform_data_origin = tool.use_transform_data_origin
         self.use_transform_pivot_point_align = tool.use_transform_pivot_point_align
         self.use_transform_skip_children = tool.use_transform_skip_children
@@ -124,11 +138,27 @@ class ToolOptions:
         tool.use_transform_pivot_point_align = False
         tool.use_transform_skip_children = False
 
+        if hasattr(space_data, "overlay"):
+            overlay = space_data.overlay
+            self.show_object_origins = overlay.show_object_origins
+            self.show_object_origins_all = overlay.show_object_origins_all
+
+            overlay.show_object_origins = False
+            overlay.show_object_origins_all = False
+
     def restore_tool(self, context):
         tool = context.scene.tool_settings
+        space_data = context.space_data
+
         tool.use_transform_data_origin = self.use_transform_data_origin
         tool.use_transform_pivot_point_align = self.use_transform_pivot_point_align
         tool.use_transform_skip_children = self.use_transform_skip_children
+
+        if hasattr(space_data, "overlay"):
+            overlay = space_data.overlay
+
+            overlay.show_object_origins = self.show_object_origins
+            overlay.show_object_origins_all = self.show_object_origins_all
 
 
 class FrameOptions:
@@ -151,6 +181,14 @@ class FrameOptions:
         context.scene.frame_end = self.frame_end
 
 
+def update_matrix_draw(context, timeout=None):
+    matrixs = [obj.matrix_world.copy() for obj in context.selected_objects]
+    hub_matrix("Dynamic Place", matrixs,
+               timeout=timeout,
+               area_restrictions=hash(context.area)
+               )
+
+
 class Dynamic(ToolOptions, FrameOptions):
     axis: bpy.props.StringProperty()
 
@@ -161,6 +199,8 @@ class Dynamic(ToolOptions, FrameOptions):
 
     active_object = None
     last_mouse = None
+
+    mouse_distance = None
 
     def particle_force_field(self, context):
         """添加对应的粒子系统和力场"""
@@ -177,10 +217,9 @@ class Dynamic(ToolOptions, FrameOptions):
                 self.selected_objects.append(obj)
 
                 particle_obj = create_particle_panel(context, obj, particle_system_collection)
-                # context.view_layer.objects.active = particle_objbpy
-                # context.view_layer.objects.active = particle_objbpy
 
-                force_field_obj = create_force_field_object(context, obj, particle_system_collection)
+                force_field_obj = create_force_field_object(context, obj.matrix_world.copy(),
+                                                            f"{obj.name}_empty_force_field", particle_system_collection)
 
                 collection = bpy.data.collections.new(f"{particle_obj.name}_{force_field_obj.name}_effector_collection")
                 collection.objects.link(force_field_obj)
@@ -239,6 +278,8 @@ class Dynamic(ToolOptions, FrameOptions):
         # 2.使用粒子和刚体来进行移动。通过空物体力场来对物体进行移动
         active = context.view_layer.objects.active
         self.active_object = active.name if active else None
+        self.mouse_distance = 0
+
         self.remember_frame(context)
         self.remember_tool(context)
         self.add_collision(context)
@@ -252,6 +293,23 @@ class Dynamic(ToolOptions, FrameOptions):
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
 
+    def modal(self, context, event):
+        print(event.type, event.type_prev)
+        update_matrix_draw(context)
+        self.update_force_field(context, event)
+
+        if check_apply(event):
+            print("event check_apply", event.type, event.type_prev, event.value, event.value_prev, flush=True)
+            self.apply(context)
+            self.exit(context)
+            return {"FINISHED"}
+        elif check_cancel(event):
+            print("event check_cancel", event.type, event.type_prev, event.value, event.value_prev, flush=True)
+            self.exit(context)
+            return {"FINISHED"}
+
+        return {"RUNNING_MODAL", "PASS_THROUGH"}
+
     def execute(self, context):
         print(self.bl_idname, self.axis)
         return {"FINISHED"}
@@ -263,11 +321,15 @@ class Dynamic(ToolOptions, FrameOptions):
         context.view_layer.objects.update()
         if context.screen.is_animation_playing:
             bpy.ops.screen.animation_play("INVOKE_DEFAULT", False)
-        self.restore_frame(context)
+
         self.clear_collision(context)
         self.remove_particle()
-        self.restore_selected(context)
         clear_collection()
+
+        self.restore_frame(context)
+        self.restore_selected(context)
+        self.restore_tool(context)
+        update_matrix_draw(context, timeout=1)
         print()
 
     def apply(self, context):
@@ -347,8 +409,33 @@ class Dynamic(ToolOptions, FrameOptions):
         """更新力场
         根据每次对比上一次移动鼠标的位置
         """
-        now_mouse = Vector((event.mouse_x, event.mouse_y))
+        prop = context.scene.dynamic_place
 
+        now_mouse = Vector((event.mouse_x, event.mouse_y))
+        distance = (now_mouse - self.last_mouse).length
+        # if distance != 0:
+        #     distance = inverse_proportional(distance, 100)
+
+        self.mouse_distance += distance
+        strength = min(prop.min_force_field, -self.mouse_distance)
+        print("strength", strength)
+        for place_obj, value in self.dynamic_place_system.items():
+            force_obj = value["force_field_obj"]
+            force_index = context.scene.objects.find(force_obj)
+
+            if force_index != -1:
+                force = context.scene.objects[force_index]
+                # force.field.flow = 10
+                force.field.strength = strength
+            else:
+                print("Tips: Not Find this force object ", force_obj)
+
+        if self.mouse_distance > prop.min_force_field:
+            value = 10 * prop.force_field_coefficient_factor
+            # if value != 0:
+            #     value = inverse_proportional(value, 1.2)
+            self.mouse_distance -= value
+        self.mouse_distance = max(min(self.mouse_distance, prop.max_force_field), prop.min_force_field)
         self.last_mouse = now_mouse
 
 
@@ -361,21 +448,6 @@ class DynamicMove(bpy.types.Operator, Dynamic):
         bpy.ops.transform.translate("INVOKE_DEFAULT", False, )
         return res
 
-    def modal(self, context, event):
-        print(event.type, event.type_prev)
-        self.update_force_field(context, event)
-
-        if check_apply(event):
-            print("event check_apply", event.type, event.type_prev, event.value, event.value_prev, flush=True)
-            self.apply(context)
-            self.exit(context)
-            return {"FINISHED"}
-        elif check_cancel(event):
-            print("event check_cancel", event.type, event.type_prev, event.value, event.value_prev, flush=True)
-            self.exit(context)
-            return {"FINISHED"}
-
-        return {"RUNNING_MODAL", "PASS_THROUGH"}
 
 
 class DynamicRotate(bpy.types.Operator, Dynamic):

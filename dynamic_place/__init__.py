@@ -1,9 +1,10 @@
-from . import tool, gizmo, ops
+from . import tool, gizmo, ops, props
 
 module_list = [
     ops,
     gizmo,
     tool,
+    props,
 ]
 
 

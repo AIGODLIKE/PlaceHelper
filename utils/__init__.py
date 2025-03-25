@@ -33,3 +33,12 @@ def get_selected_objects_center_translation(context) -> Vector:
 
     center /= len(selected_objects)
     return center
+
+
+def is_contains_chinese(text: str):
+    """通过re检查"""
+    if not isinstance(text, str):
+        return False
+    import re
+    pattern = re.compile(r'[\u4e00-\u9fff]+')
+    return bool(pattern.search(text))
