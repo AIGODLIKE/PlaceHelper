@@ -1,8 +1,9 @@
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 from ..hub import hub_matrix
+from ..utils import get_selected_objects_center_translation
 
 COLLECTION_NAME = "Particle System Collection"
 
@@ -208,12 +209,22 @@ class Dynamic(ToolOptions, FrameOptions):
     def particle_force_field(self, context):
         """添加对应的粒子系统和力场"""
         print("particle_force_field")
+        prop = context.scene.dynamic_place
+
         self.selected_objects = []
         self.dynamic_place_system = {}
 
         particle_system_collection = self.particle_system_collection = get_collection()
 
         context.scene.collection.children.link(particle_system_collection)
+        if not prop.is_individual:
+            loc = get_selected_objects_center_translation(context)
+            matrix = Matrix.Translation(loc)
+            force_field_obj = create_force_field_object(context, matrix,
+                                                        f"Center_empty_force_field", particle_system_collection)
+
+            collection = bpy.data.collections.new(f"{force_field_obj.name}_effector_collection")
+            collection.objects.link(force_field_obj)
 
         for obj in context.selected_objects:
             if obj.type == "MESH":
@@ -221,17 +232,26 @@ class Dynamic(ToolOptions, FrameOptions):
 
                 particle_obj = create_particle_panel(context, obj, particle_system_collection)
 
-                force_field_obj = create_force_field_object(context, obj.matrix_world.copy(),
-                                                            f"{obj.name}_empty_force_field", particle_system_collection)
+                if prop.is_individual:
+                    force_field_obj = create_force_field_object(context, obj.matrix_world.copy(),
+                                                                f"{obj.name}_empty_force_field",
+                                                                particle_system_collection)
 
-                collection = bpy.data.collections.new(f"{particle_obj.name}_{force_field_obj.name}_effector_collection")
-                collection.objects.link(force_field_obj)
+                    collection = bpy.data.collections.new(
+                        f"{particle_obj.name}_{force_field_obj.name}_effector_collection")
+                    collection.objects.link(force_field_obj)
+
                 particle_obj.particle_systems.active.settings.effector_weights.collection = collection
+                args = {}
+                if obj.collision and obj.collision.use:
+                    args["collision_use"] = True
+                    obj.collision.use = False
 
                 self.dynamic_place_system[obj.name] = {
                     "particle_obj": particle_obj.name,
                     "force_field_obj": force_field_obj.name,
                     "collection": collection.name,
+                    **args
                 }
 
                 # print("particle_obj", obj.name, self.dynamic_place_system[obj.name])
@@ -263,10 +283,12 @@ class Dynamic(ToolOptions, FrameOptions):
         active_index = context.scene.objects.find(self.active_object)
         if active_index != -1:
             context.view_layer.objects.active = context.scene.objects[active_index]
-        for place in self.dynamic_place_system:
+        for place, value in self.dynamic_place_system.items():
             place_index = context.scene.objects.find(place)
             if place_index != -1:
                 place = context.scene.objects[place_index]
+                if "collision_use" in value:
+                    place.collision.use = True
                 place.select_set(True)
 
     def invoke(self, context, event):
@@ -385,7 +407,11 @@ class Dynamic(ToolOptions, FrameOptions):
 
             particle_index = bpy.data.objects.find(particle_obj)
             if particle_index != -1:
-                bpy.data.meshes.remove(bpy.data.objects[particle_index].data)
+                particle = bpy.data.objects[particle_index]
+                for system in particle.particle_systems:
+                    bpy.data.particles.remove(system.settings)
+                # particle.update_tag()
+                # bpy.data.meshes.remove(particle.data)
 
             obj_index = bpy.data.objects.find(force_obj)
             if obj_index != -1:
@@ -448,6 +474,17 @@ class Dynamic(ToolOptions, FrameOptions):
         self.mouse_distance = max(min(self.mouse_distance, prop.max_force_field), prop.min_force_field)
         self.last_mouse = now_mouse
 
+    @property
+    def args(self) -> dict:
+        args = {}
+        if self.axis != "VIEW":
+            args["constraint_axis"] = {
+                "X": (True, False, False),
+                "Y": (False, True, False),
+                "Z": (False, False, True),
+            }[self.axis]
+        return args
+
 
 class DynamicMove(bpy.types.Operator, Dynamic):
     bl_idname = 'ph.dynamic_move'
@@ -455,25 +492,28 @@ class DynamicMove(bpy.types.Operator, Dynamic):
 
     def invoke(self, context, event):
         res = super().invoke(context, event)
-        bpy.ops.transform.translate("INVOKE_DEFAULT", False, )
+        bpy.ops.transform.translate("INVOKE_DEFAULT", False, **self.args)
         return res
-
 
 
 class DynamicRotate(bpy.types.Operator, Dynamic):
     bl_idname = 'ph.dynamic_rotate'
     bl_label = 'Dynamic Rotate'
 
-    def execute(self, context):
-        return {"FINISHED"}
+    def invoke(self, context, event):
+        res = super().invoke(context, event)
+        bpy.ops.transform.rotate("INVOKE_DEFAULT", False, **self.args)
+        return res
 
 
 class DynamicScale(bpy.types.Operator, Dynamic):
     bl_idname = 'ph.dynamic_scale'
     bl_label = 'Dynamic Scale'
 
-    def execute(self, context):
-        return {"FINISHED"}
+    def invoke(self, context, event):
+        res = super().invoke(context, event)
+        bpy.ops.transform.resize("INVOKE_DEFAULT", False, **self.args)
+        return res
 
 
 classes = (

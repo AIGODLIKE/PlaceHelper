@@ -28,6 +28,8 @@ def get_color(axis):
 def get_selected_objects_center_translation(context) -> Vector:
     center = Vector()
     selected_objects = context.selected_objects
+    if len(selected_objects) == 0:
+        return center
     for obj in selected_objects:
         center += obj.matrix_world.translation
 

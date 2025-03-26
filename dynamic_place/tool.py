@@ -12,12 +12,7 @@ class DynamicPlace_TL_WorkSpaceTool(bpy.types.WorkSpaceTool):
 
     @staticmethod
     def draw_settings(context, layout, tool):
-        prop = context.scene.dynamic_place
-        layout.label(text="aa")
-        layout.prop(prop, "mode")
-        layout.prop(prop, "force_field_coefficient_factor")
-        layout.prop(prop, "min_force_field")
-        layout.prop(prop, "max_force_field")
+        context.scene.dynamic_place.draw(layout)
 
 
 def register():

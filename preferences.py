@@ -24,22 +24,20 @@ class HUB:
     )
 
     def draw_hub(self, layout: bpy.types.UILayout):
-        from ..property.temp import TempDrawProperty
 
         column = layout.box().column(align=True)
         row = column.row(align=True)
         row.label(text="Hub")
-        if TempDrawProperty.draw_switch_button("Hub", row, default_extend=True):
-            column.prop(self, "hub_fps")
-            column.prop(self, "hub_scale")
-            column.prop(self, "hub_line_width")
-            column.prop(self, "hub_vert_size")
+        column.prop(self, "hub_fps")
+        column.prop(self, "hub_scale")
+        column.prop(self, "hub_line_width")
+        column.prop(self, "hub_vert_size")
 
-            column.separator()
+        column.separator()
 
-            column.prop(self, "hub_text_color")
-            column.prop(self, "hub_3d_color")
-            column.prop(self, "hub_area_color")
+        column.prop(self, "hub_text_color")
+        column.prop(self, "hub_3d_color")
+        column.prop(self, "hub_area_color")
 
 
 class PlaceToolBBoxProps(PropertyGroup):
@@ -114,6 +112,10 @@ class Preferences(AddonPreferences, HUB):
     event_alt_adsorption_z_offset: FloatProperty(name="Alt", default=5, min=0.1, max=180)
 
     gizmo_alpha: FloatProperty(name="Gizmo Alpha", default=0.5, min=0.1, max=1)
+
+    @property
+    def gizmo_alpha_highlight(self) -> float:
+        return self.gizmo_alpha + 0.5
 
     def draw(self, context):
         layout = self.layout

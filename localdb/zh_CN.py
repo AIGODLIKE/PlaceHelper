@@ -40,5 +40,12 @@ data = {
     "Arrow Offset": "箭头偏移",
     "Arrow Length": "箭头长度",
     "Avoid moving during quick selections, if you don't follow, you can adjust the values to achieve the best results": "避免在快速选择时进行了移动操作,如果不跟手可以调整数值以达最佳",
-    "Move Event Count": "移动事件计数"
+    "Move Event Count": "移动事件计数",
+    "By Center": "按中心",
+    "By Individual Center": "按各自中心",
+    "Force Field Mode": "力场模式",
+    "Attenuation factor": "衰减系数",
+    "Attenuation coefficient of force field movement": "力场运动的衰减系数",
+    "Min Force Field": "最小力场",
+    "Max Force Field": "最大力场",
 }
