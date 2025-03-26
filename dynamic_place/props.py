@@ -6,9 +6,9 @@ class DynamicPlaceProperty(bpy.types.PropertyGroup):
                                  items=[('SINGLE', 'Single', 'Single'), ('MULTI', 'Multi', 'Multi')],
                                  default='MULTI')
     force_field_coefficient_factor: bpy.props.FloatProperty(
-        name="Force",
+        name="Force move coefficient",
         description="Attenuation coefficient of force field movement",
-        default=1,
+        default=.5,
     )
     min_force_field: bpy.props.FloatProperty(name="Min Force", default=-10)
     max_force_field: bpy.props.FloatProperty(name="Max Force", default=1000)

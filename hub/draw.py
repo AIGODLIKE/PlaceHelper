@@ -474,7 +474,7 @@ class MatrixHub(PublicHub):
             https://extensions.blender.org/add-ons/math-vis-console/
         """
         self.shaders = {}  # {"batch":shader}
-        smooth_color_shader = gpu.shader.from_builtin("POLYLINE_SMOOTH_COLOR")
+        smooth_color_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
         scale = get_pref().hub_scale
         x_p = Vector((scale, 0.0, 0.0))
         y_p = Vector((0.0, scale, 0.0))

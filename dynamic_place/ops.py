@@ -8,6 +8,7 @@ COLLECTION_NAME = "Particle System Collection"
 
 FRAME_START = 0
 FRAME_END = 5000
+DEFAULT_STRENGTH = 200
 
 
 def get_collection():
@@ -24,6 +25,7 @@ def clear_collection():
 
 
 def clear_data():
+    """"""
     ...
 
 
@@ -43,7 +45,7 @@ def create_particle_panel(context, obj, collection) -> bpy.types.Object:
     matrix = obj.matrix_world.copy()
 
     bm = bmesh.new()
-    bmesh.ops.create_grid(bm, size=1)
+    bmesh.ops.create_grid(bm, size=.001)
 
     mesh = bpy.data.meshes.new(f"{obj.data.name}_particle_system_mesh")
     bm.to_mesh(mesh)
@@ -86,7 +88,7 @@ def create_force_field_object(context, matrix, name, collection) -> bpy.types.Ob
     context.view_layer.objects.active = empty
     bpy.ops.object.forcefield_toggle("INVOKE_DEFAULT", False, )
     empty.field.flow = 10
-    empty.field.strength = -200
+    empty.field.strength = -DEFAULT_STRENGTH
 
     empty.select_set(True)
     empty.empty_display_size = .00001
@@ -185,7 +187,8 @@ def update_matrix_draw(context, timeout=None):
     matrixs = [obj.matrix_world.copy() for obj in context.selected_objects]
     hub_matrix("Dynamic Place", matrixs,
                timeout=timeout,
-               area_restrictions=hash(context.area)
+               area_restrictions=hash(context.area),
+               is_alpha_animation=True,
                )
 
 
@@ -278,7 +281,7 @@ class Dynamic(ToolOptions, FrameOptions):
         # 2.使用粒子和刚体来进行移动。通过空物体力场来对物体进行移动
         active = context.view_layer.objects.active
         self.active_object = active.name if active else None
-        self.mouse_distance = 0
+        self.mouse_distance = DEFAULT_STRENGTH
 
         self.remember_frame(context)
         self.remember_tool(context)
@@ -399,8 +402,13 @@ class Dynamic(ToolOptions, FrameOptions):
             if index != -1:
                 obj = context.scene.objects[index]
                 context.view_layer.objects.active = obj
-                bpy.ops.object.modifier_remove("INVOKE_DEFAULT", False, modifier="Collision")
+                for mod in obj.modifiers:
+                    if mod.type == "COLLISION":
+                        obj.modifiers.remove(mod)
+                # bpy.ops.object.modifier_remove("INVOKE_DEFAULT", False, modifier="Collision")
                 obj.update_tag()
+            else:
+                print("not find collision", name)
 
         context.scene.objects.update()
         context.view_layer.objects.update()
@@ -413,8 +421,10 @@ class Dynamic(ToolOptions, FrameOptions):
 
         now_mouse = Vector((event.mouse_x, event.mouse_y))
         distance = (now_mouse - self.last_mouse).length
-        # if distance != 0:
-        #     distance = inverse_proportional(distance, 100)
+        # if distance != 0 and distance < 100:
+        #     d = inverse_proportional(distance, 100)
+        #     print("distance", distance, d)
+        #     distance = d
 
         self.mouse_distance += distance
         strength = min(prop.min_force_field, -self.mouse_distance)
