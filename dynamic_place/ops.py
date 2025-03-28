@@ -9,7 +9,7 @@ COLLECTION_NAME = "Particle System Collection"
 
 FRAME_START = 0
 FRAME_END = 5000
-DEFAULT_STRENGTH = 200
+DEFAULT_STRENGTH = 100
 
 
 def get_collection():
