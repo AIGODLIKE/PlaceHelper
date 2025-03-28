@@ -208,7 +208,6 @@ class Dynamic(ToolOptions, FrameOptions):
 
     def particle_force_field(self, context):
         """添加对应的粒子系统和力场"""
-        print("particle_force_field")
         prop = context.scene.dynamic_place
 
         self.selected_objects = []
@@ -259,7 +258,6 @@ class Dynamic(ToolOptions, FrameOptions):
 
     def add_collision(self, context):
         """添加碰撞"""
-        print("collision")
         context.scene.objects.update()
         context.view_layer.objects.update()
 
@@ -298,7 +296,6 @@ class Dynamic(ToolOptions, FrameOptions):
         clear_collection()
         bpy.ops.ed.undo_push(message="Push Undo")
 
-        # TODO()
         # 1.初始化,记录当前场景的时间帧
         # 2.使用粒子和刚体来进行移动。通过空物体力场来对物体进行移动
         active = context.view_layer.objects.active
@@ -319,7 +316,6 @@ class Dynamic(ToolOptions, FrameOptions):
         return {"RUNNING_MODAL"}
 
     def modal(self, context, event):
-        print(event.type, event.type_prev)
         update_matrix_draw(context)
         self.update_force_field(context, event)
 
@@ -340,8 +336,6 @@ class Dynamic(ToolOptions, FrameOptions):
         return {"FINISHED"}
 
     def exit(self, context):
-        print("exit")
-
         context.scene.objects.update()
         context.view_layer.objects.update()
         if context.screen.is_animation_playing:
@@ -358,7 +352,6 @@ class Dynamic(ToolOptions, FrameOptions):
         print()
 
     def apply(self, context):
-        print("apply")
         """将粒子物体应用后的物体矩阵copy到原物体"""
         if context.screen.is_animation_playing:
             bpy.ops.screen.animation_play("INVOKE_DEFAULT", False, )
@@ -399,7 +392,6 @@ class Dynamic(ToolOptions, FrameOptions):
                     print(e.args)
 
     def remove_particle(self):
-        print("remove_particle")
         for place_obj, value in self.dynamic_place_system.items():
             particle_obj = value["particle_obj"]
             force_obj = value["force_field_obj"]
@@ -422,7 +414,6 @@ class Dynamic(ToolOptions, FrameOptions):
                 bpy.data.collections.remove(bpy.data.collections[collection_index])
 
     def clear_collision(self, context):
-        print("clear_collision")
         for name in self.collision_objects:
             index = context.scene.objects.find(name)
             if index != -1:
