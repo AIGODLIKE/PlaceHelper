@@ -7,7 +7,7 @@ class DynamicPlace_TL_WorkSpaceTool(bpy.types.WorkSpaceTool):
     bl_context_mode = 'OBJECT'
     bl_label = "Dynamic Place"
     bl_widget = "PH_GZG_Dynamic_Place"
-    bl_icon = "ops.transform.transform"
+    bl_icon = "ops.transform.shrink_fatten"
     bl_keymap = "3D View Tool: Select Box"
 
     @staticmethod

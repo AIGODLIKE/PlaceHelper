@@ -117,7 +117,7 @@ class CreateGizmo:
             gizmo = self.new_gizmo(axis)
             gizmo.transform = {"CONSTRAIN"}
             gizmo.draw_style = "BOX"
-            gizmo.length = .5
+            gizmo.length = .3
             gizmo.line_width = 2
             ops = gizmo.target_set_operator(DynamicScale.bl_idname)
             ops.axis = axis
