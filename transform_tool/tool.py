@@ -4,6 +4,8 @@ import bpy
 from bpy.props import EnumProperty
 from bpy.types import PropertyGroup
 
+from ..utils import get_pref
+
 
 class MoveToolProps(PropertyGroup):
     orient: EnumProperty(name="Orientation",
@@ -26,9 +28,13 @@ class PH_TL_TransformPro(bpy.types.WorkSpaceTool):
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"
 
+    @staticmethod
     def draw_settings(context, layout, tool):
         prop = bpy.context.scene.move_view_tool
-        layout.prop(prop, "duplicate")
+        pref = get_pref()
+        row = layout.row(align=True)
+        row.prop(prop, "duplicate")
+        row.prop(pref, "transform_gizmo_alpha_vary")
 
 
 class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
@@ -40,9 +46,9 @@ class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
     bl_keymap = "3D View Tool: Select Box"
 
+    @staticmethod
     def draw_settings(context, layout, tool):
-        prop = bpy.context.scene.move_view_tool
-        layout.prop(prop, "duplicate")
+        PH_TL_TransformPro.draw_settings(context, layout, tool)
 
 
 def register():

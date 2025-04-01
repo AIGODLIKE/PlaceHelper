@@ -102,6 +102,7 @@ class Preferences(AddonPreferences, HUB):
         min=1,
         max=15
     )
+    transform_gizmo_alpha_vary: BoolProperty(name="Gizmo Alpha Vary", default=True)
 
     event_normal_adsorption_angle: IntProperty(name="General", default=15, min=1, max=180, subtype="ANGLE")
     event_ctrl_adsorption_angle: IntProperty(name="Ctrl", default=1, min=1, max=180, subtype="ANGLE")
@@ -228,6 +229,7 @@ class Preferences(AddonPreferences, HUB):
         column.prop(self, "transform_gizmo_arrow_length")
         column.separator()
         column.prop(self, "transform_gizmo_move_event_count")
+        column.prop(self, "transform_gizmo_alpha_vary")
 
 
 def register():

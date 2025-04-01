@@ -147,7 +147,7 @@ class MoveGizmo:
             view_distance = context.space_data.region_3d.view_distance
             # print("view_distance", view_distance)
 
-            min_distance = 8
+            hide_distance = 8
             alpha_distance = 15
 
             angle = math.radians(90)
@@ -170,16 +170,17 @@ class MoveGizmo:
                 # print(f"{axis}_offset =", gizmo.matrix_offset.__repr__())
                 # print("c=", a.__repr__(), "d=", b.__repr__(), )
                 # print(axis, distance, "a= ", origin_point.__repr__(), ";b=", axis_point.__repr__())
-                gizmo.hide = distance < min_distance
+                gizmo.hide = distance < hide_distance
                 if distance < alpha_distance:
-                    factor = (distance - min_distance) / min_distance
+                    factor = (distance - hide_distance) / hide_distance
                     gizmo.alpha = pref.gizmo_alpha * factor
+                    print("alpha move_plane_gizmos", axis, gizmo.hide, gizmo.alpha)
                 else:
                     gizmo.alpha = pref.gizmo_alpha
 
-
-            min_distance = 5
-            alpha_distance = 10
+            #
+            # min_distance = 5
+            # alpha_distance = 10
             for axis, gizmo in self.move_gizmos.items():
                 matrix = gizmo.matrix_basis
                 origin_point = matrix @ Vector()
@@ -189,14 +190,16 @@ class MoveGizmo:
                 b = location_3d_to_region_2d(region, region_3d, axis_point)
                 distance = (a - b).length
 
-                gizmo.hide = distance < min_distance
+                gizmo.hide = distance < hide_distance
                 if distance < alpha_distance:
-                    factor = (distance - min_distance) / min_distance
+                    factor = (distance - hide_distance) / hide_distance
                     gizmo.alpha = pref.gizmo_alpha * factor
                     axis_s = ["X", "Y", "Z"]
-                    axis_s.pop(axis)
-                    for a in axis_s:
-                        pz = self.move_plane_gizmos[a]
+                    axis_s.remove(axis)
+                    print("distance move_gizmos", axis)
+                    for ax in axis_s:
+                        print("sync panel ", axis, gizmo.hide)
+                        pz = self.move_plane_gizmos[ax]
                         pz.hide = gizmo.hide
                         pz.alpha = gizmo.alpha
                 else:
