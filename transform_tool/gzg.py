@@ -1,5 +1,8 @@
+import math
+
 import bpy
-from mathutils import Vector, Matrix
+from bpy_extras.view3d_utils import location_3d_to_region_2d
+from mathutils import Vector, Matrix, Euler
 
 from ..utils import get_pref
 from ..utils.get_gz_matrix import get_matrix, view_matrix
@@ -126,6 +129,79 @@ class MoveGizmo:
             gz.matrix_offset = mx_offset
             gz.matrix_basis.translation = loc
 
+    def update_gizmos_alpha_and_hide(self, context):
+        orient_slots = context.scene.transform_orientation_slots[0].type
+        pref = get_pref()
+
+        if orient_slots == "VIEW":
+            for axis, gizmo in self.move_plane_gizmos.items():
+                gizmo.hide = axis != "Z"
+                gizmo.alpha = pref.gizmo_alpha
+
+            for axis, gizmo in self.move_gizmos.items():
+                gizmo.hide = axis == "Z"
+                gizmo.alpha = pref.gizmo_alpha
+        else:
+            region = context.region
+            region_3d = context.space_data.region_3d
+            view_distance = context.space_data.region_3d.view_distance
+            # print("view_distance", view_distance)
+
+            min_distance = 8
+            alpha_distance = 15
+
+            angle = math.radians(90)
+            angle_45 = math.radians(45)
+            axis_items = {
+                "X": Euler((-angle, -angle_45, 0), "YXZ"),
+                "Y": Euler((angle, 0, angle_45)),
+                "Z": Euler((-angle, 0, angle_45)),
+            }
+            for axis, gizmo in self.move_plane_gizmos.items():
+                matrix = gizmo.matrix_basis
+                origin_point = matrix @ Vector()
+                rot_matrix = axis_items[axis].to_matrix().to_4x4()
+                axis_point = matrix @ (rot_matrix @ Vector((0, 0, view_distance * 0.1)))
+
+                a = location_3d_to_region_2d(region, region_3d, origin_point)
+                b = location_3d_to_region_2d(region, region_3d, axis_point)
+                distance = (a - b).length
+
+                # print(f"{axis}_offset =", gizmo.matrix_offset.__repr__())
+                # print("c=", a.__repr__(), "d=", b.__repr__(), )
+                # print(axis, distance, "a= ", origin_point.__repr__(), ";b=", axis_point.__repr__())
+                gizmo.hide = distance < min_distance
+                if distance < alpha_distance:
+                    factor = (distance - min_distance) / min_distance
+                    gizmo.alpha = pref.gizmo_alpha * factor
+                else:
+                    gizmo.alpha = pref.gizmo_alpha
+
+
+            min_distance = 5
+            alpha_distance = 10
+            for axis, gizmo in self.move_gizmos.items():
+                matrix = gizmo.matrix_basis
+                origin_point = matrix @ Vector()
+                axis_point = matrix @ Vector((0, 0, view_distance * 0.1))
+
+                a = location_3d_to_region_2d(region, region_3d, origin_point)
+                b = location_3d_to_region_2d(region, region_3d, axis_point)
+                distance = (a - b).length
+
+                gizmo.hide = distance < min_distance
+                if distance < alpha_distance:
+                    factor = (distance - min_distance) / min_distance
+                    gizmo.alpha = pref.gizmo_alpha * factor
+                    axis_s = ["X", "Y", "Z"]
+                    axis_s.pop(axis)
+                    for a in axis_s:
+                        pz = self.move_plane_gizmos[a]
+                        pz.hide = gizmo.hide
+                        pz.alpha = gizmo.alpha
+                else:
+                    gizmo.alpha = pref.gizmo_alpha
+
     def update_view_move_gizmo_matrix(self, context):
         res = view_matrix(context)
         q = res[2]
@@ -188,6 +264,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo):
     def refresh(self, context):
         self.update_gizmos_matrix(context)
         self.update_view_move_gizmo_matrix(context)
+        self.update_gizmos_alpha_and_hide(context)
 
 
 classes = (
