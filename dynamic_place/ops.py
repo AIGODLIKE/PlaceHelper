@@ -296,7 +296,7 @@ class Dynamic(ToolOptions, FrameOptions):
         if not context.screen.is_animation_playing:
             bpy.ops.screen.animation_play("INVOKE_DEFAULT", False)
         context.window_manager.modal_handler_add(self)
-        return {"RUNNING_MODAL"}
+        return {"RUNNING_MODAL", "PASS_THROUGH"}
 
     def modal(self, context, event):
         update_matrix_draw(context)

@@ -17,6 +17,7 @@ class DynamicPlaceProperty(bpy.types.PropertyGroup):
     )
     min_force_field: bpy.props.FloatProperty(name="Min Force Field", default=10)
     max_force_field: bpy.props.FloatProperty(name="Max Force Field", default=1000)
+    transform_tool_show_inset_gizmo: bpy.props.BoolProperty(default=False, options={"SKIP_SAVE"})
 
     @property
     def is_individual(self):

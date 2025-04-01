@@ -44,8 +44,15 @@ class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
     bl_label = "Transform Pro"
     bl_widget = "PH_GZG_transform_pro"
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "move_view").as_posix()
-    bl_keymap = "3D View Tool: Select Box"
+    # bl_keymap = "3D View Tool: Select Box"
 
+    bl_keymap = (
+        ("ph.switch_inset",
+         {'type': 'LEFT_CTRL', 'value': 'RELEASE'},
+         {"properties": []},
+         ),
+    )
+    
     @staticmethod
     def draw_settings(context, layout, tool):
         PH_TL_TransformPro.draw_settings(context, layout, tool)
