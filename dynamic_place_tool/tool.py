@@ -63,7 +63,7 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_idname = "ph.dynamic_place_tool"
     bl_space_type = 'VIEW_3D'
     bl_context_mode = 'OBJECT'
-    bl_label = "Dynamic Place"
+    bl_label = "Gravity Dynamic Place"
     bl_widget = "PH_GZG_dynamic_place"
     bl_icon = "ops.transform.transform"
     bl_keymap = "3D View Tool: Select Box"

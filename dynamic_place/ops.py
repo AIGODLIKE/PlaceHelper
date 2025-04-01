@@ -25,11 +25,6 @@ def clear_collection():
         bpy.data.collections.remove(bpy.data.collections[index])
 
 
-def clear_data():
-    """"""
-    ...
-
-
 def set_props(prop, data):
     for key, value in data.items():
         if isinstance(value, dict):
@@ -42,7 +37,6 @@ def set_props(prop, data):
 
 def create_particle_panel(context, obj, collection) -> bpy.types.Object:
     """创建一个粒子平面,用于在拖动时通过粒子与力场进行动态碰撞"""
-    print("create_particle_panel")
     matrix = obj.matrix_world.copy()
 
     bm = bmesh.new()
@@ -102,7 +96,6 @@ def check_apply(event) -> bool:
 
 
 def check_cancel(event) -> bool:
-    types = (event.type, event.type_prev)
     values = (event.value, event.value_prev)
     return event.type == "MOUSEMOVE" and event.type_prev in ("RIGHTMOUSE", "ESC") and "RELEASE" in values
 
@@ -112,14 +105,6 @@ def inverse_proportional(x, k):
     if x == 0:
         raise ValueError("x 不能为0，分母不能为零！")
     return k / x
-
-
-class SingleForceFieldMode:
-    ...
-
-
-class MultiForceFieldMode:
-    ...
 
 
 class ToolOptions:
@@ -274,8 +259,6 @@ class Dynamic(ToolOptions, FrameOptions):
                         obj.collision.absorption = 0.1
                         obj.collision.damping_factor = 0.1
                         self.collision_objects.append(obj.name)
-                    else:
-                        print("Emm", obj.name)
 
     def restore_selected(self, context):
         active_index = context.scene.objects.find(self.active_object)
@@ -320,19 +303,16 @@ class Dynamic(ToolOptions, FrameOptions):
         self.update_force_field(context, event)
 
         if check_apply(event):
-            print("event check_apply", event.type, event.type_prev, event.value, event.value_prev, flush=True)
             self.apply(context)
             self.exit(context)
             return {"FINISHED"}
         elif check_cancel(event):
-            print("event check_cancel", event.type, event.type_prev, event.value, event.value_prev, flush=True)
             self.exit(context)
             return {"FINISHED"}
 
         return {"RUNNING_MODAL", "PASS_THROUGH"}
 
     def execute(self, context):
-        print(self.bl_idname, self.axis)
         return {"FINISHED"}
 
     def exit(self, context):
@@ -349,7 +329,6 @@ class Dynamic(ToolOptions, FrameOptions):
         self.restore_selected(context)
         self.restore_tool(context)
         update_matrix_draw(context, timeout=1)
-        print()
 
     def apply(self, context):
         """将粒子物体应用后的物体矩阵copy到原物体"""
@@ -358,14 +337,12 @@ class Dynamic(ToolOptions, FrameOptions):
 
         context.scene.objects.update()
         context.view_layer.objects.update()
-        # bpy.ops.wm.redraw_timer(type='ANIM_STEP')
 
         for place_obj, value in self.dynamic_place_system.items():
             particle_obj = value["particle_obj"]
 
             particle_index = context.view_layer.objects.find(particle_obj)
             place_index = context.view_layer.objects.find(place_obj)
-            # print(place_obj, place_index, particle_obj, particle_index)
             if particle_index != -1 and place_index != -1:
                 particle = context.view_layer.objects[particle_index]
                 place = context.view_layer.objects[place_index]
@@ -385,8 +362,6 @@ class Dynamic(ToolOptions, FrameOptions):
                     matrix = active.matrix_world.copy()
                     place.matrix_world = matrix
                     place.update_tag()
-                    # print(place.name, active.name, matrix.translation, place.matrix_world.translation)
-                    print("active", active.name, active.data.name)
                     bpy.data.objects.remove(active)
                 except Exception as e:
                     print(e.args)
@@ -402,8 +377,6 @@ class Dynamic(ToolOptions, FrameOptions):
                 particle = bpy.data.objects[particle_index]
                 for system in particle.particle_systems:
                     bpy.data.particles.remove(system.settings)
-                # particle.update_tag()
-                # bpy.data.meshes.remove(particle.data)
 
             obj_index = bpy.data.objects.find(force_obj)
             if obj_index != -1:
@@ -422,7 +395,6 @@ class Dynamic(ToolOptions, FrameOptions):
                 for mod in obj.modifiers:
                     if mod.type == "COLLISION":
                         obj.modifiers.remove(mod)
-                # bpy.ops.object.modifier_remove("INVOKE_DEFAULT", False, modifier="Collision")
                 obj.update_tag()
             else:
                 print("not find collision", name)
@@ -438,29 +410,21 @@ class Dynamic(ToolOptions, FrameOptions):
 
         now_mouse = Vector((event.mouse_x, event.mouse_y))
         distance = (now_mouse - self.last_mouse).length
-        # if distance != 0 and distance < 100:
-        #     d = inverse_proportional(distance, 100)
-        #     print("distance", distance, d)
-        #     distance = d
 
         self.mouse_distance += distance
         strength = min(prop.min_force_field, -self.mouse_distance)
-        print("strength", strength)
         for place_obj, value in self.dynamic_place_system.items():
             force_obj = value["force_field_obj"]
             force_index = context.scene.objects.find(force_obj)
 
             if force_index != -1:
                 force = context.scene.objects[force_index]
-                # force.field.flow = 10
                 force.field.strength = strength
             else:
                 print("Tips: Not Find this force object ", force_obj)
 
         if self.mouse_distance > prop.min_force_field:
             value = 10 * prop.force_field_coefficient_factor
-            # if value != 0:
-            #     value = inverse_proportional(value, 1.2)
             self.mouse_distance -= value
         self.mouse_distance = max(min(self.mouse_distance, prop.max_force_field), prop.min_force_field)
         self.last_mouse = now_mouse

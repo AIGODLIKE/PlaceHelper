@@ -12,6 +12,7 @@ data = {
     "Scale\nShift: Duplicate\nAlt: Set Axis": "缩放\nShift: 复制\nAlt: 设置轴",
     "Rotate\nShift: Duplicate\nAlt: Set Axis": "旋转\nShift: 复制\nAlt: 设置轴",
     "Please select the active object": "请选择一个物体为激活项",
+    "Place Tool": "放置工具",
     "Use Color When Moving": "运行时变色",
     "Gizmo Handle All Event": "Gizmo 接收所有按键",
     "Active Instance Bounding Box": "活动项实例碰撞盒",
@@ -48,4 +49,6 @@ data = {
     "Attenuation coefficient of force field movement": "力场运动的衰减系数",
     "Min Force Field": "最小力场",
     "Max Force Field": "最大力场",
+    "Force Field Dynamic Place": "力场动态放置",
+    "Gravity Dynamic Place": "重力动态放置"
 }
