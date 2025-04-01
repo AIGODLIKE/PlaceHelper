@@ -36,14 +36,160 @@ def get_mx(axis):
         return mZW
 
 
-class PH_GZG_transform_pro(bpy.types.GizmoGroup):
+
+class MoveGizmo:
+    move_gizmos = {}
+    move_plane_gizmos = {}
+    view_move_gizmo = None
+
+    def add_view_move_gizmo(self):
+        pref = get_pref()
+        color = color_highlight = (.9, .9, .9)
+
+        gizmo = GizmoInfo(scale_basis=pref.transform_gizmo_circle_size,
+                          color=color,
+                          color_highlight=color_highlight,
+                          use_draw_modal=False,
+                          use_event_handle_all=False).set_up(self, "GIZMO_GT_dial_3d")
+        gizmo.line_width = 2
+        prop = gizmo.target_set_operator("ph.translate", index=0)
+        prop.invert_constraint = False
+        prop.axis = "VIEW"
+        gizmo.alpha = pref.gizmo_alpha
+        self.view_move_gizmo = gizmo
+
+    def add_move_plane_gizmo(self, axis):
+        pref = get_pref()
+        color, color_highlight = get_color(axis)
+
+        gizmo = GizmoInfo(scale_basis=.28,
+                          color=color,
+                          color_highlight=color_highlight,
+                          use_draw_modal=False,
+                          use_event_handle_all=False)
+        gz = gizmo.set_up(self, "PH_GT_custom_move_plane_3d")
+        gz.align_view = True
+        gz.alpha = pref.gizmo_alpha
+
+        prop = gz.target_set_operator("ph.translate", index=0)
+        prop.axis = axis
+        prop.invert_constraint = True
+
+        self.move_plane_gizmos[axis] = gz
+
+    def add_move_gizmo(self, axis):
+        color, color_highlight = get_color(axis)
+        pref = get_pref()
+
+        gizmo = GizmoInfo(scale_basis=1,
+                          color=color,
+                          color_highlight=color_highlight,
+                          use_draw_modal=False,
+                          use_event_handle_all=False)
+
+        gz = gizmo.set_up(self, "GIZMO_GT_arrow_3d")
+        gz.line_width = 2
+        gz.length = pref.transform_gizmo_arrow_length
+        gz.alpha = pref.gizmo_alpha
+
+        prop = gz.target_set_operator("ph.translate", index=0)
+        prop.invert_constraint = False
+        prop.axis = axis
+
+        self.move_gizmos[axis] = gz
+
+    def update_gizmos_matrix(self, context):
+        loc = get_position()
+
+        pref = get_pref()
+
+        hide_info = {}
+        view_vector = context.space_data.region_3d.view_matrix.inverted() @ Vector((0, 0, 1))
+
+        alpha_angle = 30
+        hide_angle = 15
+
+        for axis, gz in self.move_gizmos.items():
+
+            matrix = get_mx(axis)
+            gz.matrix_basis = matrix
+
+            # Offset
+            distance = context.space_data.region_3d.view_distance * pref.transform_gizmo_circle_size * pref.transform_gizmo_arrow_offset
+            off = Matrix.Translation(Vector((0, 0, distance)))
+            gz.matrix_offset = off
+
+            gz.matrix_basis.translation = loc
+
+            #TODO
+            # # Angle Alpha
+            # base_loc = matrix @ Vector()
+            # view_v = base_loc - view_vector
+            # view_v.normalize()
+            #
+            # if axis == "X":
+            #     v = Vector((1, 0, 0))
+            # elif axis == "Y":
+            #     v = Vector((0, 1, 0))
+            # elif axis == "Z":
+            #     v = Vector((0, 0, 1))
+            # else:
+            #     v = Vector()
+            #
+            # gizmo_vector = matrix @ v
+            # gizmo_vector.normalize()
+            # angle = math.degrees(gizmo_vector.angle(view_v))
+            # hide_info[axis] = angle
+            # if angle > 90:
+            #     angle = 180 - angle
+            #
+            # print(axis, angle)
+            # gz.hide = angle < hide_angle
+            # if gz.hide is False and alpha_angle > angle:
+            #     gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
+            # else:
+            #     gz.alpha = pref.gizmo_alpha
+
+        # alpha_angle = 15
+        # hide_angle = 10
+        for axis, gz in self.move_plane_gizmos.items():
+            gz.matrix_basis = get_mx(axis)
+            off = 2
+            if axis == "X":
+                mx_offset = Matrix.Translation(Vector((-off, -off, 0.0)))
+            elif axis == "Y":
+                mx_offset = Matrix.Translation(Vector((off, off, 0.0)))
+            else:
+                mx_offset = Matrix.Translation(Vector((off, off, 0.0)))
+
+            gz.matrix_offset = mx_offset
+            gz.matrix_basis.translation = loc
+
+        #     angle = 90 - hide_info[axis]
+        #     gz.hide = angle < hide_angle
+        #     gz.hide = True
+        #     if gz.hide is False and alpha_angle > angle:
+        #         gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
+        #     else:
+        #         gz.alpha = pref.gizmo_alpha
+
+    def update_view_move_gizmo_matrix(self, context):
+        res = view_matrix(context)
+        q = res[2]
+
+        loc = get_position()
+
+        gizmo = self.view_move_gizmo
+
+        gizmo.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
+        gizmo.matrix_basis.translation = loc
+
+
+class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo):
     bl_label = "Test Widget"
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
     bl_options = {"3D", "PERSISTENT"}
-
-    _move_gz = {}
-    _move_gz_plane = {}
 
     @classmethod
     def poll(cls, context):
@@ -65,184 +211,30 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup):
         return True
 
     def setup(self, context):
-        self._move_gz = {}
-        self._move_gz_plane = {}
+        self.move_gizmos = {}
+        self.move_plane_gizmos = {}
 
-        self.add_move_gz(context, "X")
-        self.add_move_gz(context, "Y")
-        self.add_move_gz(context, "Z")
-        self.add_move_gz(context, "VIEW")
+        self.add_view_move_gizmo()
+        # for axis in ["X", "Y", "Z"]:
+        #     self.add_move_gizmo(axis)
+        #     self.add_move_plane_gizmo(axis)
 
-        self.add_move_gz_plane(context, "X")
-        self.add_move_gz_plane(context, "Y")
-        self.add_move_gz_plane(context, "Z")
+        self.add_move_gizmo("X")
+        self.add_move_gizmo("Y")
+        self.add_move_gizmo("Z")
 
-    def add_move_gz_plane(self, context, axis):
-        pref = get_pref()
-        color, color_highlight = get_color(axis)
+        self.add_move_plane_gizmo("X")
+        self.add_move_plane_gizmo("Y")
+        self.add_move_plane_gizmo("Z")
 
-        gzObject = GizmoInfo(scale_basis=.28,
-                             color=color,
-                             color_highlight=color_highlight,
-                             use_draw_modal=False,
-                             use_event_handle_all=False)
-        gz = gzObject.set_up(self, "PH_GT_custom_move_plane_3d")
-        gz.align_view = True
-        prop = gz.target_set_operator("ph.translate", index=0)
-        prop.axis = axis
-        prop.invert_constraint = True
-
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-        off = 0.1
-        if axis == "X":
-            mx = mXW
-            mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-        elif axis == "Y":
-            mx = mYW
-            mx_offset = Matrix.Translation(Vector((off, -off, 0.0)))
-        else:
-            mx = mZW
-            mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-
-        loc = get_position()
-        gz.matrix_basis = mx
-        gz.matrix_offset = mx_offset
-        gz.alpha = pref.gizmo_alpha
-
-        gz.matrix_basis.translation = loc
-        self._move_gz_plane[gz] = axis
-
-    def add_move_gz(self, context, axis):
-        color, color_highlight = get_color(axis)
-        pref = get_pref()
-
-        if axis == "VIEW":
-            color = color_highlight = (.9, .9, .9)
-
-        gzObject = GizmoInfo(scale_basis=pref.transform_gizmo_circle_size if axis == "VIEW" else 1,
-                             color=color,
-                             color_highlight=color_highlight,
-                             use_draw_modal=False,
-                             use_event_handle_all=False)
-
-        if axis == "VIEW":
-            gz = gzObject.set_up(self, "GIZMO_GT_dial_3d")
-            gz.line_width = 2
-        else:
-            gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
-            gz.line_width = 2
-            gz.length = pref.transform_gizmo_arrow_length
-
-        prop = gz.target_set_operator("ph.translate", index=0)
-        prop.invert_constraint = False
-        prop.axis = axis
-
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-        if axis == "X":
-            gz.matrix_basis = mXW
-        elif axis == "Y":
-            gz.matrix_basis = mY_d
-        elif axis == "Z":
-            gz.matrix_basis = mZW
-        else:
-            mXW, mYW, mZW, mX_d, mY_d, mZ_d = view_matrix()
-            q = mZW
-            gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
-        gz.alpha = pref.gizmo_alpha
-
-        self._move_gz[gz] = axis
-
-    def correct_gz_loc(self, context):
-        mXW, mYW, mZW, mX_d, mY_d, mZ_d = get_matrix()
-        loc = get_position()
-
-        pref = get_pref()
-
-        def get_mx(axis):
-            if axis == "X":
-                return mXW
-            elif axis == "Y":
-                return mYW
-            else:
-                return mZW
-
-        hide_info = {}
-        view_vector = context.space_data.region_3d.view_matrix.inverted() @ Vector((0, 0, 1))
-
-        alpha_angle = 30
-        hide_angle = 15
-        for gz, axis in self._move_gz.items():
-            if axis == "VIEW":
-                res = view_matrix(context)
-                q = res[2]
-                gz.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
-            else:
-                matrix = get_mx(axis)
-                gz.matrix_basis = matrix
-
-                # Offset
-                distance = context.space_data.region_3d.view_distance * pref.transform_gizmo_circle_size * pref.transform_gizmo_arrow_offset
-                off = Matrix.Translation(Vector((0, 0, distance)))
-                gz.matrix_offset = off
-
-                # Angle Alpha
-                base_loc = matrix @ Vector()
-                view_v = base_loc - view_vector
-                view_v.normalize()
-
-                if axis == "X":
-                    v = Vector((1, 0, 0))
-                elif axis == "Y":
-                    v = Vector((0, 1, 0))
-                elif axis == "Z":
-                    v = Vector((0, 0, 1))
-                else:
-                    v = Vector()
-
-                gizmo_vector = matrix @ v
-                gizmo_vector.normalize()
-                angle = math.degrees(gizmo_vector.angle(view_v))
-                hide_info[axis] = angle
-                # if angle > 90:
-                #     angle = 180 - angle
-
-                # print(axis, angle)
-                # gz.hide = angle < hide_angle
-                # if gz.hide is False and alpha_angle > angle:
-                #     gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
-                # else:
-                #     gz.alpha = pref.gizmo_alpha
-            gz.matrix_basis.translation = loc
-        alpha_angle = 15
-        hide_angle = 10
-        for gz, axis in self._move_gz_plane.items():
-            gz.matrix_basis = get_mx(axis)
-            off = 2
-            if axis == "X":
-                mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-            elif axis == "Y":
-                mx_offset = Matrix.Translation(Vector((off, -off, 0.0)))
-            else:
-                mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
-
-            gz.matrix_offset = mx_offset
-            gz.matrix_basis.translation = loc
-
-            # angle = 90 - hide_info[axis]
-            # gz.hide = angle < hide_angle
-            # gz.hide = True
-            # if gz.hide is False and alpha_angle > angle:
-            #     gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
-            # else:
-            #     gz.alpha = pref.gizmo_alpha
-        # print("conte", context.area)
-
+        self.refresh(context)
 
     def draw_prepare(self, context):
         self.refresh(context)
 
     def refresh(self, context):
-        self.correct_gz_loc(context)
+        self.update_gizmos_matrix(context)
+        self.update_view_move_gizmo_matrix(context)
 
 
 classes = (
