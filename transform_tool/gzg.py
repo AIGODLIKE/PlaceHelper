@@ -1,5 +1,3 @@
-import math
-
 import bpy
 from mathutils import Vector, Matrix
 
@@ -31,7 +29,7 @@ def get_mx(axis):
     if axis == "X":
         return mXW
     elif axis == "Y":
-        return mY_d
+        return mYW
     else:
         return mZW
 
@@ -103,12 +101,6 @@ class MoveGizmo:
 
         pref = get_pref()
 
-        hide_info = {}
-        view_vector = context.space_data.region_3d.view_matrix.inverted() @ Vector((0, 0, 1))
-
-        alpha_angle = 30
-        hide_angle = 15
-
         for axis, gz in self.move_gizmos.items():
 
             matrix = get_mx(axis)
@@ -121,57 +113,18 @@ class MoveGizmo:
 
             gz.matrix_basis.translation = loc
 
-            #TODO
-            # # Angle Alpha
-            # base_loc = matrix @ Vector()
-            # view_v = base_loc - view_vector
-            # view_v.normalize()
-            #
-            # if axis == "X":
-            #     v = Vector((1, 0, 0))
-            # elif axis == "Y":
-            #     v = Vector((0, 1, 0))
-            # elif axis == "Z":
-            #     v = Vector((0, 0, 1))
-            # else:
-            #     v = Vector()
-            #
-            # gizmo_vector = matrix @ v
-            # gizmo_vector.normalize()
-            # angle = math.degrees(gizmo_vector.angle(view_v))
-            # hide_info[axis] = angle
-            # if angle > 90:
-            #     angle = 180 - angle
-            #
-            # print(axis, angle)
-            # gz.hide = angle < hide_angle
-            # if gz.hide is False and alpha_angle > angle:
-            #     gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
-            # else:
-            #     gz.alpha = pref.gizmo_alpha
-
-        # alpha_angle = 15
-        # hide_angle = 10
         for axis, gz in self.move_plane_gizmos.items():
             gz.matrix_basis = get_mx(axis)
             off = 2
             if axis == "X":
-                mx_offset = Matrix.Translation(Vector((-off, -off, 0.0)))
+                mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
             elif axis == "Y":
-                mx_offset = Matrix.Translation(Vector((off, off, 0.0)))
+                mx_offset = Matrix.Translation(Vector((off, -off, 0.0)))
             else:
-                mx_offset = Matrix.Translation(Vector((off, off, 0.0)))
+                mx_offset = Matrix.Translation(Vector((-off, off, 0.0)))
 
             gz.matrix_offset = mx_offset
             gz.matrix_basis.translation = loc
-
-        #     angle = 90 - hide_info[axis]
-        #     gz.hide = angle < hide_angle
-        #     gz.hide = True
-        #     if gz.hide is False and alpha_angle > angle:
-        #         gz.alpha = pref.gizmo_alpha * ((angle - hide_angle) / (alpha_angle - hide_angle))
-        #     else:
-        #         gz.alpha = pref.gizmo_alpha
 
     def update_view_move_gizmo_matrix(self, context):
         res = view_matrix(context)
