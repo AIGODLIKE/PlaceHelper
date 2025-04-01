@@ -1,5 +1,6 @@
 import bmesh
 import bpy
+from mathutils import Matrix
 
 from ..hub import hub_matrix
 
@@ -318,22 +319,30 @@ class Dynamic(ToolOptions, FrameOptions):
                 place = context.scene.objects[place_index]
                 empty = context.scene.objects[empty_index]
 
+                direction = place.location - empty.location
                 res, location, normal, index, obj, mat = context.scene.ray_cast(
                     deps, place.location,
-                    direction=place.location - empty.location,
-                    distance=99999999)
+                    direction=direction,
+                    distance=direction.length
+                )
 
+                print("res", place.name, res, obj == place)
                 if res is False:
                     place.matrix_world.translation = empty.matrix_world.translation
                 elif obj == place:
                     off_location = Matrix.Translation(location)
 
+                    direction = location - empty.location
                     res, location, normal, index, obj, mat = context.scene.ray_cast(
                         deps, location,
-                        direction=location - empty.location,
-                        distance=99999999)
+                        direction=direction,
+                        distance=direction.length)
+                    if res:
+                        place.matrix_world.translation = location
+                    else:
+                        place.matrix_world.translation = empty.matrix_world.translation
                 else:
-                    ...
+                    place.matrix_world.translation = location
 
     @property
     def args(self) -> dict:
