@@ -31,6 +31,7 @@ class PH_OT_translate(bpy.types.Operator):
     invert_constraint: BoolProperty(name="Not Moving this Axis", default=False)
     matrix_basis: FloatVectorProperty(size=(4, 4), subtype="MATRIX")
     pp = None
+    move_event_count = None
 
     def get_orient_matrix(self, context):
         mat = self.matrix_basis.copy().to_3x3()
@@ -117,8 +118,32 @@ class PH_OT_translate(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
+class SwitchInset(bpy.types.Operator):
+    bl_idname = "ph.switch_inset"
+    bl_label = "Switch Inset"
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def invoke(self, context, event):
+        prop = context.scene.dynamic_place
+        prop.transform_tool_show_inset_gizmo = True
+
+        context.window_manager.modal_handler_add(self)
+        return {"RUNNING_MODAL", "PASS_THROUGH"}
+
+    def modal(self, context, event):
+        if not event.ctrl:
+            prop = context.scene.dynamic_place
+            prop.transform_tool_show_inset_gizmo = False
+            return {"FINISHED"}
+        return {"RUNNING_MODAL", "PASS_THROUGH"}
+
+
 classes = (
     PH_OT_translate,
+    SwitchInset,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

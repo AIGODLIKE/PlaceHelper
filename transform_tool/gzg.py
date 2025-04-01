@@ -37,13 +37,12 @@ def get_mx(axis):
         return mZW
 
 
-
 class MoveGizmo:
+    move_view_gizmo = None
     move_gizmos = {}
     move_plane_gizmos = {}
-    view_move_gizmo = None
 
-    def add_view_move_gizmo(self):
+    def add_move_view_gizmo(self):
         pref = get_pref()
         color = color_highlight = (.9, .9, .9)
 
@@ -57,7 +56,7 @@ class MoveGizmo:
         prop.invert_constraint = False
         prop.axis = "VIEW"
         gizmo.alpha = pref.gizmo_alpha
-        self.view_move_gizmo = gizmo
+        self.move_view_gizmo = gizmo
 
     def add_move_plane_gizmo(self, axis):
         pref = get_pref()
@@ -130,6 +129,7 @@ class MoveGizmo:
             gz.matrix_basis.translation = loc
 
     def update_gizmos_alpha_and_hide(self, context):
+        """TODO If the object is too close, it will cause all axes to disappear"""
         orient_slots = context.scene.transform_orientation_slots[0].type
         pref = get_pref()
 
@@ -201,13 +201,17 @@ class MoveGizmo:
 
         loc = get_position()
 
-        gizmo = self.view_move_gizmo
+        gizmo = self.move_view_gizmo
 
         gizmo.matrix_basis = Matrix.LocRotScale(Vector((0, 0, 0)), q, Vector((1, 1, 1)))
         gizmo.matrix_basis.translation = loc
 
 
-class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo):
+class InsetGizmo:
+    ...
+
+
+class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo, InsetGizmo):
     bl_label = "Test Widget"
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
@@ -236,11 +240,7 @@ class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo):
         self.move_gizmos = {}
         self.move_plane_gizmos = {}
 
-        self.add_view_move_gizmo()
-        # for axis in ["X", "Y", "Z"]:
-        #     self.add_move_gizmo(axis)
-        #     self.add_move_plane_gizmo(axis)
-
+        self.add_move_view_gizmo()
         self.add_move_gizmo("X")
         self.add_move_gizmo("Y")
         self.add_move_gizmo("Z")
