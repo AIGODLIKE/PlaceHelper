@@ -53,7 +53,7 @@ class MoveGizmo:
                           use_event_handle_all=False).set_up(self, "GIZMO_GT_dial_3d")
         gizmo.line_width = 2
         prop = gizmo.target_set_operator("ph.translate", index=0)
-        prop.invert_constraint = False
+        prop.panel_constraint = False
         prop.axis = "VIEW"
         gizmo.alpha = pref.gizmo_alpha
         self.move_view_gizmo = gizmo
@@ -73,7 +73,7 @@ class MoveGizmo:
 
         prop = gz.target_set_operator("ph.translate", index=0)
         prop.axis = axis
-        prop.invert_constraint = True
+        prop.panel_constraint = True
 
         self.move_plane_gizmos[axis] = gz
 
@@ -93,7 +93,7 @@ class MoveGizmo:
         gz.alpha = pref.gizmo_alpha
 
         prop = gz.target_set_operator("ph.translate", index=0)
-        prop.invert_constraint = False
+        prop.panel_constraint = False
         prop.axis = axis
 
         self.move_gizmos[axis] = gz
@@ -146,8 +146,8 @@ class MoveGizmo:
             region_3d = context.space_data.region_3d
             view_distance = context.space_data.region_3d.view_distance
 
-            hide_distance = 8
-            alpha_distance = 15
+            hide_distance = 10
+            alpha_distance = 20
 
             angle = math.radians(90)
             angle_45 = math.radians(45)
@@ -207,12 +207,8 @@ class MoveGizmo:
         gizmo.matrix_basis.translation = loc
 
 
-class InsetGizmo:
-    ...
-
-
-class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo, InsetGizmo):
-    bl_label = "Test Widget"
+class PH_GZG_transform_pro(bpy.types.GizmoGroup, MoveGizmo):
+    bl_label = "Transform Pro"
     bl_space_type = "VIEW_3D"
     bl_region_type = "WINDOW"
     bl_options = {"3D", "PERSISTENT"}
