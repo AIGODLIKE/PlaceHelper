@@ -15,7 +15,7 @@ DEFAULT_STRENGTH = 100
 def get_collection():
     index = bpy.data.collections.find(COLLECTION_NAME)
     if index == -1:
-        bpy.data.collections.new(COLLECTION_NAME)
+        return bpy.data.collections.new(COLLECTION_NAME)
     return bpy.data.collections[index]
 
 
@@ -200,6 +200,7 @@ class Dynamic(ToolOptions, FrameOptions):
 
         particle_system_collection = self.particle_system_collection = get_collection()
 
+        print("particle_system_collection", particle_system_collection)
         context.scene.collection.children.link(particle_system_collection)
         if not prop.is_individual:
             loc = get_selected_objects_center_translation(context)
