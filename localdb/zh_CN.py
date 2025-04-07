@@ -51,5 +51,6 @@ data = {
     "Max Force Field": "最大力场",
     "Force Field Dynamic Place": "力场动态放置",
     "Gravity Dynamic Place": "重力动态放置",
-    "Gizmo Alpha Vary": "Gizmo Alpha变化"
+    "Gizmo Alpha Vary": "Gizmo Alpha变化",
+    "Clear mesh": "清理网格"
 }

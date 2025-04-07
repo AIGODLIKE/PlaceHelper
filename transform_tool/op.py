@@ -8,8 +8,6 @@ from ..utils import get_pref
 
 C_OBJECT_TYPE_HAS_BBOX = {"MESH", "CURVE", "FONT", "LATTICE"}
 
-move_view_tool_props = lambda: bpy.context.scene.move_view_tool
-
 
 class PH_OT_translate(bpy.types.Operator):
     bl_idname = "ph.translate"
@@ -96,9 +94,10 @@ class PH_OT_translate(bpy.types.Operator):
             TRANSFORM_OT_translate=args,
         )
 
-    def scale(self, context, ):
-        if self.axis in ("VIEW", "Z"):
-            bpy.ops.mesh.inset("INVOKE_DEFAULT", release_confirm=True)
+    def scale(self, context, event):
+        if self.axis in ("VIEW",):  # "Z"
+            context.window.cursor_warp(event.mouse_x + 200, event.mouse_y + 0)
+            bpy.ops.mesh.inset("INVOKE_DEFAULT", release_confirm=True, use_even_offset=True)
         else:
             bpy.ops.mesh.extrude_context("EXEC_DEFAULT")
             bpy.ops.transform.resize("INVOKE_DEFAULT", constraint_axis=self.constraint_axis, release_confirm=True)
@@ -128,15 +127,42 @@ class PH_OT_translate(bpy.types.Operator):
             self.move_event_count += 1
             if self.move_event_count > pref.transform_gizmo_move_event_count:
                 if context.mode == "EDIT_MESH" and event.ctrl:
-                    self.scale(context)
+                    self.scale(context, event)
                 else:
                     self.move(context, event)
                 return {"FINISHED"}
         return {"RUNNING_MODAL"}
 
 
+class PH_OT_Clear_mesh(bpy.types.Operator):
+    bl_idname = "ph.clear_mesh"
+    bl_label = "Clear mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "EDIT_MESH"
+
+    def execute(self, context):
+        import bmesh
+
+        bm = bmesh.from_edit_mesh(context.object.data)
+        selected = {f.index for f in bm.faces if f.select}
+        bm.free()
+
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.intersect(mode='SELECT', separate_mode='CUT', solver='EXACT')
+
+        bm = bmesh.from_edit_mesh(context.object.data)
+        for f in bm.faces:
+            f.select = f.index in selected
+        bmesh.update_edit_mesh(context.object.data)
+        return {"FINISHED"}
+
+
 classes = (
     PH_OT_translate,
+    PH_OT_Clear_mesh,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

@@ -48,7 +48,11 @@ class PH_TL_TransformPro_edit(bpy.types.WorkSpaceTool):
 
     @staticmethod
     def draw_settings(context, layout, tool):
-        PH_TL_TransformPro.draw_settings(context, layout, tool)
+        from .op import PH_OT_Clear_mesh
+
+        column = layout.row(align=True)
+        PH_TL_TransformPro.draw_settings(context, column, tool)
+        column.operator(PH_OT_Clear_mesh.bl_idname)
 
 
 def register():
