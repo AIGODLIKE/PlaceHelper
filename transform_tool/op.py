@@ -153,10 +153,10 @@ class PH_OT_Clear_mesh(bpy.types.Operator):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.intersect(mode='SELECT', separate_mode='CUT', solver='EXACT')
 
-        bm = bmesh.from_edit_mesh(context.object.data)
-        for f in bm.faces:
-            f.select = f.index in selected
-        bmesh.update_edit_mesh(context.object.data)
+        # bm = bmesh.from_edit_mesh(context.object.data)
+        # for f in bm.faces:
+        #     f.select = f.index in selected
+        # bmesh.update_edit_mesh(context.object.data)
         return {"FINISHED"}
 
 
