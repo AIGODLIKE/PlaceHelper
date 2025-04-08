@@ -164,14 +164,15 @@ class MoveGizmo:
 
                 a = location_3d_to_region_2d(region, region_3d, origin_point)
                 b = location_3d_to_region_2d(region, region_3d, axis_point)
-                distance = (a - b).length
+                if a and b:
+                    distance = (a - b).length
 
-                gizmo.hide = distance < hide_distance
-                if distance < alpha_distance:
-                    factor = (distance - hide_distance) / hide_distance
-                    gizmo.alpha = pref.gizmo_alpha * factor
-                else:
-                    gizmo.alpha = pref.gizmo_alpha
+                    gizmo.hide = distance < hide_distance
+                    if distance < alpha_distance:
+                        factor = (distance - hide_distance) / hide_distance
+                        gizmo.alpha = pref.gizmo_alpha * factor
+                    else:
+                        gizmo.alpha = pref.gizmo_alpha
 
             for axis, gizmo in self.move_gizmos.items():
                 matrix = gizmo.matrix_basis
@@ -180,20 +181,21 @@ class MoveGizmo:
 
                 a = location_3d_to_region_2d(region, region_3d, origin_point)
                 b = location_3d_to_region_2d(region, region_3d, axis_point)
-                distance = (a - b).length
+                if a and b:
+                    distance = (a - b).length
 
-                gizmo.hide = distance < hide_distance
-                if distance < alpha_distance:
-                    factor = (distance - hide_distance) / hide_distance
-                    gizmo.alpha = pref.gizmo_alpha * factor
-                    axis_s = ["X", "Y", "Z"]
-                    axis_s.remove(axis)
-                    for ax in axis_s:
-                        pz = self.move_plane_gizmos[ax]
-                        pz.hide = gizmo.hide
-                        pz.alpha = gizmo.alpha
-                else:
-                    gizmo.alpha = pref.gizmo_alpha
+                    gizmo.hide = distance < hide_distance
+                    if distance < alpha_distance:
+                        factor = (distance - hide_distance) / hide_distance
+                        gizmo.alpha = pref.gizmo_alpha * factor
+                        axis_s = ["X", "Y", "Z"]
+                        axis_s.remove(axis)
+                        for ax in axis_s:
+                            pz = self.move_plane_gizmos[ax]
+                            pz.hide = gizmo.hide
+                            pz.alpha = gizmo.alpha
+                    else:
+                        gizmo.alpha = pref.gizmo_alpha
 
     def update_view_move_gizmo_matrix(self, context):
         res = view_matrix(context)
