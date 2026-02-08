@@ -9,7 +9,7 @@ from gpu_extras.batch import batch_for_shader
 from gpu_extras.presets import draw_circle_2d
 from mathutils import Vector, Matrix
 
-from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
+from ._runtime import ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS, SCENE_OBJS
 from ..utils import get_pref
 from ..utils.obj_bbox import AlignObject
 
@@ -37,7 +37,8 @@ def draw_bbox_callback(self, context):
     if not context.object:
         return
 
-    overlap_obj_a = OVERLAP_OBJ.get('obj')
+    overlap_name = OVERLAP_OBJ.get('obj_name')
+    overlap_obj_a = SCENE_OBJS.get(overlap_name) if overlap_name else None
 
     pref_bbox = get_pref().place_tool.bbox
     width = pref_bbox.width
@@ -48,7 +49,8 @@ def draw_bbox_callback(self, context):
 
     with wrap_bgl_restore(width):
         if context.object and len(context.selected_objects) == 1:
-            obj_A = ALIGN_OBJ.get('active', None)
+            active_name = ALIGN_OBJ.get('active_name')
+            obj_A = SCENE_OBJS.get(active_name) if active_name else None
             if context.object.type in C_OBJECT_TYPE and obj_A:  # mesh object
 
                 shader_2d = get_shader('2d')
