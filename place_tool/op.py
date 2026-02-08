@@ -556,24 +556,24 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
 
                 world_loc = location
 
-            with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
-                z_offset = Vector((0, 0, self.z_offset))
-                self.tmp_parent.location = world_loc
-                context.view_layer.update()
-                if place_tool_props().orient == 'NORMAL':
+                with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
+                    z_offset = Vector((0, 0, self.z_offset))
+                    self.tmp_parent.location = world_loc
                     context.view_layer.update()
-                    self.clear_rotate(context, self.tmp_parent)
-                self.tmp_parent.matrix_world = self.tmp_parent.matrix_world @ Matrix.Translation(z_offset)
-                if hasattr(self, 'objs_A') and context.object in self.selected_objs:
-                    self.objs_A.bvh_tree_update()
+                    if place_tool_props().orient == 'NORMAL':
+                        context.view_layer.update()
+                        self.clear_rotate(context, self.tmp_parent)
+                    self.tmp_parent.matrix_world = self.tmp_parent.matrix_world @ Matrix.Translation(z_offset)
+                    if hasattr(self, 'objs_A') and context.object in self.selected_objs:
+                        self.objs_A.bvh_tree_update()
 
-                    offset_mx = Matrix.Translation(world_loc - self.center)
-                    ALIGN_OBJS['bbox_pts'] = self.objs_A.get_bbox_pts()
-                    ALIGN_OBJS['top'] = offset_mx @ self.top
-                    ALIGN_OBJS['center'] = offset_mx @ self.top  # 使用默认center容易闪烁，故改用top
-                    ALIGN_OBJS['bottom'] = self.tmp_parent.location
-                    ALIGN_OBJS['size'] = self.objs_A.size
-                context.view_layer.update()
+                        offset_mx = Matrix.Translation(world_loc - self.center)
+                        ALIGN_OBJS['bbox_pts'] = self.objs_A.get_bbox_pts()
+                        ALIGN_OBJS['top'] = offset_mx @ self.top
+                        ALIGN_OBJS['center'] = offset_mx @ self.top  # 使用默认center容易闪烁，故改用top
+                        ALIGN_OBJS['bottom'] = self.tmp_parent.location
+                        ALIGN_OBJS['size'] = self.objs_A.size
+                    context.view_layer.update()
 
     def clear_rotate(self, context, obj):
         """清除除了local z以外轴向的旋转"""
