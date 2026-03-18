@@ -91,10 +91,10 @@ class BVH_Helper:
 
             if obj is context.object:
                 obj_A = AlignObject(obj, self.build_act_obj_mode, build_instance=self.build_act_inst)
-                SCENE_OBJS[obj] = obj_A
-                ALIGN_OBJ['active'] = obj_A
+                SCENE_OBJS[obj.name] = obj_A
+                ALIGN_OBJ['active_name'] = obj.name
             else:
-                SCENE_OBJS[obj] = AlignObject(obj, self.build_scn_obj_mode, build_instance=self.build_scn_inst)
+                SCENE_OBJS[obj.name] = AlignObject(obj, self.build_scn_obj_mode, build_instance=self.build_scn_inst)
 
     def is_overlap(self, context, exclude_obj_list=None):
         obj = context.object
@@ -103,18 +103,29 @@ class BVH_Helper:
             return
         elif context.object.type not in C_OBJECT_TYPE_HAS_BBOX:
             return
-        # 更新激活物体
-        ALIGN_OBJ['active'].bvh_tree_update()
-        # 检测是否更新了激活物体
-        for key, obj_A in SCENE_OBJS.items():
-            if obj_A.obj == ALIGN_OBJ['active'].obj:
+
+        active_name = ALIGN_OBJ.get('active_name')
+        if not active_name:
+            return
+        active_align_obj = SCENE_OBJS.get(active_name)
+        if not active_align_obj:
+            return
+
+        active_align_obj.bvh_tree_update()
+        exclude_names = [o.name for o in exclude_obj_list if o is not None] if exclude_obj_list else []
+
+        for obj_name, obj_A in SCENE_OBJS.items():
+            if obj_name == active_name:
                 continue
-            elif obj_A.obj in context.object.children_recursive:
+            scene_obj = bpy.context.scene.objects.get(obj_name)
+            if not scene_obj:
                 continue
-            elif exclude_obj_list and key in exclude_obj_list:
+            if scene_obj in context.object.children_recursive:
                 continue
-            elif ALIGN_OBJ['active'].bvh_tree.overlap(obj_A.bvh_tree):
-                OVERLAP_OBJ['obj'] = obj_A
+            if obj_name in exclude_names:
+                continue
+            if active_align_obj.bvh_tree.overlap(obj_A.bvh_tree):
+                OVERLAP_OBJ['obj_name'] = obj_name
                 return True
 
         OVERLAP_OBJ.clear()
@@ -122,11 +133,13 @@ class BVH_Helper:
     def check_objects_overlap(self, context, exclude_obj_list=None):
         if not hasattr(self, 'objs_A'): return
 
-        for key, obj_A in SCENE_OBJS.items():
-            if key in exclude_obj_list:
+        exclude_names = [o.name for o in exclude_obj_list if o is not None] if exclude_obj_list else []
+
+        for obj_name, obj_A in SCENE_OBJS.items():
+            if obj_name in exclude_names:
                 continue
             if self.objs_A.bvh_tree.overlap(obj_A.bvh_tree):
-                OVERLAP_OBJ['obj'] = obj_A
+                OVERLAP_OBJ['obj_name'] = obj_name
                 return True
 
         OVERLAP_OBJ.clear()
@@ -536,7 +549,6 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
             if result:
                 self.tg_obj = target_obj
                 self.normal = normal.normalized()
-
                 world_loc = location
 
             with store_objs_mx([self.tmp_parent], self.stop_moving(exclude_obj_list=[self.tg_obj])):
@@ -658,12 +670,13 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
             offset *= 4
         _axis = {'X': 0, 'Y': 1, 'Z': 2}[self.axis]
 
-        # rotate_mode = {'Z': 'ZYX', 'X': 'XYZ', 'Y': 'YXZ'}[self.axis]
-        # rot = context.object.rotation_euler.to_matrix().to_euler(rotate_mode)
-        # axis = self.axis.lower()
-        # setattr(rot, axis, getattr(rot, axis) + offset)
+        obj_name = ALIGN_OBJ.get('active_name')
+        if not obj_name:
+            return
+        obj_A = SCENE_OBJS.get(obj_name)
+        if not obj_A:
+            return
 
-        obj_A = ALIGN_OBJ['active']
         pivot = obj_A.get_bbox_center(is_local=False)
         # get rotate axis
 
@@ -762,7 +775,12 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         with mouse_offset(self, event, scale=0.01, scale_shift=0.005) as (offset_x, offset_y):
             offset = offset_y
 
-        self.obj_A = ALIGN_OBJ['active']
+        obj_name = ALIGN_OBJ.get('active_name')
+        if not obj_name:
+            return
+        self.obj_A = SCENE_OBJS.get(obj_name)
+        if not self.obj_A:
+            return
 
         offset = offset * -1 + 1
 
@@ -783,10 +801,14 @@ class PH_OT_scale_object(ModalBase, bpy.types.Operator):
         with mouse_offset(self, event, scale=0.01, scale_shift=0.005) as (offset_x, offset_y):
             offset = offset_y
 
-        self.obj_A = ALIGN_OBJ['active']
+        obj_name = ALIGN_OBJ.get('active_name')
+        if not obj_name:
+            return
+        self.obj_A = SCENE_OBJS.get(obj_name)
+        if not self.obj_A:
+            return
 
         offset = offset * -1 + 1
-        # offset_mx = self.obj_A.obj.matrix_world @ self.ori_mx[self.obj_A.obj].inverted()
         scale_factor = Vector((offset,) * 3)
         pivot = self.bottom
 

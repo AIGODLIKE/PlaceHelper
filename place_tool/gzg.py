@@ -3,7 +3,7 @@ from itertools import product
 import bpy
 from mathutils import Vector, Matrix
 
-from ._runtime import ALIGN_OBJ, ALIGN_OBJS
+from ._runtime import ALIGN_OBJ, ALIGN_OBJS, SCENE_OBJS
 from ..utils import get_pref
 from ..utils.get_gz_matrix import local_matrix
 from ..utils.get_position import get_objs_bbox_top
@@ -103,7 +103,8 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         self.rotate_gz.matrix_basis = context.object.matrix_world.normalized()
         self.scale_gz.matrix_basis = context.object.matrix_world.normalized()
 
-        obj_A = ALIGN_OBJ.get("active")
+        active_name = ALIGN_OBJ.get("active_name")
+        obj_A = SCENE_OBJS.get(active_name) if active_name else None
 
         if obj_A and len(context.selected_objects) == 1:
             try:
@@ -123,8 +124,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
                 self.rotate_gz.matrix_basis = mx
                 self.scale_gz.matrix_basis = mx
-            except ReferenceError as e:
-                print(e.args)
+            except ReferenceError:
                 pass
 
         elif obj_A and len(context.selected_objects) > 1:
@@ -144,8 +144,9 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
         elif not obj_A or obj_A.obj != context.object:
             if context.object.type in {"MESH", "CURVE", "SURFACE", "FONT", "LIGHT"}:
-                ALIGN_OBJ["active"] = AlignObject(context.object,
-                                                  "ACCURATE", True)
+                align_obj = AlignObject(context.object, "ACCURATE", True)
+                SCENE_OBJS[context.object.name] = align_obj
+                ALIGN_OBJ["active_name"] = context.object.name
 
     def refresh(self, context):
         prop = context.scene.place_tool
@@ -167,7 +168,8 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         self.refresh(context)
 
     def update_set_axis_gizmo_matrix(self, context):
-        obj_A = ALIGN_OBJ.get("active")
+        active_name = ALIGN_OBJ.get("active_name")
+        obj_A = SCENE_OBJS.get(active_name) if active_name else None
         if obj_A:
             try:
                 pos = obj_A.get_bbox_center(is_local=False)
