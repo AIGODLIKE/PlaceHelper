@@ -440,7 +440,8 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
         empty_obj.name = 'TMP_PARENT'
         empty_obj.empty_display_type = 'PLAIN_AXES'
         empty_obj.empty_display_size = 0
-        empty_obj.location = self.bottom
+        # empty_obj.location = self.bottom
+        empty_obj.matrix_world.translation = self.bottom
         z = getattr(empty_obj.location, self.axis.lower())
         setattr(empty_obj.location, self.axis.lower(), z - offset)
 
@@ -543,7 +544,7 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
                 self.tmp_parent.location = world_loc
                 context.view_layer.update()
                 if place_tool_props().orient == 'NORMAL':
-                    context.view_layer.update()
+                    # context.view_layer.update()
                     self.clear_rotate(context, self.tmp_parent)
                 self.tmp_parent.matrix_world = self.tmp_parent.matrix_world @ Matrix.Translation(z_offset)
                 if hasattr(self, 'objs_A') and context.object in self.selected_objs:
