@@ -455,8 +455,11 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
         empty_obj.empty_display_size = 0
         # empty_obj.location = self.bottom
         empty_obj.matrix_world.translation = self.bottom
+        bpy.context.view_layer.update()
+        empty_obj.matrix_world.translation = self.bottom
         z = getattr(empty_obj.location, self.axis.lower())
         setattr(empty_obj.location, self.axis.lower(), z - offset)
+        bpy.context.view_layer.update()
 
         rot_obj = bpy.context.object
         empty_obj.rotation_euler = rot_obj.rotation_euler

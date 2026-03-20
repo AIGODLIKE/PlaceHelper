@@ -30,6 +30,7 @@ def get_shader(type="3d"):
         return shader_debug
     elif type == 'tex':
         return shader_tex
+    return None
 
 
 def draw_bbox_callback(self, context):
