@@ -33,6 +33,7 @@ data = {
     "Not in User Keymap Found %s": "在用户快捷键中未找到 %s",
     "Show Place Axis": "显示放置轴",
     "Press D adjustment Z-offset": "按 D 调整Z偏移",
+    "Ctrl+Alt+Wheel: snap rotation by 90°": "Ctrl+Alt+滚轮：按 90° 吸附旋转",
     "Adsorption Z Offset": "吸附Z偏移",
     "Transform Tool": "变换工具",
     "Transform Gizmo circle size": "变换 Gizmo 圆大小",

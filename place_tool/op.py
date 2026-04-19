@@ -370,11 +370,35 @@ class MoveEvent:
 
     z_offset = property(fget=get_z_offset, fset=set_z_offset)
 
+    def _rotate_snap_90deg_grid(self, wheel_up: bool) -> None:
+        step_deg = 90.0
+        current_deg = math.degrees(self.rotate)
+        n_grid = round(current_deg / step_deg)
+        on_grid = math.isclose(current_deg, n_grid * step_deg, rel_tol=0, abs_tol=1e-4)
+        if wheel_up:
+            new_deg = (
+                current_deg + step_deg
+                if on_grid
+                else math.ceil(current_deg / step_deg) * step_deg
+            )
+        else:
+            new_deg = (
+                current_deg - step_deg
+                if on_grid
+                else math.floor(current_deg / step_deg) * step_deg
+            )
+        self.rotate = math.radians(new_deg)
+
     def update_event(self, event: bpy.types.Event):
         if event.type == "D":
             self.z_mode = event.value != "RELEASE"
 
         if event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE"}:
+            wheel_up = event.type == "WHEELUPMOUSE"
+            if event.ctrl and event.alt and not self.z_mode:
+                self._rotate_snap_90deg_grid(wheel_up)
+                return
+
             pref = get_pref()
 
             if self.z_mode:
@@ -390,7 +414,7 @@ class MoveEvent:
                 elif event.alt:
                     value = pref.event_alt_adsorption_angle
 
-            value = value if event.type == 'WHEELUPMOUSE' else -value
+            value = value if wheel_up else -value
 
             if self.z_mode:
                 self.update_z_offset(value)
@@ -633,6 +657,7 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
         from bpy.app.translations import pgettext_iface
         text = [
             pgettext_iface("Press D adjustment Z-offset"),
+            pgettext_iface("Ctrl+Alt+Wheel: snap rotation by 90°"),
             pgettext_iface("R: Press Reset Rotation"),
             pgettext_iface("Z: Press Reset Z Offset"),
         ]
