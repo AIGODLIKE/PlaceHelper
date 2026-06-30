@@ -470,7 +470,7 @@ class MatrixHub(PublicHub):
         super().__init__(identifier, timeout, area_restrictions, is_alpha_animation)
 
     def init_shader(self):
-        """ math_vis_console\draw.py L:189
+        r""" math_vis_console\draw.py L:189
             https://extensions.blender.org/add-ons/math-vis-console/
         """
         self.shaders = {}  # {"batch":shader}

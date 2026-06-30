@@ -200,7 +200,6 @@ class Dynamic(ToolOptions, FrameOptions):
 
         particle_system_collection = self.particle_system_collection = get_collection()
 
-        print("particle_system_collection", particle_system_collection)
         context.scene.collection.children.link(particle_system_collection)
         if not prop.is_individual:
             loc = get_selected_objects_center_translation(context)
@@ -364,8 +363,8 @@ class Dynamic(ToolOptions, FrameOptions):
                     place.matrix_world = matrix
                     place.update_tag()
                     bpy.data.objects.remove(active)
-                except Exception as e:
-                    print(e.args)
+                except Exception:
+                    pass
 
     def remove_particle(self):
         for place_obj, value in self.dynamic_place_system.items():
@@ -397,8 +396,6 @@ class Dynamic(ToolOptions, FrameOptions):
                     if mod.type == "COLLISION":
                         obj.modifiers.remove(mod)
                 obj.update_tag()
-            else:
-                print("not find collision", name)
 
         context.scene.objects.update()
         context.view_layer.objects.update()
@@ -421,8 +418,6 @@ class Dynamic(ToolOptions, FrameOptions):
             if force_index != -1:
                 force = context.scene.objects[force_index]
                 force.field.strength = strength
-            else:
-                print("Tips: Not Find this force object ", force_obj)
 
         if self.mouse_distance > prop.min_force_field:
             value = 10 * prop.force_field_coefficient_factor
@@ -443,7 +438,7 @@ class Dynamic(ToolOptions, FrameOptions):
 
 
 class DynamicMove(bpy.types.Operator, Dynamic):
-    bl_idname = 'ph.dynamic_move'
+    bl_idname = 'object.ph_dynamic_move'
     bl_label = 'Dynamic Move'
 
     def invoke(self, context, event):
@@ -453,7 +448,7 @@ class DynamicMove(bpy.types.Operator, Dynamic):
 
 
 class DynamicRotate(bpy.types.Operator, Dynamic):
-    bl_idname = 'ph.dynamic_rotate'
+    bl_idname = 'object.ph_dynamic_rotate'
     bl_label = 'Dynamic Rotate'
 
     def invoke(self, context, event):
@@ -463,7 +458,7 @@ class DynamicRotate(bpy.types.Operator, Dynamic):
 
 
 class DynamicScale(bpy.types.Operator, Dynamic):
-    bl_idname = 'ph.dynamic_scale'
+    bl_idname = 'object.ph_dynamic_scale'
     bl_label = 'Dynamic Scale'
 
     def invoke(self, context, event):

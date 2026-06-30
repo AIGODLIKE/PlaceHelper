@@ -52,7 +52,7 @@ class MoveGizmo:
                           use_draw_modal=False,
                           use_event_handle_all=False).set_up(self, "GIZMO_GT_dial_3d")
         gizmo.line_width = 2
-        prop = gizmo.target_set_operator("ph.translate", index=0)
+        prop = gizmo.target_set_operator("object.ph_translate", index=0)
         prop.panel_constraint = False
         prop.axis = "VIEW"
         gizmo.alpha = pref.gizmo_alpha
@@ -71,7 +71,7 @@ class MoveGizmo:
         gz.align_view = True
         gz.alpha = pref.gizmo_alpha
 
-        prop = gz.target_set_operator("ph.translate", index=0)
+        prop = gz.target_set_operator("object.ph_translate", index=0)
         prop.axis = axis
         prop.panel_constraint = True
 
@@ -92,7 +92,7 @@ class MoveGizmo:
         gz.length = pref.transform_gizmo_arrow_length
         gz.alpha = pref.gizmo_alpha
 
-        prop = gz.target_set_operator("ph.translate", index=0)
+        prop = gz.target_set_operator("object.ph_translate", index=0)
         prop.panel_constraint = False
         prop.axis = axis
 
@@ -132,6 +132,21 @@ class MoveGizmo:
         """TODO If the object is too close, it will cause all axes to disappear"""
         orient_slots = context.scene.transform_orientation_slots[0].type
         pref = get_pref()
+
+        # 可选：物体模式下仅当开启「显示 Gizmo」时才显示 Gizmo（关闭时用左键拖动直接移动物体）；
+        # 编辑模式没有拖动移动手势，始终显示 Gizmo。
+        if context.mode == "OBJECT":
+            show_gizmo = getattr(context.scene.move_view_tool, "show_gizmo", False)
+        else:
+            show_gizmo = True
+        if self.move_view_gizmo is not None:
+            self.move_view_gizmo.hide = not show_gizmo
+        if not show_gizmo:
+            for gizmo in self.move_gizmos.values():
+                gizmo.hide = True
+            for gizmo in self.move_plane_gizmos.values():
+                gizmo.hide = True
+            return
 
         if orient_slots == "VIEW":
             for axis, gizmo in self.move_plane_gizmos.items():

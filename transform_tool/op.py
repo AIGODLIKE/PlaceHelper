@@ -2,15 +2,36 @@ from math import radians
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatVectorProperty
+from bpy_extras import view3d_utils
 from mathutils import Quaternion
 
 from ..utils import get_pref
 
 C_OBJECT_TYPE_HAS_BBOX = {"MESH", "CURVE", "FONT", "LATTICE"}
 
+# 双击可进入编辑模式的物体类型
+C_EDITABLE_TYPES = {"MESH", "CURVE", "SURFACE", "FONT", "META", "LATTICE", "ARMATURE"}
+
+
+def _object_under_cursor(context, event):
+    """对光标位置做场景射线检测，命中返回物体，否则返回 None。"""
+    region = context.region
+    rv3d = getattr(context, "region_data", None)
+    if region is None or rv3d is None:
+        return None
+    coord = (event.mouse_region_x, event.mouse_region_y)
+    try:
+        view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+        ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+        depsgraph = context.evaluated_depsgraph_get()
+        result, _loc, _no, _idx, obj, _mx = context.scene.ray_cast(depsgraph, ray_origin, view_vector)
+    except Exception:
+        return None
+    return obj if result else None
+
 
 class PH_OT_translate(bpy.types.Operator):
-    bl_idname = "ph.translate"
+    bl_idname = "object.ph_translate"
     bl_label = "Translate"
     bl_description = "Translate"
     # bl_options = {"REGISTER", "UNDO"}
@@ -104,7 +125,8 @@ class PH_OT_translate(bpy.types.Operator):
 
     def move(self, context, event):
         if context.mode == "OBJECT":
-            is_copy = False if not event.shift else context.scene.move_view_tool.duplicate
+            # Shift 或 Alt 拖动时复制（复制类型由工具栏的 Duplicate 决定）
+            is_copy = context.scene.move_view_tool.duplicate if (event.shift or event.alt) else False
             self.translate(context, is_copy=is_copy)
         elif context.mode == "EDIT_MESH":
             if event.shift:
@@ -135,7 +157,7 @@ class PH_OT_translate(bpy.types.Operator):
 
 
 class PH_OT_Clear_mesh(bpy.types.Operator):
-    bl_idname = "ph.clear_mesh"
+    bl_idname = "mesh.ph_clear_mesh"
     bl_label = "Clear mesh"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -160,9 +182,115 @@ class PH_OT_Clear_mesh(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class PH_OT_transform_drag(bpy.types.Operator):
+    """Drag an object to move it, or drag on empty space to box select"""
+    bl_idname = "object.ph_transform_drag"
+    bl_label = "Move / Box Select"
+    bl_options = {"REGISTER"}
+
+    duplicate: BoolProperty(name="Duplicate", default=False)
+
+    def invoke(self, context, event):
+        obj = _object_under_cursor(context, event)
+
+        # 空白处：框选
+        if obj is None:
+            try:
+                bpy.ops.view3d.select_box("INVOKE_DEFAULT")
+            except Exception:
+                pass
+            return {"FINISHED"}
+
+        # 命中未选中的物体：先把它设为当前选择
+        try:
+            if not obj.select_get():
+                bpy.ops.object.select_all(action="DESELECT")
+                obj.select_set(True)
+                context.view_layer.objects.active = obj
+        except Exception:
+            pass
+
+        if self.duplicate:
+            linked = context.scene.move_view_tool.duplicate == "INSTANCE"
+            try:
+                bpy.ops.object.duplicate_move(
+                    "INVOKE_DEFAULT",
+                    OBJECT_OT_duplicate={"linked": linked},
+                    TRANSFORM_OT_translate={"release_confirm": True},
+                )
+                return {"FINISHED"}
+            except Exception:
+                pass
+
+        try:
+            bpy.ops.transform.translate("INVOKE_DEFAULT", release_confirm=True)
+        except Exception:
+            pass
+        return {"FINISHED"}
+
+
+class PH_OT_transform_enter_edit(bpy.types.Operator):
+    """Double click an object to enter Edit Mode"""
+    bl_idname = "object.ph_transform_enter_edit"
+    bl_label = "Enter Edit Mode"
+
+    def invoke(self, context, event):
+        obj = _object_under_cursor(context, event)
+        if obj is None:
+            return {"CANCELLED"}
+        try:
+            if not obj.select_get():
+                bpy.ops.object.select_all(action="DESELECT")
+                obj.select_set(True)
+            context.view_layer.objects.active = obj
+        except Exception:
+            pass
+        if obj.type in C_EDITABLE_TYPES:
+            try:
+                bpy.ops.object.mode_set(mode="EDIT")
+            except Exception:
+                return {"FINISHED"}
+            # 进入编辑模式后切换到变换加强版（编辑），保证双击退出等手势可用
+            try:
+                bpy.ops.wm.tool_set_by_id(name="ph.transform_pro_edit")
+            except Exception:
+                pass
+        return {"FINISHED"}
+
+
+class PH_OT_transform_exit_edit(bpy.types.Operator):
+    """Double click empty space to exit Edit Mode"""
+    bl_idname = "object.ph_transform_exit_edit"
+    bl_label = "Exit Edit Mode"
+
+    def invoke(self, context, event):
+        obj = _object_under_cursor(context, event)
+        # 空白处：退出到物体模式
+        if obj is None:
+            try:
+                bpy.ops.object.mode_set(mode="OBJECT")
+            except Exception:
+                return {"FINISHED"}
+            # 退回物体模式后切换到变换加强版（物体），保持工具一致
+            try:
+                bpy.ops.wm.tool_set_by_id(name="ph.transform_pro")
+            except Exception:
+                pass
+            return {"FINISHED"}
+        # 命中几何：执行默认选择
+        try:
+            bpy.ops.view3d.select("INVOKE_DEFAULT")
+        except Exception:
+            pass
+        return {"FINISHED"}
+
+
 classes = (
     PH_OT_translate,
     PH_OT_Clear_mesh,
+    PH_OT_transform_drag,
+    PH_OT_transform_enter_edit,
+    PH_OT_transform_exit_edit,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)

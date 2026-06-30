@@ -3,6 +3,7 @@ from bpy.props import BoolProperty, IntProperty, FloatProperty, EnumProperty
 from bpy.types import PropertyGroup
 
 from .gzg import update_gzg_pref
+from ..utils import SELECT_BOX_KEYMAP, EXIT_TO_SELECT_BOX_KEYMAP
 
 
 class DynamicPlaceProps(PropertyGroup):
@@ -66,9 +67,11 @@ class PH_TL_DynamicPlaceTool(bpy.types.WorkSpaceTool):
     bl_label = "Gravity Dynamic Place"
     bl_widget = "PH_GZG_dynamic_place"
     bl_icon = "ops.transform.transform"
-    bl_keymap = "3D View Tool: Select Box"
+    bl_keymap = SELECT_BOX_KEYMAP + EXIT_TO_SELECT_BOX_KEYMAP
 
     def draw_settings(context, layout, tool):
+        from ..help_overlay import draw_help_toggle
+        draw_help_toggle(layout)
         prop = bpy.context.scene.dynamic_place_tool
         layout.prop(prop, "mode")
         layout.prop(prop, "location")
@@ -109,7 +112,7 @@ class PH_PT_DynamicPlaceTool(bpy.types.Panel):
 
 
 class PH_OT_set_dynamic_place_mode(bpy.types.Operator):
-    bl_idname = 'ph.set_dynamic_place_mode'
+    bl_idname = 'object.ph_set_dynamic_place_mode'
     bl_label = 'Mode'
 
     axis: EnumProperty(name="Axis",

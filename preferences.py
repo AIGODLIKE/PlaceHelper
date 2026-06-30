@@ -69,14 +69,24 @@ class DynamicPlaceToolProps(PropertyGroup):
                                        min=0)
 
 
+class ScatterToolPrefProps(PropertyGroup):
+    ring_color: FloatVectorProperty(name="Brush Color", subtype="COLOR", size=4,
+                                    default=(0.2, 0.7, 1.0, 0.9), min=0, max=1)
+    ring_color_erase: FloatVectorProperty(name="Erase Color", subtype="COLOR", size=4,
+                                          default=(1.0, 0.25, 0.2, 0.9), min=0, max=1)
+    ring_width: FloatProperty(name="Brush Width", default=2.0, min=1.0, max=10.0)
+
+
 class Preferences(AddonPreferences, HUB):
     bl_idname = __package__
 
     tool_type: EnumProperty(name="Tool", items=[("PLACE_TOOL", "Place", ""), ("TRANSFORM_TOOL", "Transform", ""),
-                                                ("DYNAMIC_PLACE_TOOL", "Dynamic Place", "")], default="PLACE_TOOL")
+                                                ("DYNAMIC_PLACE_TOOL", "Dynamic Place", ""),
+                                                ("SCATTER_TOOL", "Scatter", "")], default="PLACE_TOOL")
 
     place_tool: PointerProperty(type=PlaceToolProps)
     dynamic_place_tool: PointerProperty(type=DynamicPlaceToolProps)
+    scatter_tool: PointerProperty(type=ScatterToolPrefProps)
     #
     use_event_handle_all: BoolProperty(name="Gizmo Handle All Event", default=False)
     debug: BoolProperty(name="Debug", default=False)
@@ -114,6 +124,13 @@ class Preferences(AddonPreferences, HUB):
 
     gizmo_alpha: FloatProperty(name="Gizmo Alpha", default=0.5, min=0.1, max=1)
 
+    help_offset_x: IntProperty(name="Help Offset X",
+                               description="Horizontal offset of the tool help hints from the lower-left corner",
+                               default=60, min=0, max=2000)
+    help_offset_y: IntProperty(name="Help Offset Y",
+                               description="Vertical offset of the tool help hints from the lower-left corner",
+                               default=60, min=0, max=2000)
+
     @property
     def gizmo_alpha_highlight(self) -> float:
         return self.gizmo_alpha + 0.5
@@ -135,10 +152,18 @@ class Preferences(AddonPreferences, HUB):
             self.draw_transform_tool(context, col)
         elif self.tool_type == "DYNAMIC_PLACE_TOOL":
             self.draw_dynamic_place_tool(context, col)
+        elif self.tool_type == "SCATTER_TOOL":
+            self.draw_scatter_tool(context, col)
         col.separator()
         column = col.box().column(align=True)
         column.prop(self, "use_event_handle_all")
         column.prop(self, "gizmo_alpha")
+
+        help_box = column.box().column(align=True)
+        help_box.label(text="Tool Help Hints", icon="QUESTION")
+        row = help_box.row(align=True)
+        row.prop(self, "help_offset_x")
+        row.prop(self, "help_offset_y")
         # layout.prop(self, "debug")
         self.draw_hub(column)
 
@@ -221,6 +246,15 @@ class Preferences(AddonPreferences, HUB):
         else:
             column.label(text=bpy.app.translations.pgettext_iface("Not in User Keymap Found %s") % key)
 
+    def draw_scatter_tool(self, context, layout):
+        column = layout.box().column(align=True)
+        column.use_property_split = True
+        column.label(text="Brush Display", icon="BRUSH_DATA")
+        scatter = self.scatter_tool
+        column.prop(scatter, "ring_width")
+        column.prop(scatter, "ring_color")
+        column.prop(scatter, "ring_color_erase")
+
     def draw_transform_tool(self, context, layout):
         column = layout.box().column(align=True)
         column.label(text="Transform Tool")
@@ -237,6 +271,7 @@ def register():
     bpy.utils.register_class(PlaceToolGizmoProps)
     bpy.utils.register_class(PlaceToolProps)
     bpy.utils.register_class(DynamicPlaceToolProps)
+    bpy.utils.register_class(ScatterToolPrefProps)
     bpy.utils.register_class(Preferences)
 
 
@@ -245,4 +280,5 @@ def unregister():
     bpy.utils.unregister_class(PlaceToolGizmoProps)
     bpy.utils.unregister_class(PlaceToolProps)
     bpy.utils.unregister_class(DynamicPlaceToolProps)
+    bpy.utils.unregister_class(ScatterToolPrefProps)
     bpy.utils.unregister_class(Preferences)

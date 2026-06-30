@@ -1,4 +1,121 @@
 data = {
+    # 工具帮助提示（左下角）
+    "Show Tool Help": "显示工具帮助",
+    "Show operation hints for the active tool in the lower-left corner of the viewport":
+        "在视口左下角显示当前工具的操作提示",
+    "Click: Select object": "点击：选择物体",
+    "Drag: Place on surface": "拖拽：贴合表面放置",
+    "Shift + Drag: Duplicate and place": "Shift + 拖拽：复制并放置",
+    "Alt + Click: Set placement axis": "Alt + 点击：设置放置轴向",
+    "Drag + Wheel: Spin around axis": "拖拽时 + 滚轮：可自旋",
+    "Drag + Ctrl + Alt + Wheel: Spin in 90 steps": "拖拽时 + Ctrl + Alt + 滚轮：每 90 度自旋转",
+    "Drag gizmo: Move / rotate / scale": "拖拽控制器：移动 / 旋转 / 缩放",
+    "Drag object: Move": "拖拽物体：移动",
+    "Shift / Alt + Drag: Duplicate while moving": "Shift / Alt + 拖拽：移动时复制",
+    "Double click object: Enter Edit Mode": "双击物体：进入编辑模式",
+    "Double click empty: Exit Edit Mode": "双击空白：退出编辑模式",
+    "Toggle Show Gizmo in the top bar": "在顶栏切换「显示 Gizmo」",
+    "Drag empty space: Box select": "空白处拖拽：框选",
+    "Alt + Drag: Box select": "Alt + 拖拽：框选",
+    "Drag object: Drop with gravity": "拖拽物体：重力坠落",
+    "Set Mode / Gravity in the top bar": "在顶栏设置模式 / 重力",
+    "Drag: Paint objects": "拖拽：绘制散布物体",
+    "Ctrl + Drag: Erase": "Ctrl + 拖拽：擦除",
+    "Alt + Wheel: Adjust brush radius": "Alt + 滚轮：调整笔刷半径",
+    "[ / ]: Adjust brush radius": "[ / ]：调整笔刷半径",
+    "Drag empty space: Box select sources": "空白处拖拽：框选散布源物体",
+    "Select objects first, then drag empty space to pick sources":
+        "请先选择物体，再在空白处拖拽框选作为散布源",
+    "Esc: Finish": "Esc：结束",
+    "Esc: Exit to Select Box tool": "Esc：退出到框选工具",
+    "Use Object Axis": "使用物体向上轴",
+    "Use the per-object up axis instead of the scene axis":
+        "使用每个物体自身的向上轴，而不是场景设置的轴",
+    # 放置：限制到地面
+    "Limit to Ground": "限制到地面",
+    "Prevent placed objects from going below the Z=0 ground plane while moving":
+        "移动时防止放置的物体穿过 Z=0 的地面",
+    "Ground": "地面",
+    "Box Select": "框选",
+    "Box select objects by dragging on empty space": "在空白处拖动以框选物体",
+    # 散布：缩放与随机缩放
+    "Scale": "缩放",
+    "Random Scale": "随机缩放",
+    "Pressure Scale": "压感缩放",
+    "Use tablet pen pressure to drive scale between "
+    "Scale Min and Scale Max (the current pressure is shown at the brush)":
+        "用数位板笔压控制缩放：笔压在最小/最大缩放之间映射（实时笔压显示在笔刷处）",
+    "Randomize scale between Scale Min and Scale Max. "
+    "When off, every instance uses the fixed Scale (Min) value":
+        "在最小/最大缩放之间随机；关闭时所有实例使用固定缩放值（最小值）",
+    # 散布：压感密度上下限与实时读数
+    "Pressure": "笔压",
+    "Pressure Min Density": "压感最小密度",
+    "Density at the lightest pressure": "最轻笔压时的密度",
+    "Pressure Max Density": "压感最大密度",
+    "Density at the firmest pressure": "最重笔压时的密度",
+    "Pressure Min": "压感最小",
+    "Live pressure is shown at the brush": "实时笔压显示在笔刷处",
+    "Use tablet pen pressure to drive density: "
+    "pressure is mapped between Min and Max Density "
+    "(the current pressure is shown at the brush)":
+        "用数位板笔压控制密度：笔压在最小/最大密度之间映射（实时笔压显示在笔刷处）",
+    # 散布：密度随机 / 叠加 / 应用 / 源随机 / 帮助偏移
+    "Random Density": "随机密度",
+    "Randomize the density per stamp between Density and Max Density":
+        "每次落刷在密度与最大密度之间随机取值",
+    "Max Density": "最大密度",
+    "Stacking": "叠加",
+    "Allow scattering on top of already scattered objects, stacking them up like a tower":
+        "允许在已散布物体表面继续散布，像叠叠乐一样向上堆叠",
+    "Apply Scatter": "应用散布",
+    "Apply scattered objects: move them out of the Scatter collection so they "
+    "become permanent and are no longer removed by Clear Scattered":
+        "应用散布物体：将其移出散布集合，使之永久保留、不再被“清除散布”删除",
+    "Applied %d scattered objects": "已应用 %d 个散布物体",
+    "Randomize Weights": "随机权重",
+    "Randomize the scatter probability (weight) of the selected source objects":
+        "随机化所选源物体的散布概率（权重）",
+    "Randomized %d source weights": "已随机 %d 个源物体的权重",
+    "Scatter Sources": "散布源",
+    "Tool Help Hints": "工具帮助提示",
+    "Help Offset X": "帮助偏移 X",
+    "Horizontal offset of the tool help hints from the lower-left corner":
+        "工具帮助提示相对左下角的水平偏移",
+    "Help Offset Y": "帮助偏移 Y",
+    "Vertical offset of the tool help hints from the lower-left corner":
+        "工具帮助提示相对左下角的垂直偏移",
+    # 散布：随机间距与源概率
+    "Random Spacing": "随机间距",
+    "Randomize the spacing between objects, picking a value "
+    "between Min Distance and Max Distance for each placement":
+        "随机化物体间距，每次放置在最小距离与最大距离之间取值",
+    "Max Distance": "最大距离",
+    "Upper bound of the random spacing": "随机间距的上限",
+    "Source Probability": "散布源概率",
+    "Select source objects to set probability": "选择源物体以设置概率",
+    # 散布：随机缩放与压感密度
+    "Pressure Density": "压感密度",
+    "Pressure Radius": "压感半径",
+    "Use tablet pen pressure to drive brush radius between "
+    "Min and Max Radius (shown live at the brush)":
+        "使用数位笔压感驱动笔刷半径，在最小与最大半径之间映射（绘制时实时显示在笔刷处）",
+    "Pressure Min Radius": "压感最小半径",
+    "Brush radius at the lightest pressure": "最轻压感时的笔刷半径",
+    "Pressure Max Radius": "压感最大半径",
+    "Brush radius at the firmest pressure": "最重压感时的笔刷半径",
+    "Random Radius": "随机半径",
+    "Randomize the brush radius per stamp between Radius and Max Radius":
+        "每次落笔在“半径”与“最大半径”之间随机取笔刷半径",
+    "Max Radius": "最大半径",
+    "Upper bound of the random brush radius": "随机笔刷半径的上限",
+    "Use tablet pen pressure to drive density: "
+    "the harder you press, the more objects are scattered":
+        "用数位板笔压控制密度：按得越用力，散布的物体越多",
+    "Random Per-Axis Scale": "各轴随机缩放",
+    "Randomize each axis independently for non-uniform (stretched) scaling. "
+    "When off, scaling is uniform across all axes":
+        "各轴独立随机，产生非等比（拉伸）缩放；关闭时为等比缩放",
     "Place": "放置",
     "Transform Pro": "变换加强版",
     "Dynamic Place": "动态放置",
@@ -53,5 +170,70 @@ data = {
     "Force Field Dynamic Place": "力场动态放置",
     "Gravity Dynamic Place": "重力动态放置",
     "Gizmo Alpha Vary": "Gizmo Alpha变化",
-    "Clear mesh": "清理网格"
+    "Show Gizmo": "显示 Gizmo",
+    "Show the move gizmos. When off, drag an object directly with the left mouse button to move it":
+        "显示移动 Gizmo。关闭时直接用鼠标左键拖动物体即可移动",
+    "Move / Box Select": "移动 / 框选",
+    "Enter Edit Mode": "进入编辑模式",
+    "Exit Edit Mode": "退出编辑模式",
+    "Clear mesh": "清理网格",
+    "Scatter": "散布",
+    "Scatter Brush": "散布笔刷",
+    "Scatter Brush\nDrag on a surface to scatter, Ctrl+Drag to erase\nDrag on empty space to box-select source objects\nAlt+Wheel (hover), Wheel (while painting) or [ ]: Adjust Radius": "散布笔刷\n在表面拖动散布，Ctrl+拖动擦除\n在空白处拖动框选源物体\nAlt+滚轮（悬停）、滚轮（绘制中）或 [ ]：调整半径",
+    "Brush": "笔刷",
+    "Brush radius": "笔刷半径",
+    "Density": "密度",
+    "Target number of instances per square unit of brush area. The tool keeps trying placements to reach this density, so a large Min Distance no longer starves the result": "笔刷单位面积内的目标实例数量。工具会持续尝试放置以达到该密度，因此较大的最小距离不会再导致散布数量不足",
+    "Min Distance": "最小间距",
+    "Minimum distance between scattered objects (0 = off)": "散布物体之间的最小间距（0 = 关闭）",
+    "Avoid Overlap": "防止穿插",
+    "Keep instances apart based on their bounding size": "根据包围尺寸使实例彼此分开",
+    "Overlap Spacing": "穿插间距系数",
+    "Multiplier on the combined bounding radius": "对两者包围半径之和的系数",
+    "Transform": "变换",
+    "Scale Min": "最小缩放",
+    "Scale Max": "最大缩放",
+    "Align to Normal": "对齐法线",
+    "Align scattered objects to the surface normal": "将散布物体对齐到表面法线",
+    "Random Rotation": "随机旋转",
+    "Randomize rotation around the surface normal": "绕表面法线随机旋转",
+    "Random Tilt": "随机倾斜",
+    "Maximum random tilt away from the normal (degrees)": "偏离法线的最大随机倾斜角（度）",
+    "Height": "法向高度",
+    "Distance from the surface along its normal": "沿表面法线方向距离表面的高度",
+    "Random Height": "随机高度",
+    "Randomize the normal height between Height and Max Height": "在“法向高度”与“最大高度”之间随机取法向高度",
+    "Max Height": "最大法向高度",
+    "Upper bound of the random normal height": "随机法向高度的上限",
+    "Filter": "过滤",
+    "Limit to Surface": "限制在表面内",
+    "Only place objects where the brush actually overlaps a surface. "
+    "Samples that fall outside the surface are skipped, so a brush "
+    "larger than the surface will not scatter objects beyond its edge":
+        "仅在笔刷与表面实际重叠处放置物体。落在表面之外的采样点会被跳过，"
+        "因此当笔刷大于散布面时不会把物体散布到边缘之外",
+    "Limit Slope": "限制坡度",
+    "Only scatter on surfaces flatter than the limit": "仅在坡度小于阈值的表面散布",
+    "Max Slope": "最大坡度",
+    "Maximum surface slope angle (degrees)": "表面最大坡度角（度）",
+    "Limit Height": "限制高度",
+    "Only scatter within a world Z range": "仅在世界 Z 区间内散布",
+    "Height Min": "最小高度",
+    "Height Max": "最大高度",
+    "Density Mask": "密度遮罩",
+    "Use an image texture (via UV) to control density": "用图像贴图（按 UV）控制散布密度",
+    "Invert Mask": "反转遮罩",
+    "Scatter Weight": "散布权重",
+    "Relative probability of this object when scattering multiple sources": "多源散布时该物体被选中的相对概率",
+    "Create linked instances (share mesh data)": "创建关联实例（共享网格数据）",
+    "Create full copies (independent mesh data)": "创建完整副本（独立网格数据）",
+    "Clear Scattered": "清除散布",
+    "Remove all objects scattered into the Scatter collection": "移除散布集合中的所有物体",
+    "Please select at least one object to scatter": "请至少选择一个要散布的物体",
+    "No surface under cursor": "光标下没有表面",
+    "Removed %d scattered objects": "已移除 %d 个散布物体",
+    "Brush Display": "笔刷显示",
+    "Brush Color": "笔刷颜色",
+    "Erase Color": "擦除颜色",
+    "Brush Width": "笔刷宽度"
 }

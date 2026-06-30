@@ -7,6 +7,7 @@ from mathutils import Vector, Matrix
 
 from ._runtime import SCENE_OBJS, ALIGN_OBJ, OVERLAP_OBJ, ALIGN_OBJS
 from .draw_bbox import draw_bbox_callback
+from .axis import resolve_place_axis
 from ..utils import get_pref
 from ..utils.obj_bbox import AlignObject, AlignObjects, C_OBJECT_TYPE_HAS_BBOX
 from ..utils.raycast import ray_cast
@@ -185,10 +186,7 @@ class ModalBase:
         return check(bpy.context, exclude_obj_list) and place_tool_props().coll_stop  # 先后顺序
 
     def invoke(self, context, event):
-        prop = context.scene.place_tool
-
-        self.axis = prop.axis
-        self.invert_axis = prop.invert_axis
+        self.axis, self.invert_axis = resolve_place_axis(context)
 
         self.clear_target()
 
@@ -430,7 +428,7 @@ class MoveEvent:
 
 class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
     """Move"""
-    bl_idname = "ph.move_object"
+    bl_idname = "object.ph_move_object"
     bl_label = "Move"
 
     cursor_modal = 'SCROLL_XY'
@@ -442,11 +440,24 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
     invert_axis: BoolProperty(name='Invert Axis', default=False)
     z_mode = None
 
-    def invoke(self, context, event):
-        prop = bpy.context.scene.place_tool
+    def _lowest_world_z(self):
+        """选中物体包围盒的世界空间最低点 Z。"""
+        min_z = None
+        for obj in getattr(self, "selected_objs", []):
+            if obj is None:
+                continue
+            try:
+                mx = obj.matrix_world
+                for corner in obj.bound_box:
+                    z = (mx @ Vector(corner)).z
+                    if min_z is None or z < min_z:
+                        min_z = z
+            except Exception:
+                continue
+        return min_z
 
-        self.axis = prop.axis
-        self.invert_axis = prop.invert_axis
+    def invoke(self, context, event):
+        self.axis, self.invert_axis = resolve_place_axis(context)
 
         self.clear_target()
 
@@ -586,6 +597,18 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
                     # context.view_layer.update()
                     self.clear_rotate(context, self.tmp_parent)
                 self.tmp_parent.matrix_world = self.tmp_parent.matrix_world @ Matrix.Translation(z_offset)
+
+                # 限制到地面：抬升使物体最低点不低于 Z=0
+                if place_tool_props().limit_to_ground:
+                    context.view_layer.update()
+                    min_z = self._lowest_world_z()
+                    if min_z is not None and min_z < -1e-6:
+                        self.tmp_parent.matrix_world = (
+                                Matrix.Translation(Vector((0.0, 0.0, -min_z)))
+                                @ self.tmp_parent.matrix_world
+                        )
+                        context.view_layer.update()
+
                 if hasattr(self, 'objs_A') and context.object in self.selected_objs:
                     self.objs_A.bvh_tree_update()
 
@@ -675,7 +698,7 @@ class PH_OT_move_object(ModalBase, MoveEvent, bpy.types.Operator):
 
 class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
     """Rotate\nShift: Duplicate\nAlt: Set Axis"""
-    bl_idname = 'ph.rotate_object'
+    bl_idname = 'object.ph_rotate_object'
     bl_label = 'Rotate'
 
     cursor_modal = 'SCROLL_X'
@@ -736,7 +759,6 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
             z = -v1.cross(v2)  # 垂直于x轴的向量
 
         rot = Matrix.Rotation(-offset, 4, z)
-        print("rot_matrix", call, rot)
 
         rot_matrix = (
                 Matrix.Translation(pivot) @
@@ -790,7 +812,7 @@ class PH_OT_rotate_object(ModalBase, bpy.types.Operator):
 
 class PH_OT_scale_object(ModalBase, bpy.types.Operator):
     """Scale\nShift: Duplicate\nAlt: Set Axis"""
-    bl_idname = 'ph.scale_object'
+    bl_idname = 'object.ph_scale_object'
     bl_label = 'Scale'
     bl_options = {'REGISTER', 'UNDO'}
 

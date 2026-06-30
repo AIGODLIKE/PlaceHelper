@@ -85,7 +85,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
         gzObject = GizmoInfo(scale_basis=1,
                              use_draw_modal=False)
         gz = gzObject.set_up(self, 'GIZMO_GT_arrow_3d')
-        prop = gz.target_set_operator("ph.gravity_place", index=0)
+        prop = gz.target_set_operator("object.ph_gravity_place", index=0)
         prop.axis = 'Z'
 
         gz.alpha = get_pref().gizmo_alpha
@@ -125,7 +125,7 @@ class PH_GZG_dynamic_place(bpy.types.GizmoGroup):
 
         gz.alpha = get_pref().gizmo_alpha
 
-        op = 'ph.scale_force' if context.scene.dynamic_place_tool.mode == 'FORCE' else 'ph.gravity_place'
+        op = 'object.ph_scale_force' if context.scene.dynamic_place_tool.mode == 'FORCE' else 'object.ph_gravity_place'
         prop = gz.target_set_operator(op, index=0)
         prop.axis = axis
         prop.invert_axis = invert_axis

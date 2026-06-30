@@ -378,7 +378,7 @@ class DynamicBase:
 
 
 class PH_OT_gravity_place(DynamicBase, bpy.types.Operator):
-    bl_idname = 'ph.gravity_place'
+    bl_idname = 'object.ph_gravity_place'
     bl_label = 'Dynamic Place'
 
     def set_gravity_vec(self, context):
@@ -498,7 +498,7 @@ class PH_OT_gravity_place(DynamicBase, bpy.types.Operator):
 
 
 class PH_OT_scale_force(DynamicBase, bpy.types.Operator):
-    bl_idname = 'ph.scale_force'
+    bl_idname = 'object.ph_scale_force'
     bl_label = 'Dynamic Place'
 
     force = None

@@ -4,6 +4,7 @@ import bpy
 from mathutils import Vector, Matrix
 
 from ._runtime import ALIGN_OBJ, ALIGN_OBJS, SCENE_OBJS
+from .axis import resolve_place_axis
 from ..utils import get_pref
 from ..utils.get_gz_matrix import local_matrix
 from ..utils.get_position import get_objs_bbox_top
@@ -55,15 +56,14 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
 
         def add_axis_gz(axis, invert):
             gz = gzObject.set_up(self, "GIZMO_GT_arrow_3d")
-            prop = gz.target_set_operator("ph.set_place_axis")
+            prop = gz.target_set_operator("object.ph_set_place_axis")
             prop.axis = axis
             prop.invert_axis = invert
             gz.alpha = get_pref().gizmo_alpha
             return gz
 
         prop = context.scene.place_tool
-        exist_axis = prop.axis
-        exist_invert = prop.invert_axis
+        exist_axis, exist_invert = resolve_place_axis(context)
 
         # not add the axis and invert direction that already exist
         set_axis_gzs = {}
@@ -87,7 +87,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         self.rotate_gz = gzObject.set_up(self, "PH_GT_custom_rotate_z_3d")
         self.rotate_gz.alpha = get_pref().gizmo_alpha
         prop = self.rotate_gz.target_set_operator(
-            "ph.rotate_object", index=0)
+            "object.ph_rotate_object", index=0)
         prop.axis = "Z"
 
     def add_scale_gz(self, context):
@@ -97,7 +97,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
                              color_highlight=color, )
         self.scale_gz = gzObject.set_up(self, "PH_GT_custom_scale_3d")
         self.scale_gz.alpha = get_pref().gizmo_alpha
-        prop = self.scale_gz.target_set_operator("ph.scale_object", index=0)
+        prop = self.scale_gz.target_set_operator("object.ph_scale_object", index=0)
 
     def correct_gz_loc(self, context):
         self.rotate_gz.matrix_basis = context.object.matrix_world.normalized()
@@ -109,8 +109,7 @@ class PH_GZG_place_tool(bpy.types.GizmoGroup):
         if obj_A and len(context.selected_objects) == 1:
             try:
                 x, y, z, xD, yD, zD = local_matrix(reverse_zD=True)
-                axis = context.scene.place_tool.axis
-                invert = context.scene.place_tool.invert_axis
+                axis, invert = resolve_place_axis(context)
                 if axis == "X":
                     q = x if not invert else xD
                 elif axis == "Y":

@@ -5,6 +5,8 @@ from bpy.props import BoolProperty, EnumProperty
 from bpy.types import PropertyGroup
 
 from .gzg import update_gzg_pref
+from .axis import AXIS_ITEMS
+from ..utils import EXIT_TO_SELECT_BOX_KEYMAP
 
 
 class PlaceToolProps(PropertyGroup):
@@ -21,8 +23,17 @@ class PlaceToolProps(PropertyGroup):
     setting_axis: BoolProperty(name="Setting Axis", default=False)
 
     invert_axis: BoolProperty(name="Invert Axis", default=False, update=update_gzg_pref)
+    use_object_axis: BoolProperty(
+        name="Use Object Axis",
+        description="Use the per-object up axis instead of the scene axis",
+        default=True,
+        update=update_gzg_pref)
     # coll_hide: BoolProperty(name="Keep Color When Intersecting", default=False)
     coll_stop: BoolProperty(name="Stop When Intersecting", default=False)
+    limit_to_ground: BoolProperty(name="Limit to Ground",
+                                  description="Prevent placed objects from going below the Z=0 ground plane "
+                                              "while moving",
+                                  default=False)
 
     duplicate: EnumProperty(name="Duplicate",
                             items=[("INSTANCE", "Instance", "Create a Instance of the Active Object"),
@@ -52,37 +63,107 @@ class PH_TL_PlaceTool(bpy.types.WorkSpaceTool):
     bl_icon = Path(__file__).parent.parent.joinpath("icons", "place_tool").as_posix()
     bl_widget = "PH_GZG_place_tool"
     bl_keymap = (
-        ("ph.wrap_view3d_select",
+        ("object.ph_wrap_view3d_select",
          {"type": "LEFTMOUSE", "value": "CLICK"},
          {"properties": []},
          ),
 
-        ("ph.move_object",
+        # Alt + 拖动：框选（即使已选中物体也可用，不与移动手势冲突）
+        ("object.ph_place_box_select",
+         {"type": "LEFTMOUSE", "value": "CLICK_DRAG", "alt": True},
+         {"properties": []}),
+
+        ("object.ph_move_object",
          {"type": "LEFTMOUSE", "value": "CLICK_DRAG", "shift": False},
          {"properties": []}),
 
-        ("ph.move_object",
+        ("object.ph_move_object",
          {"type": "LEFTMOUSE", "value": "CLICK_DRAG", "shift": True},
          {"properties": []}),
 
-        ("ph.show_place_axis",
+        ("object.ph_show_place_axis",
          {"type": "LEFTMOUSE", "value": "CLICK", "alt": True},
          {"properties": []}),
-    )
+    ) + EXIT_TO_SELECT_BOX_KEYMAP
 
     def draw_settings(context, layout, tool):
+        from ..help_overlay import draw_help_toggle
+        draw_help_toggle(layout)
         prop = bpy.context.scene.place_tool
         layout.prop(prop, "orient")
         if prop.orient == "NORMAL":
-            layout.prop(prop, "axis")
-            layout.prop(prop, "invert_axis")
+            layout.prop(prop, "use_object_axis")
+            obj = context.object
+            if prop.use_object_axis and obj is not None:
+                layout.prop(obj, "ph_place_tool_axis", text="Axis")
+                layout.prop(obj, "ph_place_tool_invert_axis")
+            else:
+                layout.prop(prop, "axis")
+                layout.prop(prop, "invert_axis")
         layout.prop(prop, "duplicate")
+        layout.prop(prop, "limit_to_ground", text="", icon="CON_FLOOR", toggle=True)
 
         layout.popover(panel="PH_PT_PlaceTool", text="", icon="PREFERENCES")
 
 
+class PH_OT_place_box_select(bpy.types.Operator):
+    bl_idname = "object.ph_place_box_select"
+    bl_label = "Box Select"
+    bl_description = "Box select objects by dragging on empty space"
+
+    _timer = None
+    _finishing = False
+
+    def invoke(self, context, event):
+        self._finishing = False
+        try:
+            bpy.ops.view3d.select_box("INVOKE_DEFAULT")
+        except Exception:
+            return {"CANCELLED"}
+        # 用定时器等待 select_box 模态结束后再补设活动物体
+        wm = context.window_manager
+        self._timer = wm.event_timer_add(0.01, window=context.window)
+        wm.modal_handler_add(self)
+        return {"RUNNING_MODAL"}
+
+    def modal(self, context, event):
+        # select_box 在左键释放（确认）或右键/ESC（取消）时结束
+        if event.type == "LEFTMOUSE" and event.value == "RELEASE":
+            self._finishing = True
+        elif event.type in {"RIGHTMOUSE", "ESC"} and event.value == "PRESS":
+            self._finishing = True
+
+        # 让事件继续传递给 select_box，待其处理完选择后于下一个 TIMER 收尾
+        if self._finishing and event.type == "TIMER":
+            self._ensure_active(context)
+            self._cleanup(context)
+            return {"FINISHED"}
+        return {"PASS_THROUGH"}
+
+    @staticmethod
+    def _ensure_active(context):
+        """若没有有效的活动物体，则把第一个选中物体设为活动物体。"""
+        view_layer = context.view_layer
+        active = view_layer.objects.active
+        try:
+            if active is not None and active.select_get():
+                return
+        except Exception:
+            pass
+        selected = context.selected_objects
+        if selected:
+            view_layer.objects.active = selected[0]
+            if context.area:
+                context.area.tag_redraw()
+
+    def _cleanup(self, context):
+        if self._timer is not None:
+            context.window_manager.event_timer_remove(self._timer)
+            self._timer = None
+
+
 class PH_PT_wrap_view3d_select(bpy.types.Operator):
-    bl_idname = "ph.wrap_view3d_select"
+    bl_idname = "object.ph_wrap_view3d_select"
     bl_label = "Select"
 
     def execute(self, context):
@@ -131,10 +212,14 @@ class PH_PT_PlaceToolPanel(bpy.types.Panel):
         layout.label(text="Collisions")
         layout.prop(prop, "coll_stop")
         # layout.prop(prop, "coll_hide")
+        layout.separator()
+
+        layout.label(text="Ground")
+        layout.prop(prop, "limit_to_ground")
 
 
 class PT_OT_show_place_axis(bpy.types.Operator):
-    bl_idname = "ph.show_place_axis"
+    bl_idname = "object.ph_show_place_axis"
     bl_label = "Show Place Axis"
     bl_description = "Show Place Axis"
 
@@ -177,7 +262,7 @@ class PT_OT_show_place_axis(bpy.types.Operator):
 
 
 class PH_OT_set_place_axis(bpy.types.Operator):
-    bl_idname = "ph.set_place_axis"
+    bl_idname = "object.ph_set_place_axis"
     bl_label = "Set Place Axis"
     bl_description = "Set Place Axis"
 
@@ -190,8 +275,12 @@ class PH_OT_set_place_axis(bpy.types.Operator):
 
     def invoke(self, context, event):
         prop = context.scene.place_tool
-        prop.axis = self.axis
-        prop.invert_axis = self.invert_axis
+        if prop.use_object_axis and context.object is not None:
+            context.object.ph_place_tool_axis = self.axis
+            context.object.ph_place_tool_invert_axis = self.invert_axis
+        else:
+            prop.axis = self.axis
+            prop.invert_axis = self.invert_axis
         prop.setting_axis = False
         from .gzg import update_gzg_pref
         update_gzg_pref(None, context)
@@ -203,9 +292,21 @@ def register():
     bpy.types.Scene.place_tool = bpy.props.PointerProperty(type=PlaceToolProps)
     bpy.types.Object.place_tool_rotation = bpy.props.FloatProperty(default=0, subtype="ANGLE")
     bpy.types.Object.place_tool_z_offset = bpy.props.FloatProperty(default=0)
+    bpy.types.Object.ph_place_tool_axis = EnumProperty(
+        name="Axis",
+        items=AXIS_ITEMS,
+        default="Z",
+        update=update_gzg_pref,
+    )
+    bpy.types.Object.ph_place_tool_invert_axis = BoolProperty(
+        name="Invert Axis",
+        default=False,
+        update=update_gzg_pref,
+    )
 
     bpy.utils.register_class(PH_PT_PlaceToolPanel)
     bpy.utils.register_class(PH_PT_wrap_view3d_select)
+    bpy.utils.register_class(PH_OT_place_box_select)
     bpy.utils.register_class(PH_OT_set_place_axis)
     bpy.utils.register_class(PT_OT_show_place_axis)
 
@@ -217,6 +318,7 @@ def unregister():
 
     bpy.utils.unregister_class(PH_PT_PlaceToolPanel)
     bpy.utils.unregister_class(PH_PT_wrap_view3d_select)
+    bpy.utils.unregister_class(PH_OT_place_box_select)
     bpy.utils.unregister_class(PH_OT_set_place_axis)
     bpy.utils.unregister_class(PT_OT_show_place_axis)
     bpy.utils.unregister_class(PlaceToolProps)
@@ -224,3 +326,5 @@ def unregister():
     del bpy.types.Scene.place_tool
     del bpy.types.Object.place_tool_rotation
     del bpy.types.Object.place_tool_z_offset
+    del bpy.types.Object.ph_place_tool_axis
+    del bpy.types.Object.ph_place_tool_invert_axis

@@ -9,15 +9,6 @@ C_OBJECT_TYPE_HAS_BBOX = {"MESH", "CURVE", "FONT", "LATTICE", "LIGHT"}
 faces = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (4, 0, 3, 7)]
 
 
-def DebugWrapper(func):
-    def wrapper(*args, **kwargs):
-        # func name
-        print(func.__name__)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
 class AlignObject:
 
     def __init__(self, obj: bpy.types.Object, mode: str = "ACCURATE", is_local: bool = False,
@@ -154,7 +145,6 @@ class AlignObject:
             ob_inst.object.to_mesh_clear()
 
         if not find:
-            print("did not find any instance")
             return default_bbox()
 
         # calc max and min
