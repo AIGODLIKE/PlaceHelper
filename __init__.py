@@ -8,9 +8,7 @@ bl_info = {
     "version": (2, 0, 1),
     "category": "辣椒出品",
     "support": "COMMUNITY",
-    "doc_url": "",
-    "tracker_url": "",
-    "description": "",
+    "description": "Place, align and scatter objects with ease",
     "location": "Tool Shelf",
 }
 
