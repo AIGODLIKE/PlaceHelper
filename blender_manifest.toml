@@ -6,7 +6,7 @@ version = "2.0.1"
 type = "add-on"
 maintainer = "AIGODLIKE Community"
 
-blender_version_min = "5.0.0"
+blender_version_min = "4.2.0"
 
 website = "https://github.com/AIGODLIKE/PlaceHelper"
 support = "https://github.com/AIGODLIKE/PlaceHelper/issues"
@@ -20,6 +20,7 @@ paths_exclude_pattern = [
     "/.git/",
     ".gitignore",
     ".gitattributes",
+    ".editorconfig",
     "/*.zip",
     "*.blend1",
     ".vscode/",
